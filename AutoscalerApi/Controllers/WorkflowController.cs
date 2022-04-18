@@ -29,7 +29,7 @@ public class WorkflowController : ControllerBase
     [HttpPost("workflow-trigger")]
     public async Task<IActionResult> Post([FromBody] Workflow? workflow)
     {
-        _logger.LogInformation($"Workflow hook '{workflow.action}' on repo '{workflow.repository.FullName}' received");
+        _logger.LogInformation($"Workflow hook '{workflow.Action}' on repo '{workflow.Repository.FullName}' received");
         if (workflow == null) return Ok();
         
         _logger.LogInformation($"Executing workflow");
