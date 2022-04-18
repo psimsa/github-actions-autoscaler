@@ -1,0 +1,30 @@
+name: Build Autoscaler - debug image
+
+on:
+  workflow_dispatch:
+  
+env:
+  DOTNET_VERSION: '6.0.x'
+
+jobs:
+  build:
+    runs-on: self-hosted
+    env:
+      image: docker.io/ofcoursedude/moje:autoscaler-${{ github.RUN_ID }}
+      tag_suffix: ""
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set suffix
+        if: github.ref != 'refs/heads/main'
+        run: echo "tag_suffix=-${{ github.ref_name }}" >> $GITHUB_ENV
+      - name: Build the Docker image
+        run: docker build . --file AutoscalerApi/Dockerfile-debug -t ${{env.image}}${{env.tag_suffix}}
+      - name: Docker Login
+        uses: docker/login-action@v1.14.1
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_TOKEN }}
+      - name: Docker push
+        run: docker push ${{env.image}}${{env.tag_suffix}}
+      - name: Docker clean-up
+        run: docker image rm ${{env.image}}${{env.tag_suffix}}

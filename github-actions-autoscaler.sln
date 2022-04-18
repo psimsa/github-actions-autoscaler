@@ -1,0 +1,49 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.1.32319.34
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AutoscalerApi", "AutoscalerApi\AutoscalerApi.csproj", "{066012FA-13F6-48A6-945E-DA4B72B12E1C}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WorkflowFunctions", "WorkflowFunctions\WorkflowFunctions.csproj", "{E367E936-7274-48BD-9FA7-3E6698D4D2C5}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Playground", "Playground\Playground.csproj", "{E90144B5-224A-40B6-8B53-04204234537A}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{5BACFA97-6325-4FBE-859F-5AC2C4E47428}"
+	ProjectSection(SolutionItems) = preProject
+		.dockerignore = .dockerignore
+		.gitignore = .gitignore
+		.github\workflows\AutoscalerApi.yml = .github\workflows\AutoscalerApi.yml
+		.github\workflows\BranchBuild.yml = .github\workflows\BranchBuild.yml
+		.github\workflows\MultiArchBuild.yml = .github\workflows\MultiArchBuild.yml
+		README.md = README.md
+		renovate.json = renovate.json
+		.github\workflows\WorkflowFunctions.yml = .github\workflows\WorkflowFunctions.yml
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{066012FA-13F6-48A6-945E-DA4B72B12E1C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{066012FA-13F6-48A6-945E-DA4B72B12E1C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{066012FA-13F6-48A6-945E-DA4B72B12E1C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{066012FA-13F6-48A6-945E-DA4B72B12E1C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E367E936-7274-48BD-9FA7-3E6698D4D2C5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E367E936-7274-48BD-9FA7-3E6698D4D2C5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E367E936-7274-48BD-9FA7-3E6698D4D2C5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E367E936-7274-48BD-9FA7-3E6698D4D2C5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E90144B5-224A-40B6-8B53-04204234537A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E90144B5-224A-40B6-8B53-04204234537A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E90144B5-224A-40B6-8B53-04204234537A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E90144B5-224A-40B6-8B53-04204234537A}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {D99C66B7-0E98-4B09-B977-6C4D83E168BD}
+	EndGlobalSection
+EndGlobal
