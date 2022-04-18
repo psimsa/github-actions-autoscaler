@@ -40,6 +40,7 @@ public class DockerService : IDockerService
         var container = new CreateContainerParameters()
         {
             Image = "myoung34/github-runner",
+            Name = containerName,
             HostConfig = new HostConfig()
             {
                 AutoRemove = true,
