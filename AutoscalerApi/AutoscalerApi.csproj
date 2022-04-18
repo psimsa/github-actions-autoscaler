@@ -1,0 +1,42 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+	<PropertyGroup>
+		<TargetFramework>net6.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<UserSecretsId>6bf2578d-1c88-4b7b-bc10-92aac6445754</UserSecretsId>
+		<DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+		<EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+		<!--<TrimmerDefaultAction>Link</TrimmerDefaultAction>-->
+		<TrimMode>copyused</TrimMode>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<TrimmerRootAssembly Include="AutoscalerApi" />
+		<PackageReference Include="Azure.Storage.Queues" Version="12.9.0" />
+		<PackageReference Include="Docker.DotNet" Version="3.125.5">
+			<IsTrimmable>false</IsTrimmable>
+		</PackageReference>
+		<!--<PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.15.1" />-->
+	</ItemGroup>
+	<!--<Target Name="ConfigureTrimming"
+	        BeforeTargets="PrepareForILLink">
+		<ItemGroup>
+			<ManagedAssemblyToLink Condition="'%(Filename)' == 'Docker.DotNet'">
+				<IsTrimmable>false</IsTrimmable>
+			</ManagedAssemblyToLink>
+			<ManagedAssemblyToLink Condition="'%(Filename)' == 'Newtonsoft.Json'">
+				<IsTrimmable>false</IsTrimmable>
+			</ManagedAssemblyToLink>
+			<ManagedAssemblyToLink Condition="'%(Filename)' == 'Azure.Storage.Queues'">
+				<IsTrimmable>false</IsTrimmable>
+			</ManagedAssemblyToLink>
+			<ManagedAssemblyToLink Condition="'%(Filename)' == 'Microsoft.AspNetCore.Diagnostics'">
+				<IsTrimmable>false</IsTrimmable>
+			</ManagedAssemblyToLink>
+			<ManagedAssemblyToLink Condition="'%(Filename)' == 'Microsoft.AspNetCore.Diagnostics'">
+				<IsTrimmable>false</IsTrimmable>
+			</ManagedAssemblyToLink>
+		</ItemGroup>
+	</Target>-->
+</Project>
