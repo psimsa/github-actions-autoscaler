@@ -20,7 +20,7 @@ public class DockerService : IDockerService
         _accessToken = configuration["ACCESS_TOKEN"];
     }
 
-    public async Task StartEphemeralContainer(string repositoryFullName)
+    private async Task StartEphemeralContainer(string repositoryFullName, string containerName)
     {
         var volumes = new Dictionary<string, EmptyStruct> { { "/var/run/docker.sock", new EmptyStruct() } };
 
@@ -60,18 +60,17 @@ public class DockerService : IDockerService
 
     public async Task ProcessWorkflow(Workflow workflow)
     {
-        if (workflow.action == "queued" &&
-            workflow.repository.FullName.StartsWith("ofcoursedude/") &&
-            workflow.job.labels.Any(_ => _ == "self-hosted"))
+        if (workflow.Action == "queued" &&
+            workflow.Repository.FullName.StartsWith("ofcoursedude/") &&
+            workflow.Job.Labels.Any(_ => _ == "self-hosted"))
         {
             _logger.LogInformation($"Workflow is self-hosted");
-            await StartEphemeralContainer(workflow.repository.FullName);
+            await StartEphemeralContainer(workflow.Repository.FullName, $"{workflow.Repository.Name}-{workflow.Job.RunId}");;
         }
     }
 }
 
 public interface IDockerService
 {
-    Task StartEphemeralContainer(string repositoryFullName);
     Task ProcessWorkflow(Workflow workflow);
 }

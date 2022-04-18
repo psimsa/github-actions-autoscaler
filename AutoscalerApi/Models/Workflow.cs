@@ -2,4 +2,7 @@
 
 namespace AutoscalerApi.Controllers;
 
-public record Workflow(string action, [property: JsonPropertyName("workflow_job")]WorkflowJob job, Repository repository);
+public record Workflow(
+    [property: JsonPropertyName("action")] string Action,
+    [property: JsonPropertyName("workflow_job")] WorkflowJob Job,
+    [property: JsonPropertyName("repository")] Repository Repository);
