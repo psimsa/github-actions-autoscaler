@@ -31,7 +31,7 @@ public class WorkflowController : ControllerBase
     {
         _logger.LogInformation($"Workflow hook '{workflow.Action}' on repo '{workflow.Repository.FullName}' received");
         if (workflow == null) return Ok();
-        
+
         _logger.LogInformation($"Executing workflow");
         await _dockerService.ProcessWorkflow(workflow);
 
