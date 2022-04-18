@@ -25,5 +25,5 @@ jobs:
       - name: Docker push
         run: docker push docker.io/ofcoursedude/moje:autoscaler
         if: github.ref == 'refs/heads/main'
-      - name: Docker cleanup
-        run: docker image prune -f
+#      - name: Docker cleanup
+#        run: docker image prune -f
