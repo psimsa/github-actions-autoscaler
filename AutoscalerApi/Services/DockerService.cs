@@ -87,7 +87,7 @@ public class DockerService : IDockerService
                     m.Set();
                 }
             }));
-        m.Wait();
+        // m.Wait();
         _logger.LogInformation("Downloaded");
     }
 
