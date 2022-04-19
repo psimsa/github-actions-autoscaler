@@ -29,7 +29,7 @@ public class DockerService : IDockerService
 
         var volumes = new Dictionary<string, EmptyStruct> { { "/var/run/docker.sock", new EmptyStruct() }, {volume.Name, new EmptyStruct()} };
 
-        await PullImageIfNotExists();
+        // await PullImageIfNotExists();
 
         var mounts = new List<Mount>(new[]
         {
