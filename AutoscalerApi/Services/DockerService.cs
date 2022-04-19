@@ -51,7 +51,7 @@ public class DockerService : IDockerService
             {
                 "REPO_URL=https://github.com/" + repositoryFullName,
                 $"ACCESS_TOKEN={_accessToken}",
-                "RUNNER_WORKDIR=/runner",
+                "RUNNER_WORKDIR=/home/runner/work",
                 "EPHEMERAL=TRUE",
             })
         };
