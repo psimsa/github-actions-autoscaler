@@ -40,7 +40,7 @@ public class DockerService : IDockerService
             },
             new Mount()
             {
-                Source = volume.Name, Target = "/home/runner/work", ReadOnly = false
+                Source = volume.Name, Target = "/home/runner/work", ReadOnly = false, Type = "volume"
             }
         });
 
