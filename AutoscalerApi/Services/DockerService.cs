@@ -27,7 +27,11 @@ public class DockerService : IDockerService
         var volume = await _client.Volumes.CreateAsync(new VolumesCreateParameters());
         // var r2 = await _client.Volumes.PruneAsync();
 
-        var volumes = new Dictionary<string, EmptyStruct> { { "/var/run/docker.sock", new EmptyStruct() }, {volume.Name, new EmptyStruct()} };
+        var volumes = new Dictionary<string, EmptyStruct>
+        {
+            {"/var/run/docker.sock", new EmptyStruct()},
+            {volume.Mountpoint, new EmptyStruct()}
+        };
 
         // await PullImageIfNotExists();
 
@@ -40,7 +44,12 @@ public class DockerService : IDockerService
             },
             new Mount()
             {
-                Source = volume.Name, Target = "/home/runner/work", ReadOnly = false, Type = "volume"
+                Target = volume.Mountpoint, Source = volume.Mountpoint, Type = "bind",
+                ReadOnly = false
+            },
+            new Mount()
+            {
+                Source = volume.Name, Target = "/dummy", ReadOnly = false, Type = "volume"
             }
         });
 
@@ -59,7 +68,7 @@ public class DockerService : IDockerService
             {
                 "REPO_URL=https://github.com/" + repositoryFullName,
                 $"ACCESS_TOKEN={_accessToken}",
-                "RUNNER_WORKDIR=/home/runner/work",
+                $"RUNNER_WORKDIR={volume.Mountpoint}",
                 "EPHEMERAL=TRUE",
             })
         };
@@ -95,7 +104,8 @@ public class DockerService : IDockerService
     {
         switch (workflow.Action)
         {
-            case "queued" when workflow.Repository.FullName.StartsWith("ofcoursedude/") && workflow.Job.Labels.Any(_ => _ == "self-hosted"):
+            case "queued" when workflow.Repository.FullName.StartsWith("ofcoursedude/") &&
+                               workflow.Job.Labels.Any(_ => _ == "self-hosted"):
                 _logger.LogInformation($"Workflow is self-hosted");
                 await StartEphemeralContainer(workflow.Repository.FullName,
                     $"{workflow.Repository.Name}-{workflow.Job.RunId}");
