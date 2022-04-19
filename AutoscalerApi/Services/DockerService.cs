@@ -24,7 +24,10 @@ public class DockerService : IDockerService
 
     private async Task StartEphemeralContainer(string repositoryFullName, string containerName)
     {
-        var volumes = new Dictionary<string, EmptyStruct> { { "/var/run/docker.sock", new EmptyStruct() } };
+        var volume = await _client.Volumes.CreateAsync(new VolumesCreateParameters());
+        // var r2 = await _client.Volumes.PruneAsync();
+
+        var volumes = new Dictionary<string, EmptyStruct> { { "/var/run/docker.sock", new EmptyStruct() }, {volume.Name, new EmptyStruct()} };
 
         await PullImageIfNotExists();
 
@@ -34,6 +37,10 @@ public class DockerService : IDockerService
             {
                 Target = "/var/run/docker.sock", Source = "/var/run/docker.sock", Type = "bind",
                 ReadOnly = false
+            },
+            new Mount()
+            {
+                Source = volume.Name, Target = "/home/runner/work", ReadOnly = false
             }
         });
 
@@ -45,14 +52,14 @@ public class DockerService : IDockerService
             {
                 AutoRemove = true,
                 Mounts = mounts,
-                CapAdd = new List<string>() { "SETFCAP", "FOWNER", "SYS_CHROOT" },
+                // CapAdd = new List<string>() { "SETFCAP", "FOWNER", "SYS_CHROOT" },
             },
             Volumes = volumes,
             Env = new List<string>(new[]
             {
                 "REPO_URL=https://github.com/" + repositoryFullName,
                 $"ACCESS_TOKEN={_accessToken}",
-                // "RUNNER_WORKDIR=/home/runner/work",
+                "RUNNER_WORKDIR=/home/runner/work",
                 "EPHEMERAL=TRUE",
             })
         };
@@ -66,27 +73,37 @@ public class DockerService : IDockerService
 
     private async Task PullImageIfNotExists()
     {
+        var m = new ManualResetEventSlim();
+        var progress = new Progress<JSONMessage>();
         await _client.Images.CreateImageAsync(
             new ImagesCreateParameters
             {
                 FromImage = "myoung34/github-runner",
                 Tag = "latest",
-            }, new AuthConfig()
+            }, null, new Progress<JSONMessage>(message =>
             {
-                RegistryToken = _dockerToken
-            }, new Progress<JSONMessage>());
+                if (message.Status.StartsWith("Status:"))
+                {
+                    m.Set();
+                }
+            }));
+        m.Wait();
+        _logger.LogInformation("Downloaded");
     }
 
     public async Task ProcessWorkflow(Workflow workflow)
     {
-        if (workflow.Action == "queued" &&
-            workflow.Repository.FullName.StartsWith("ofcoursedude/") &&
-            workflow.Job.Labels.Any(_ => _ == "self-hosted"))
+        switch (workflow.Action)
         {
-            _logger.LogInformation($"Workflow is self-hosted");
-            await StartEphemeralContainer(workflow.Repository.FullName,
-                $"{workflow.Repository.Name}-{workflow.Job.RunId}");
-            ;
+            case "queued" when workflow.Repository.FullName.StartsWith("ofcoursedude/") && workflow.Job.Labels.Any(_ => _ == "self-hosted"):
+                _logger.LogInformation($"Workflow is self-hosted");
+                await StartEphemeralContainer(workflow.Repository.FullName,
+                    $"{workflow.Repository.Name}-{workflow.Job.RunId}");
+                ;
+                break;
+            case "completed":
+                await _client.Volumes.PruneAsync();
+                break;
         }
     }
 }

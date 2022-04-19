@@ -16,7 +16,7 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddSingleton<IDockerService, DockerService>();
 builder.Services.AddSingleton(provider => new DockerClientConfiguration().CreateClient());
-builder.Services.AddHostedService<QueueMonitorWorker>();
+// builder.Services.AddHostedService<QueueMonitorWorker>();
 
 var app = builder.Build();
 
