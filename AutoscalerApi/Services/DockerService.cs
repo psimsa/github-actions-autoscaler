@@ -45,13 +45,14 @@ public class DockerService : IDockerService
             {
                 AutoRemove = true,
                 Mounts = mounts,
+                CapAdd = new List<string>() { "SETFCAP", "FOWNER", "SYS_CHROOT" },
             },
             Volumes = volumes,
             Env = new List<string>(new[]
             {
                 "REPO_URL=https://github.com/" + repositoryFullName,
                 $"ACCESS_TOKEN={_accessToken}",
-                "RUNNER_WORKDIR=/home/runner/work",
+                // "RUNNER_WORKDIR=/home/runner/work",
                 "EPHEMERAL=TRUE",
             })
         };
