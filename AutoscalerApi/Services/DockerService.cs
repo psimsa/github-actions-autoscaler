@@ -13,8 +13,8 @@ public class DockerService : IDockerService
     private readonly ILogger<DockerService> _logger;
     private readonly string _accessToken;
     private readonly string _dockerToken;
-    private readonly string _dockerUsername;
-    private readonly string _dockerPassword;
+    private readonly int _maxRunners;
+    private DateTime _lastPullCheck = DateTime.MinValue;
 
     public DockerService(DockerClient client, IConfiguration configuration, ILogger<DockerService> logger)
     {
@@ -22,21 +22,42 @@ public class DockerService : IDockerService
         _logger = logger;
         _accessToken = configuration["ACCESS_TOKEN"];
         _dockerToken = configuration["DOCKER_TOKEN"];
-        /*_dockerUsername = configuration["DOCKER_USERNAME"];
-        _dockerPassword = configuration["DOCKER_PASSWORD"];*/
+        var maxRunners = configuration.GetValue<int>("MAX_RUNNERS");
+        _maxRunners = maxRunners > 0 ? maxRunners : 3;
     }
 
-    private async Task StartEphemeralContainer(string repositoryFullName, string containerName)
+    private async Task StartEphemeralContainer(string repositoryFullName, string containerName, long jobRunId)
     {
+        async Task<IList<ContainerListResponse>> ListContainersAsync()
+        {
+            return await _client.Containers.ListContainersAsync(new ContainersListParameters()
+            {
+                Filters = new Dictionary<string, IDictionary<string, bool>>()
+                {
+                    {
+                        "label", new Dictionary<string, bool>()
+                        {
+                            { "autoscaler=true", true }
+                        }
+                    }
+                }
+            });
+        }
+
+        while ((await ListContainersAsync()).Count == _maxRunners)
+        {
+            await Task.Delay(1000);
+        }
+
         var volume = await _client.Volumes.CreateAsync(new VolumesCreateParameters());
 
         var volumes = new Dictionary<string, EmptyStruct>
         {
-            {"/var/run/docker.sock", new EmptyStruct()},
-            {volume.Mountpoint, new EmptyStruct()}
+            { "/var/run/docker.sock", new EmptyStruct() },
+            { volume.Mountpoint, new EmptyStruct() }
         };
 
-        // await PullImageIfNotExists();
+        await PullImageIfNotExists();
 
         var mounts = new List<Mount>(new[]
         {
@@ -73,7 +94,14 @@ public class DockerService : IDockerService
                 $"RUNNER_WORKDIR={volume.Mountpoint}",
                 "EPHEMERAL=TRUE",
                 "DISABLE_AUTO_UPDATE=TRUE",
-            })
+            }),
+            Labels = new Dictionary<string, string>()
+            {
+                { "autoscaler", "true" },
+                { "autoscaler.repository", repositoryFullName },
+                { "autoscaler.container", containerName },
+                { "autoscaler.jobrun", jobRunId.ToString() }
+            }
         };
 
         _logger.LogInformation($"Creating container for {repositoryFullName}");
@@ -92,7 +120,7 @@ public class DockerService : IDockerService
             {
                 FromImage = "myoung34/github-runner",
                 Tag = "latest",
-            }, new AuthConfig() {Username = _dockerUsername, Password = _dockerPassword}, new Progress<JSONMessage>(
+            }, new AuthConfig() { Password = _dockerToken }, new Progress<JSONMessage>(
                 message =>
                 {
                     if (message.Status.StartsWith("Status:"))
@@ -112,8 +140,7 @@ public class DockerService : IDockerService
                                workflow.Job.Labels.Any(_ => _ == "self-hosted"):
                 _logger.LogInformation($"Workflow is self-hosted");
                 await StartEphemeralContainer(workflow.Repository.FullName,
-                    $"{workflow.Repository.Name}-{workflow.Job.RunId}");
-                ;
+                    $"{workflow.Repository.Name}-{workflow.Job.RunId}", workflow.Job.RunId);
                 break;
             case "completed":
                 await _client.Volumes.PruneAsync();
