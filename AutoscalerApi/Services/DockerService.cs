@@ -13,6 +13,8 @@ public class DockerService : IDockerService
     private readonly ILogger<DockerService> _logger;
     private readonly string _accessToken;
     private readonly string _dockerToken;
+    private readonly string _dockerUsername;
+    private readonly string _dockerPassword;
 
     public DockerService(DockerClient client, IConfiguration configuration, ILogger<DockerService> logger)
     {
@@ -20,12 +22,13 @@ public class DockerService : IDockerService
         _logger = logger;
         _accessToken = configuration["ACCESS_TOKEN"];
         _dockerToken = configuration["DOCKER_TOKEN"];
+        /*_dockerUsername = configuration["DOCKER_USERNAME"];
+        _dockerPassword = configuration["DOCKER_PASSWORD"];*/
     }
 
     private async Task StartEphemeralContainer(string repositoryFullName, string containerName)
     {
         var volume = await _client.Volumes.CreateAsync(new VolumesCreateParameters());
-        // var r2 = await _client.Volumes.PruneAsync();
 
         var volumes = new Dictionary<string, EmptyStruct>
         {
@@ -61,7 +64,6 @@ public class DockerService : IDockerService
             {
                 AutoRemove = true,
                 Mounts = mounts,
-                // CapAdd = new List<string>() { "SETFCAP", "FOWNER", "SYS_CHROOT" },
             },
             Volumes = volumes,
             Env = new List<string>(new[]
@@ -70,6 +72,7 @@ public class DockerService : IDockerService
                 $"ACCESS_TOKEN={_accessToken}",
                 $"RUNNER_WORKDIR={volume.Mountpoint}",
                 "EPHEMERAL=TRUE",
+                "DISABLE_AUTO_UPDATE=TRUE",
             })
         };
 
@@ -89,13 +92,14 @@ public class DockerService : IDockerService
             {
                 FromImage = "myoung34/github-runner",
                 Tag = "latest",
-            }, null, new Progress<JSONMessage>(message =>
-            {
-                if (message.Status.StartsWith("Status:"))
+            }, new AuthConfig() {Username = _dockerUsername, Password = _dockerPassword}, new Progress<JSONMessage>(
+                message =>
                 {
-                    m.Set();
-                }
-            }));
+                    if (message.Status.StartsWith("Status:"))
+                    {
+                        m.Set();
+                    }
+                }));
         m.Wait();
         _logger.LogInformation("Downloaded");
     }
