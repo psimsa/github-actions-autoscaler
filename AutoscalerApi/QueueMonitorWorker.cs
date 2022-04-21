@@ -32,9 +32,10 @@ public class QueueMonitorWorker : IHostedService
             try
             {
                 QueueMessage message = await client.ReceiveMessageAsync(TimeSpan.FromSeconds(10), cancellationToken);
-                _logger.LogInformation("Dequeued message");
+                
                 if (message != null)
                 {
+                    _logger.LogInformation("Dequeued message");
                     var decodedMessage = Encoding.UTF8.GetString(Convert.FromBase64String(message.MessageText));
                     var workflow = JsonSerializer.Deserialize<Workflow>(decodedMessage);
                     if (workflow != null)
