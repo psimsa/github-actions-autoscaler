@@ -3,10 +3,10 @@ name: Build docker file
 on:
   push:
     branches: [ main ]
-    paths: [AutoScaleApi/**, .github/workflows/AutoscalerApi.yml]
+    paths: [AutoScaleApi/**, Dockerfile, .github/workflows/AutoscalerApi.yml]
   pull_request:
     branches: [ main ]
-    paths: [AutoScaleApi/**, .github/workflows/AutoscalerApi.yml]
+    paths: [AutoScaleApi/**, Dockerfile, .github/workflows/AutoscalerApi.yml]
 
 jobs:
   build:
