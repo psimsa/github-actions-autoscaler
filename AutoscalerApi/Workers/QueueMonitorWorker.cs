@@ -12,6 +12,7 @@ public class QueueMonitorWorker : IHostedService
     private readonly IDockerService _dockerService;
     private readonly ILogger<QueueMonitorWorker> _logger;
     private readonly string _connectionString;
+    private readonly string _queueName;
 
     public QueueMonitorWorker(AppConfiguration configuration, IDockerService dockerService,
         ILogger<QueueMonitorWorker> logger)
@@ -19,11 +20,12 @@ public class QueueMonitorWorker : IHostedService
         _dockerService = dockerService;
         _logger = logger;
         _connectionString = configuration.AzureStorage;
+        _queueName = configuration.AzureStorageQueue;
     }
 
     public async Task StartAsync(CancellationToken cancellationToken)
     {
-        var client = new QueueClient(_connectionString, "workflow-job-queued");
+        var client = new QueueClient(_connectionString, _queueName);
 
         await client.CreateIfNotExistsAsync();
 
@@ -47,11 +49,15 @@ public class QueueMonitorWorker : IHostedService
                     await client.DeleteMessageAsync(message.MessageId, message.PopReceipt,
                         cancellationToken);
                 }
-                else await Task.Delay(TimeSpan.FromSeconds(10), cancellationToken);
+                else
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(10), cancellationToken);
+                }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error receiving message");
+                await Task.Delay(TimeSpan.FromSeconds(10), cancellationToken);
             }
         }
     }
