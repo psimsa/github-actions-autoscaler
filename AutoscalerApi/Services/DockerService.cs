@@ -154,6 +154,7 @@ public class DockerService : IDockerService
                 break;
         }
     }
+
     private bool CheckIfRepoIsWhitelistedOrHasAllowedPrefix(string repositoryFullName)
     {
         if (repositoryFullName.StartsWith(_repoPrefix))
