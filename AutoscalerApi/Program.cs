@@ -1,11 +1,13 @@
 using AutoscalerApi;
 using AutoscalerApi.Services;
+using AutoscalerApi.Workers;
 using Docker.DotNet;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Configuration.AddJsonFile("appsettings.custom.json", true);
+var appConfig = new AppConfiguration();
+builder.Configuration.Bind(appConfig);
 
 // Add services to the container.
 
@@ -15,9 +17,13 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddSingleton<IDockerService, DockerService>();
-builder.Services.AddSingleton(provider => new DockerClientConfiguration().CreateClient());
-builder.Services.AddHostedService<QueueMonitorWorker>();
+builder.Services.AddSingleton(_ => new DockerClientConfiguration().CreateClient());
+if (!string.IsNullOrWhiteSpace(appConfig.AzureStorage))
+{
+    builder.Services.AddHostedService<QueueMonitorWorker>();
+}
 
+builder.Services.AddSingleton(appConfig);
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -33,6 +39,9 @@ else
 
 app.UseAuthorization();
 
-app.MapControllers();
+if (appConfig.UseWebEndpoint)
+{
+    app.MapControllers();
+}
 
 app.Run();

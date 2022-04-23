@@ -2,6 +2,17 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": ".NET Core Launch (console)",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build (AutoscalerApi)",
+            "program": "${workspaceFolder}/AutoscalerApi/bin/Debug/net6.0/AutoscalerApi.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/AutoscalerApi",
+            "stopAtEntry": false,
+            "console": "internalConsole"
+        },
+        {
             "name": "Attach to .NET Functions",
             "type": "coreclr",
             "request": "attach",
