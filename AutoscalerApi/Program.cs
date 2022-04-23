@@ -1,7 +1,7 @@
 using AutoscalerApi;
 using AutoscalerApi.Services;
+using AutoscalerApi.Workers;
 using Docker.DotNet;
-using System;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,7 +17,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddSingleton<IDockerService, DockerService>();
-builder.Services.AddSingleton(provider => new DockerClientConfiguration().CreateClient());
+builder.Services.AddSingleton(_ => new DockerClientConfiguration().CreateClient());
 if (!string.IsNullOrWhiteSpace(appConfig.AzureStorage))
 {
     builder.Services.AddHostedService<QueueMonitorWorker>();

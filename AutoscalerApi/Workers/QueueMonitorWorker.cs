@@ -5,7 +5,7 @@ using AutoscalerApi.Services;
 using Azure.Storage.Queues;
 using Azure.Storage.Queues.Models;
 
-namespace AutoscalerApi;
+namespace AutoscalerApi.Workers;
 
 public class QueueMonitorWorker : IHostedService
 {
@@ -32,7 +32,7 @@ public class QueueMonitorWorker : IHostedService
             try
             {
                 QueueMessage message = await client.ReceiveMessageAsync(TimeSpan.FromSeconds(10), cancellationToken);
-                
+
                 if (message != null)
                 {
                     _logger.LogInformation("Dequeued message");
