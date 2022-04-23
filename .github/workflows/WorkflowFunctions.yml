@@ -5,6 +5,7 @@ name: Build and deploy dotnet core project to Azure Function App - pavel-autosca
 
 on:
   push:
+    branches: [ main ]
     paths: [WorkflowFunctions/**, .github/workflows/WorkflowFunctions.yml]
   workflow_dispatch:
 
