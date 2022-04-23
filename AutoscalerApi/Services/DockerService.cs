@@ -43,7 +43,7 @@ public class DockerService : IDockerService
                     {
                         "label", new Dictionary<string, bool>()
                         {
-                            { "autoscaler=true", true }
+                            {"autoscaler=true", true}
                         }
                     }
                 }
@@ -59,8 +59,8 @@ public class DockerService : IDockerService
 
         var volumes = new Dictionary<string, EmptyStruct>
         {
-            { "/var/run/docker.sock", new EmptyStruct() },
-            { volume.Mountpoint, new EmptyStruct() }
+            {"/var/run/docker.sock", new EmptyStruct()},
+            {volume.Mountpoint, new EmptyStruct()}
         };
 
         await PullImageIfNotExists();
@@ -103,10 +103,10 @@ public class DockerService : IDockerService
             }),
             Labels = new Dictionary<string, string>()
             {
-                { "autoscaler", "true" },
-                { "autoscaler.repository", repositoryFullName },
-                { "autoscaler.container", containerName },
-                { "autoscaler.jobrun", jobRunId.ToString() }
+                {"autoscaler", "true"},
+                {"autoscaler.repository", repositoryFullName},
+                {"autoscaler.container", containerName},
+                {"autoscaler.jobrun", jobRunId.ToString()}
             }
         };
 
@@ -119,6 +119,14 @@ public class DockerService : IDockerService
 
     private async Task PullImageIfNotExists()
     {
+        var images = await _client.Images.ListImagesAsync(new ImagesListParameters() {All = true});
+        if (images.SelectMany(_ => _.RepoTags).Any(_ => _.Equals("myoung34/github-runner:latest")) &&
+            _lastPullCheck.AddHours(1) > DateTime.UtcNow)
+        {
+            return;
+        }
+
+        _lastPullCheck = DateTime.UtcNow;
         var m = new ManualResetEventSlim();
         var progress = new Progress<JSONMessage>();
         await _client.Images.CreateImageAsync(
@@ -126,7 +134,7 @@ public class DockerService : IDockerService
             {
                 FromImage = "myoung34/github-runner",
                 Tag = "latest",
-            }, new AuthConfig() { Password = _dockerToken }, new Progress<JSONMessage>(
+            }, new AuthConfig() {Password = _dockerToken}, new Progress<JSONMessage>(
                 message =>
                 {
                     if (message.Status.StartsWith("Status:"))
@@ -144,7 +152,8 @@ public class DockerService : IDockerService
         {
             case "queued" when CheckIfRepoIsWhitelistedOrHasAllowedPrefix(workflow.Repository.FullName) &&
                                workflow.Job.Labels.Any(_ => _ == "self-hosted"):
-                _logger.LogInformation("Workflow {workflow} is self-hosted and repository {repository} whitelisted, starting container",
+                _logger.LogInformation(
+                    "Workflow {workflow} is self-hosted and repository {repository} whitelisted, starting container",
                     workflow.Job.Name, workflow.Repository.FullName);
                 await StartEphemeralContainer(workflow.Repository.FullName,
                     $"{workflow.Repository.Name}-{workflow.Job.RunId}", workflow.Job.RunId);
@@ -153,7 +162,7 @@ public class DockerService : IDockerService
                 await _client.Volumes.PruneAsync();
                 break;
         }
-    } 
+    }
 
     private bool CheckIfRepoIsWhitelistedOrHasAllowedPrefix(string repositoryFullName)
     {
@@ -171,7 +180,7 @@ public class DockerService : IDockerService
         {
             return _repoWhitelist.Contains(repositoryFullName);
         }
-
+        
         return _repoWhitelist.Any(_ => repositoryFullName.StartsWith(_) || _.Equals("*"));
     }
 }

@@ -11,4 +11,5 @@ public class AppConfiguration
     public string RepoPrefix { get; set; }
     public string[] RepoWhitelist { get; set; } = new string[0];
     public bool IsRepoWhitelistExactMatch { get; set; }
+    public string DockerHost { get; set; }
 }
