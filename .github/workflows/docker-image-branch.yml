@@ -3,7 +3,7 @@ name: Build docker file branch
 on:
   push:
     branches-ignore: [ main ]
-  workflow_run:
+  workflow_dispatch:
 
 jobs:
 
