@@ -16,13 +16,13 @@ public class DockerService : IDockerService
     private readonly int _maxRunners;
     private DateTime _lastPullCheck = DateTime.MinValue;
 
-    public DockerService(DockerClient client, IConfiguration configuration, ILogger<DockerService> logger)
+    public DockerService(DockerClient client, AppConfiguration configuration, ILogger<DockerService> logger)
     {
         _client = client;
         _logger = logger;
-        _accessToken = configuration["ACCESS_TOKEN"];
-        _dockerToken = configuration["DOCKER_TOKEN"];
-        var maxRunners = configuration.GetValue<int>("MAX_RUNNERS");
+        _accessToken = configuration.GithubToken;
+        _dockerToken = configuration.DockerToken;
+        var maxRunners = configuration.MaxRunners;
         _maxRunners = maxRunners > 0 ? maxRunners : 3;
     }
 

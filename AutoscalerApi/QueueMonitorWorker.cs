@@ -13,12 +13,12 @@ public class QueueMonitorWorker : IHostedService
     private readonly ILogger<QueueMonitorWorker> _logger;
     private readonly string _connectionString;
 
-    public QueueMonitorWorker(IConfiguration configuration, IDockerService dockerService,
+    public QueueMonitorWorker(AppConfiguration configuration, IDockerService dockerService,
         ILogger<QueueMonitorWorker> logger)
     {
         _dockerService = dockerService;
         _logger = logger;
-        _connectionString = configuration["AzureStorage"];
+        _connectionString = configuration.AzureStorage;
     }
 
     public async Task StartAsync(CancellationToken cancellationToken)
