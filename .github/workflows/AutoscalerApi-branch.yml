@@ -2,8 +2,11 @@ name: Build docker file branch
 
 on:
   push:
-    branches: [ '!main' ]
-    paths: [AutoScaleApi/**, .github/workflows/AutoscalerApi-branch.yml]
+    branches: 
+    - '!main'
+    paths: 
+    - AutoScaleApi/**
+    - .github/workflows/AutoscalerApi-branch.yml
   workflow_dispatch:
 
 jobs:

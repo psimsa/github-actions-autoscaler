@@ -153,7 +153,7 @@ public class DockerService : IDockerService
                 await _client.Volumes.PruneAsync();
                 break;
         }
-    }
+    } 
 
     private bool CheckIfRepoIsWhitelistedOrHasAllowedPrefix(string repositoryFullName)
     {
