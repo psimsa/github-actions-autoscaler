@@ -1,0 +1,25 @@
+name: Build branch
+
+on:
+  push:
+    branches-ignore: 
+    - main
+  workflow_dispatch:
+
+env:
+  DOTNET_VERSION: '6.0.x'
+
+jobs:
+  build-branch:
+    runs-on: self-hosted
+    steps:
+      - name: 'Checkout GitHub Action'
+        uses: actions/checkout@v2
+      - name: Setup DotNet ${{ env.DOTNET_VERSION }} Environment
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+      - name: 'Build solution'
+        shell: bash
+        run: |
+          dotnet build --configuration Release --output ./output

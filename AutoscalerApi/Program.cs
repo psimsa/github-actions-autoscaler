@@ -17,7 +17,9 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddSingleton<IDockerService, DockerService>();
-builder.Services.AddSingleton(_ => new DockerClientConfiguration().CreateClient());
+var dockerConfig = !string.IsNullOrWhiteSpace(appConfig.DockerHost) ? new DockerClientConfiguration(new Uri(appConfig.DockerHost)) : new DockerClientConfiguration();
+
+builder.Services.AddSingleton(_ => dockerConfig.CreateClient());
 if (!string.IsNullOrWhiteSpace(appConfig.AzureStorage))
 {
     builder.Services.AddHostedService<QueueMonitorWorker>();
