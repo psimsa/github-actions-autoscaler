@@ -31,9 +31,10 @@ public class QueueMonitorWorker : IHostedService
 
         while (!cancellationToken.IsCancellationRequested)
         {
+            QueueMessage message = null;
             try
             {
-                QueueMessage message = await client.ReceiveMessageAsync(TimeSpan.FromSeconds(10), cancellationToken);
+                message = await client.ReceiveMessageAsync(TimeSpan.FromSeconds(10), cancellationToken);
 
                 if (message != null)
                 {
@@ -57,6 +58,10 @@ public class QueueMonitorWorker : IHostedService
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error receiving message");
+                if(message != null)
+                {
+                    await client.DeleteMessageAsync(message.MessageId, message.PopReceipt, cancellationToken);
+                }
                 await Task.Delay(TimeSpan.FromSeconds(10), cancellationToken);
             }
         }

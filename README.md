@@ -1,6 +1,6 @@
 # Github Runner Docker Autoscaler
 
-[![Build docker file](https://github.com/ofcoursedude/github-actions-autoscaler/actions/workflows/docker-image.yml/badge.svg)](https://github.com/ofcoursedude/github-actions-autoscaler/actions/workflows/docker-image.yml)
+[![Build docker file](https://github.com/ofcoursedude/github-actions-autoscaler/actions/workflows/AutoscalerApi.yml/badge.svg)](https://github.com/ofcoursedude/github-actions-autoscaler/actions/workflows/AutoscalerApi.yml)
 
 This is a simple autoscaler for Github Actions Runner Docker containers. It also allows for a single instance to be shared across multiple projects.
 
