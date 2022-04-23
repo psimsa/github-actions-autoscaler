@@ -1,6 +1,7 @@
 using AutoscalerApi;
 using AutoscalerApi.Services;
 using Docker.DotNet;
+using System;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -38,7 +39,7 @@ else
 
 app.UseAuthorization();
 
-if (app.Configuration.GetValue<string>("UseWebEndpoint") == "true")
+if (appConfig.UseWebEndpoint)
 {
     app.MapControllers();
 }
