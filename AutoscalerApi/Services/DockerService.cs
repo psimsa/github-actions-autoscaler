@@ -51,6 +51,11 @@ public class DockerService : IDockerService
 
     private async Task StartEphemeralContainer(string repositoryFullName, string containerName, long jobRunId)
     {
+        while ((await GetAutoscalerContainersAsync()).Count >= _maxRunners)
+        {
+            await Task.Delay(3000);
+        }
+
         var volume = await _client.Volumes.CreateAsync(new VolumesCreateParameters());
 
         var volumes = new Dictionary<string, EmptyStruct>

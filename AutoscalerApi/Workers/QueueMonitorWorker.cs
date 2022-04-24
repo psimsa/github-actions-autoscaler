@@ -34,11 +34,6 @@ public class QueueMonitorWorker : IHostedService
 
         while (!cancellationToken.IsCancellationRequested)
         {
-            while ((await _dockerService.GetAutoscalerContainersAsync()).Count >= _maxRunners)
-            {
-                await Task.Delay(3000, cancellationToken);
-            }
-
             QueueMessage message = null!;
             try
             {
