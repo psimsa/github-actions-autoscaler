@@ -38,10 +38,9 @@ if (!app.Environment.IsDevelopment())
     app.UseHttpsRedirection();
 }
 
-app.UseAuthorization();
-
 if (appConfig.UseWebEndpoint)
 {
+    app.UseAuthorization();
     app.MapControllers();
 }
 
