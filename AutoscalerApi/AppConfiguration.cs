@@ -18,6 +18,14 @@ public class AppConfiguration
     [UnconditionalSuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "<Pending>")]
     public static AppConfiguration FromConfiguration(IConfiguration configuration)
     {
+        var maxRunners = configuration.GetValue<int>("MaxRunners");
+        maxRunners = maxRunners switch
+        {
+            0 => 1,
+            < 0 => int.MaxValue,
+            _ => maxRunners
+        };
+
         return new AppConfiguration()
         {
             AzureStorageQueue = configuration.GetValue<string>("AzureStorageQueue"),
@@ -25,7 +33,7 @@ public class AppConfiguration
             UseWebEndpoint = configuration.GetValue<bool>("UseWebEndpoint"),
             DockerToken = configuration.GetValue<string>("DockerToken"),
             GithubToken = configuration.GetValue<string>("GithubToken"),
-            MaxRunners = configuration.GetValue<int>("MaxRunners"),
+            MaxRunners = maxRunners,
             RepoPrefix = configuration.GetValue<string>("RepoPrefix"),
             RepoWhitelist = configuration.GetValue<string>("RepoWhitelist").Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries),
             IsRepoWhitelistExactMatch = configuration.GetValue<bool>("IsRepoWhitelistExactMatch"),

@@ -33,29 +33,24 @@ public class DockerService : IDockerService
         _isRepoWhitelistExactMatch = configuration.IsRepoWhitelistExactMatch;
     }
 
-    private async Task StartEphemeralContainer(string repositoryFullName, string containerName, long jobRunId)
+    public async Task<IList<ContainerListResponse>> GetAutoscalerContainersAsync()
     {
-        async Task<IList<ContainerListResponse>> ListContainersAsync()
+        return await _client.Containers.ListContainersAsync(new ContainersListParameters()
         {
-            return await _client.Containers.ListContainersAsync(new ContainersListParameters()
+            Filters = new Dictionary<string, IDictionary<string, bool>>()
             {
-                Filters = new Dictionary<string, IDictionary<string, bool>>()
                 {
+                    "label", new Dictionary<string, bool>()
                     {
-                        "label", new Dictionary<string, bool>()
-                        {
-                            {"autoscaler=true", true}
-                        }
+                        {"autoscaler=true", true}
                     }
                 }
-            });
-        }
+            }
+        });
+    }
 
-        while ((await ListContainersAsync()).Count == _maxRunners)
-        {
-            await Task.Delay(3000);
-        }
-
+    private async Task StartEphemeralContainer(string repositoryFullName, string containerName, long jobRunId)
+    {
         var volume = await _client.Volumes.CreateAsync(new VolumesCreateParameters());
 
         var volumes = new Dictionary<string, EmptyStruct>
@@ -99,6 +94,7 @@ public class DockerService : IDockerService
                 "REPO_URL=https://github.com/" + repositoryFullName,
                 $"ACCESS_TOKEN={_accessToken}",
                 $"RUNNER_WORKDIR={volume.Mountpoint}",
+                $"RUNNER_NAME={containerName}",
                 "EPHEMERAL=TRUE",
                 "DISABLE_AUTO_UPDATE=TRUE",
             }),
@@ -120,11 +116,11 @@ public class DockerService : IDockerService
 
     private async Task PullImageIfNotExists()
     {
-        if (_lastPullCheck.AddHours(1) > DateTime.Now)
+        /*if (_lastPullCheck.AddHours(1) > DateTime.Now)
         {
             return;
-        }
-        
+        }*/
+
         _logger.LogInformation("Checking for latest image");
 
         _lastPullCheck = DateTime.UtcNow;
@@ -154,7 +150,7 @@ public class DockerService : IDockerService
             case "queued" when CheckIfRepoIsWhitelistedOrHasAllowedPrefix(workflow.Repository.FullName) &&
                                workflow.Job.Labels.Any(_ => _ == "self-hosted"):
                 _logger.LogInformation(
-                    "Workflow {workflow} is self-hosted and repository {repository} whitelisted, starting container",
+                    "Workflow '{workflow}' is self-hosted and repository {repository} whitelisted, starting container",
                     workflow.Job.Name, workflow.Repository.FullName);
                 await StartEphemeralContainer(workflow.Repository.FullName,
                     $"{workflow.Repository.Name}-{workflow.Job.RunId}", workflow.Job.RunId);
@@ -181,7 +177,7 @@ public class DockerService : IDockerService
         {
             return _repoWhitelist.Contains(repositoryFullName);
         }
-        
+
         return _repoWhitelist.Any(_ => repositoryFullName.StartsWith(_) || _.Equals("*"));
     }
 }
@@ -189,4 +185,5 @@ public class DockerService : IDockerService
 public interface IDockerService
 {
     Task ProcessWorkflow(Workflow workflow);
+    Task<IList<ContainerListResponse>> GetAutoscalerContainersAsync();
 }

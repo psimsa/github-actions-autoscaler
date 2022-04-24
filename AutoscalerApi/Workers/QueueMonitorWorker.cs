@@ -14,6 +14,7 @@ public class QueueMonitorWorker : IHostedService
     private readonly ILogger<QueueMonitorWorker> _logger;
     private readonly string _connectionString;
     private readonly string _queueName;
+    private int _maxRunners;
 
     public QueueMonitorWorker(AppConfiguration configuration, IDockerService dockerService,
         ILogger<QueueMonitorWorker> logger)
@@ -22,6 +23,7 @@ public class QueueMonitorWorker : IHostedService
         _logger = logger;
         _connectionString = configuration.AzureStorage;
         _queueName = configuration.AzureStorageQueue;
+        _maxRunners = configuration.MaxRunners;
     }
 
     public async Task StartAsync(CancellationToken cancellationToken)
@@ -32,7 +34,12 @@ public class QueueMonitorWorker : IHostedService
 
         while (!cancellationToken.IsCancellationRequested)
         {
-            QueueMessage message = null;
+            while ((await _dockerService.GetAutoscalerContainersAsync()).Count >= _maxRunners)
+            {
+                await Task.Delay(3000, cancellationToken);
+            }
+
+            QueueMessage message = null!;
             try
             {
                 message = await client.ReceiveMessageAsync(TimeSpan.FromSeconds(10), cancellationToken);
@@ -41,7 +48,8 @@ public class QueueMonitorWorker : IHostedService
                 {
                     _logger.LogInformation("Dequeued message");
                     var decodedMessage = Encoding.UTF8.GetString(Convert.FromBase64String(message.MessageText));
-                    var workflow = JsonSerializer.Deserialize<Workflow>(decodedMessage, AppSerizerContext.Default.Workflow);
+                    var workflow =
+                        JsonSerializer.Deserialize<Workflow>(decodedMessage, AppSerizerContext.Default.Workflow);
                     if (workflow != null)
                     {
                         _logger.LogInformation($"Executing workflow");
@@ -59,10 +67,11 @@ public class QueueMonitorWorker : IHostedService
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error receiving message");
-                if(message != null)
+                if (message != null)
                 {
                     await client.DeleteMessageAsync(message.MessageId, message.PopReceipt, cancellationToken);
                 }
+
                 await Task.Delay(TimeSpan.FromSeconds(10), cancellationToken);
             }
         }
@@ -74,4 +83,6 @@ public class QueueMonitorWorker : IHostedService
 }
 
 [JsonSerializable(typeof(Workflow))]
-public partial class AppSerizerContext:JsonSerializerContext{}
+public partial class AppSerizerContext : JsonSerializerContext
+{
+}
