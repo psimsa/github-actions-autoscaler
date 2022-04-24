@@ -19,6 +19,7 @@ public class DockerService : IDockerService
     private readonly string[] _repoWhitelist;
     private readonly bool _isRepoWhitelistExactMatch;
     private DateTime _lastPullCheck = DateTime.MinValue;
+    private int _totalCount = 0;
 
     public DockerService(DockerClient client, AppConfiguration configuration, ILogger<DockerService> logger)
     {
@@ -157,8 +158,10 @@ public class DockerService : IDockerService
                 _logger.LogInformation(
                     "Workflow '{workflow}' is self-hosted and repository {repository} whitelisted, starting container",
                     workflow.Job.Name, workflow.Repository.FullName);
+                Interlocked.Increment(ref _totalCount);
+                var containerName = $"{workflow.Repository.Name}-{workflow.Job.RunId}-{_totalCount}";
                 await StartEphemeralContainer(workflow.Repository.FullName,
-                    $"{workflow.Repository.Name}-{workflow.Job.RunId}", workflow.Job.RunId);
+                    containerName, workflow.Job.RunId);
                 break;
             case "completed":
                 await _client.Volumes.PruneAsync();
