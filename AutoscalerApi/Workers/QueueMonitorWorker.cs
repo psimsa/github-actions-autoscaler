@@ -14,6 +14,7 @@ public class QueueMonitorWorker : IHostedService
     private readonly ILogger<QueueMonitorWorker> _logger;
     private readonly string _connectionString;
     private readonly string _queueName;
+
     public QueueMonitorWorker(AppConfiguration configuration, IDockerService dockerService,
         ILogger<QueueMonitorWorker> logger)
     {

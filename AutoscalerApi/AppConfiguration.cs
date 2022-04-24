@@ -15,7 +15,9 @@ public class AppConfiguration
     public bool IsRepoWhitelistExactMatch { get; set; }
     public string DockerHost { get; set; } = "";
 
-    [UnconditionalSuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "<Pending>")]
+    [UnconditionalSuppressMessage("Trimming",
+        "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code",
+        Justification = "<Pending>")]
     public static AppConfiguration FromConfiguration(IConfiguration configuration)
     {
         var maxRunners = configuration.GetValue<int>("MaxRunners");
@@ -35,7 +37,8 @@ public class AppConfiguration
             GithubToken = configuration.GetValue<string>("GithubToken"),
             MaxRunners = maxRunners,
             RepoPrefix = configuration.GetValue<string>("RepoPrefix"),
-            RepoWhitelist = configuration.GetValue<string>("RepoWhitelist").Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries),
+            RepoWhitelist = configuration.GetValue<string>("RepoWhitelist").Split(',',
+                StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries),
             IsRepoWhitelistExactMatch = configuration.GetValue<bool>("IsRepoWhitelistExactMatch"),
             DockerHost = configuration.GetValue<string>("DockerHost"),
         };

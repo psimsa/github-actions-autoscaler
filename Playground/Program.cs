@@ -12,7 +12,7 @@ var containers = await _client.Containers.ListContainersAsync(new ContainersList
         {
             "label", new Dictionary<string, bool>()
             {
-                { "autoscaler=true", true }
+                {"autoscaler=true", true}
             }
         }
     }
@@ -20,6 +20,6 @@ var containers = await _client.Containers.ListContainersAsync(new ContainersList
 
 Console.WriteLine($"{containers.Count} containers found");
 var container = containers.FirstOrDefault();
-if(container==null)Environment.Exit(0);
+if (container == null) Environment.Exit(0);
 
 Console.WriteLine(container.Image);
