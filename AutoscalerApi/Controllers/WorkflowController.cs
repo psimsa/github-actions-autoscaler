@@ -23,7 +23,7 @@ public class WorkflowController : ControllerBase
     [HttpGet("ping")]
     public IActionResult Get()
     {
-        return Ok(new { message = "Pong" });
+        return Ok(new {message = "Pong"});
     }
 
     [HttpPost("workflow-trigger")]

@@ -8,6 +8,9 @@ on:
     branches: [ main ]
     paths: [AutoscalerApi/**, .github/workflows/AutoscalerApi.yml]
 
+env:
+  DOTNET_VERSION: '6.0.x'
+
 jobs:
   build:
     runs-on: self-hosted
@@ -26,3 +29,20 @@ jobs:
         if: github.ref == 'refs/heads/main'
 #      - name: Docker cleanup
 #        run: docker image prune -f
+
+  #create-binary:
+  #  runs-on: self-hosted
+  #  steps:
+  #    - uses: actions/checkout@v3
+  #    - name: Setup DotNet ${{ env.DOTNET_VERSION }} Environment
+  #      uses: actions/setup-dotnet@v2
+  #      with:
+  #        dotnet-version: ${{ env.DOTNET_VERSION }}
+  #    - name: Publish package
+  #      run: dotnet publish AutoscalerApi --self-contained -p:PublishSingleFile=true -p:PublishTrimmed=true -r linux-x64 -c Release -o artifacts
+  #    - name: Publish artifacts
+  #      uses: actions/upload-artifact@v2.2.1
+  #      with:
+  #        name: github-autoscaler-linux-amd64
+  #        path: artifacts/*
+  #        retention-days: 1
