@@ -122,10 +122,21 @@ public class DockerService : IDockerService
 
     private async Task PullImageIfNotExists()
     {
-        /*if (_lastPullCheck.AddHours(1) > DateTime.Now)
+        var imagesListResponses = await _client.Images.ListImagesAsync(new ImagesListParameters() {All = true});
+        var tags = imagesListResponses
+            .Where(_ => _.RepoTags != null && _.RepoTags.Count > 0).SelectMany(_ => _.RepoTags);
+
+        /*if (images.SelectMany(_ => _.RepoTags).Any(_ => _.Equals("myoung34/github-runner:latest")) &&
+            _lastPullCheck.AddHours(1) > DateTime.UtcNow)
         {
             return;
         }*/
+
+        if (tags.Any(_ => _.Equals("myoung34/github-runner:latest")) &&
+            _lastPullCheck.AddHours(1) > DateTime.UtcNow)
+        {
+            return;
+        }
 
         _logger.LogInformation("Checking for latest image");
 
