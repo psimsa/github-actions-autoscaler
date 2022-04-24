@@ -9,9 +9,6 @@ builder.Configuration.AddJsonFile("appsettings.custom.json", true);
 var appConfig = AppConfiguration.FromConfiguration(builder.Configuration);
 /*builder.Configuration.Bind(appConfig);*/
 
-Console.WriteLine(appConfig.AzureStorageQueue);
-
-
 // Add services to the container.
 
 builder.Services.AddControllers();
@@ -29,13 +26,6 @@ if (!string.IsNullOrWhiteSpace(appConfig.AzureStorage))
 
 builder.Services.AddSingleton(appConfig);
 var app = builder.Build();
-
-var logger = app.Services.GetRequiredService<ILogger<AppConfiguration>>();
-logger.LogInformation("{asdf}", appConfig.AzureStorageQueue);
-foreach (var s in appConfig.RepoWhitelist)
-{
-    logger.LogInformation("{s}", s);
-}
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
