@@ -39,7 +39,7 @@ jobs:
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
       - name: Publish package
-        run: dotnet publish --self-contained -p:PublishSingleFile=true -p:PublishTrimmed=true -r linux-x64 -c Release -o artifacts
+        run: dotnet publish AutoscalerApi --self-contained -p:PublishSingleFile=true -p:PublishTrimmed=true -r linux-x64 -c Release -o artifacts
       - name: Publish artifacts
         uses: actions/upload-artifact@v2.2.1
         with:

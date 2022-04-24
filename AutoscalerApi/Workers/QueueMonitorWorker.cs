@@ -14,8 +14,6 @@ public class QueueMonitorWorker : IHostedService
     private readonly ILogger<QueueMonitorWorker> _logger;
     private readonly string _connectionString;
     private readonly string _queueName;
-    private int _maxRunners;
-
     public QueueMonitorWorker(AppConfiguration configuration, IDockerService dockerService,
         ILogger<QueueMonitorWorker> logger)
     {
@@ -23,7 +21,6 @@ public class QueueMonitorWorker : IHostedService
         _logger = logger;
         _connectionString = configuration.AzureStorage;
         _queueName = configuration.AzureStorageQueue;
-        _maxRunners = configuration.MaxRunners;
     }
 
     public async Task StartAsync(CancellationToken cancellationToken)
@@ -44,7 +41,7 @@ public class QueueMonitorWorker : IHostedService
                     _logger.LogInformation("Dequeued message");
                     var decodedMessage = Encoding.UTF8.GetString(Convert.FromBase64String(message.MessageText));
                     var workflow =
-                        JsonSerializer.Deserialize<Workflow>(decodedMessage, AppSerizerContext.Default.Workflow);
+                        JsonSerializer.Deserialize(decodedMessage, AppSerizerContext.Default.Workflow);
                     if (workflow != null)
                     {
                         _logger.LogInformation($"Executing workflow");
