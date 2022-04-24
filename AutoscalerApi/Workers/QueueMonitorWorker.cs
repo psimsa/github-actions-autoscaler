@@ -1,5 +1,6 @@
 ﻿using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using AutoscalerApi.Controllers;
 using AutoscalerApi.Services;
 using Azure.Storage.Queues;
@@ -27,7 +28,7 @@ public class QueueMonitorWorker : IHostedService
     {
         var client = new QueueClient(_connectionString, _queueName);
 
-        await client.CreateIfNotExistsAsync();
+        await client.CreateIfNotExistsAsync(cancellationToken: cancellationToken);
 
         while (!cancellationToken.IsCancellationRequested)
         {
@@ -40,7 +41,7 @@ public class QueueMonitorWorker : IHostedService
                 {
                     _logger.LogInformation("Dequeued message");
                     var decodedMessage = Encoding.UTF8.GetString(Convert.FromBase64String(message.MessageText));
-                    var workflow = JsonSerializer.Deserialize<Workflow>(decodedMessage);
+                    var workflow = JsonSerializer.Deserialize<Workflow>(decodedMessage, AppSerizerContext.Default.Workflow);
                     if (workflow != null)
                     {
                         _logger.LogInformation($"Executing workflow");
@@ -71,3 +72,6 @@ public class QueueMonitorWorker : IHostedService
     {
     }
 }
+
+[JsonSerializable(typeof(Workflow))]
+public partial class AppSerizerContext:JsonSerializerContext{}

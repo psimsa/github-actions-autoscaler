@@ -6,15 +6,17 @@ using Docker.DotNet;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Configuration.AddJsonFile("appsettings.custom.json", true);
-var appConfig = new AppConfiguration();
-builder.Configuration.Bind(appConfig);
+var appConfig = AppConfiguration.FromConfiguration(builder.Configuration);
+/*builder.Configuration.Bind(appConfig);*/
+
+Console.WriteLine(appConfig.AzureStorageQueue);
+
 
 // Add services to the container.
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
 
 builder.Services.AddSingleton<IDockerService, DockerService>();
 var dockerConfig = !string.IsNullOrWhiteSpace(appConfig.DockerHost) ? new DockerClientConfiguration(new Uri(appConfig.DockerHost)) : new DockerClientConfiguration();
@@ -28,13 +30,15 @@ if (!string.IsNullOrWhiteSpace(appConfig.AzureStorage))
 builder.Services.AddSingleton(appConfig);
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+var logger = app.Services.GetRequiredService<ILogger<AppConfiguration>>();
+logger.LogInformation("{asdf}", appConfig.AzureStorageQueue);
+foreach (var s in appConfig.RepoWhitelist)
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    logger.LogInformation("{s}", s);
 }
-else
+
+// Configure the HTTP request pipeline.
+if (!app.Environment.IsDevelopment())
 {
     app.UseHttpsRedirection();
 }
