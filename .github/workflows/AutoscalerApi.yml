@@ -41,7 +41,7 @@ jobs:
      - name: Publish package
        run: dotnet publish AutoscalerApi --self-contained -p:PublishSingleFile=true -p:PublishTrimmed=true -r linux-x64 -c Release -o artifacts
      - name: Publish artifacts
-       uses: actions/upload-artifact@v2.2.1
+       uses: actions/upload-artifact@v2.2.4
        with:
          name: github-autoscaler-linux-amd64
          path: artifacts/*
