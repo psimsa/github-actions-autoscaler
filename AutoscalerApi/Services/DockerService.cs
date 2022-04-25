@@ -29,7 +29,7 @@ public class DockerService : IDockerService
         _dockerToken = configuration.DockerToken;
         var maxRunners = configuration.MaxRunners;
         _maxRunners = maxRunners > 0 ? maxRunners : 3;
-        _repoPrefix = configuration.RepoPrefix;
+        _repoPrefix = configuration.RepoWhitelistPrefix;
         _repoWhitelist = configuration.RepoWhitelist;
         _isRepoWhitelistExactMatch = configuration.IsRepoWhitelistExactMatch;
     }
@@ -125,12 +125,6 @@ public class DockerService : IDockerService
         var imagesListResponses = await _client.Images.ListImagesAsync(new ImagesListParameters() {All = true});
         var tags = imagesListResponses
             .Where(_ => _.RepoTags != null && _.RepoTags.Count > 0).SelectMany(_ => _.RepoTags);
-
-        /*if (images.SelectMany(_ => _.RepoTags).Any(_ => _.Equals("myoung34/github-runner:latest")) &&
-            _lastPullCheck.AddHours(1) > DateTime.UtcNow)
-        {
-            return;
-        }*/
 
         if (tags.Any(_ => _.Equals("myoung34/github-runner:latest")) &&
             _lastPullCheck.AddHours(1) > DateTime.UtcNow)
