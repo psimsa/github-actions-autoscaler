@@ -1,7 +1,5 @@
 ﻿using System.Text;
 using System.Text.Json;
-using System.Text.Json.Serialization;
-using AutoscalerApi.Controllers;
 using AutoscalerApi.Services;
 using Azure.Storage.Queues;
 using Azure.Storage.Queues.Models;
@@ -41,11 +39,10 @@ public class QueueMonitorWorker : IHostedService
                 {
                     _logger.LogInformation("Dequeued message");
                     var decodedMessage = Encoding.UTF8.GetString(Convert.FromBase64String(message.MessageText));
-                    var workflow =
-                        JsonSerializer.Deserialize(decodedMessage, AppSerizerContext.Default.Workflow);
+                    var workflow = JsonSerializer.Deserialize(decodedMessage, Models.ApplicationJsonSerializerContext.Default.Workflow);
                     if (workflow != null)
                     {
-                        _logger.LogInformation($"Executing workflow");
+                        _logger.LogInformation("Executing workflow");
                         await _dockerService.ProcessWorkflow(workflow);
                     }
 
@@ -73,9 +70,4 @@ public class QueueMonitorWorker : IHostedService
     public async Task StopAsync(CancellationToken cancellationToken)
     {
     }
-}
-
-[JsonSerializable(typeof(Workflow))]
-public partial class AppSerizerContext : JsonSerializerContext
-{
 }

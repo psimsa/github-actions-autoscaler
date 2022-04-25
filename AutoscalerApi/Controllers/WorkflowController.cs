@@ -1,6 +1,7 @@
 using System.Linq;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
+using AutoscalerApi.Models;
 using AutoscalerApi.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
