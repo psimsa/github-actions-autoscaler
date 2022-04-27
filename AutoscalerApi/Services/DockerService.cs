@@ -187,6 +187,7 @@ public class DockerService : IDockerService
         {
             return repoName switch
             {
+                var f when string.IsNullOrWhiteSpace(_repoBlacklistPrefix) && !_repoBlacklist.Any() => false,
                 var f when f.StartsWith(_repoBlacklistPrefix) => true,
                 var f when _isRepoBlacklistExactMatch => _repoBlacklist.Contains(f),
                 _ => _repoBlacklist.Any(repoName.StartsWith)
@@ -199,7 +200,7 @@ public class DockerService : IDockerService
             var f when f.StartsWith(_repoWhitelistPrefix) => true,
             _ when _repoWhitelist.Length == 0 => false,
             var f when _isRepoWhitelistExactMatch => _repoWhitelist.Contains(f),
-            _ => _repoWhitelist.Any(f => repositoryFullName.StartsWith(f) || f.Equals("*"))
+            _ => _repoWhitelist.Any(repo => repositoryFullName.StartsWith(repo) || repo.Equals("*"))
         };
     }
 }

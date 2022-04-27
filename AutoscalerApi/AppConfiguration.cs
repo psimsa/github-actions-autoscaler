@@ -30,7 +30,7 @@ public class AppConfiguration
             < 0 => int.MaxValue,
             _ => maxRunners
         };
-
+        
         return new AppConfiguration()
         {
             AzureStorageQueue = configuration.GetValue<string>("AzureStorageQueue"),
