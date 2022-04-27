@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace AutoscalerApi.Controllers;
+namespace AutoscalerApi.Models;
 
 public record WorkflowJob
 {

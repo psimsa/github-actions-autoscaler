@@ -10,9 +10,12 @@ public class AppConfiguration
     public string DockerToken { get; set; } = "";
     public string GithubToken { get; set; } = "";
     public int MaxRunners { get; set; }
-    public string RepoPrefix { get; set; } = "";
+    public string RepoWhitelistPrefix { get; set; } = "";
     public string[] RepoWhitelist { get; set; } = Array.Empty<string>();
     public bool IsRepoWhitelistExactMatch { get; set; }
+    public string RepoBlacklistPrefix { get; set; } = "";
+    public string[] RepoBlacklist { get; set; } = Array.Empty<string>();
+    public bool IsRepoBlacklistExactMatch { get; set; }
     public string DockerHost { get; set; } = "";
 
     [UnconditionalSuppressMessage("Trimming",
@@ -36,10 +39,14 @@ public class AppConfiguration
             DockerToken = configuration.GetValue<string>("DockerToken"),
             GithubToken = configuration.GetValue<string>("GithubToken"),
             MaxRunners = maxRunners,
-            RepoPrefix = configuration.GetValue<string>("RepoPrefix"),
+            RepoWhitelistPrefix = configuration.GetValue<string>("RepoWhitelistPrefix"),
             RepoWhitelist = configuration.GetValue<string>("RepoWhitelist").Split(',',
                 StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries),
             IsRepoWhitelistExactMatch = configuration.GetValue<bool>("IsRepoWhitelistExactMatch"),
+            RepoBlacklistPrefix = configuration.GetValue<string>("RepoBlacklistPrefix"),
+            RepoBlacklist = configuration.GetValue<string>("RepoBlacklist").Split(',',
+                StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries),
+            IsRepoBlacklistExactMatch = configuration.GetValue<bool>("IsRepoBlacklistExactMatch"),
             DockerHost = configuration.GetValue<string>("DockerHost"),
         };
     }

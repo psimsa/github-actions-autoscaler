@@ -2,6 +2,7 @@ using AutoscalerApi;
 using AutoscalerApi.Services;
 using AutoscalerApi.Workers;
 using Docker.DotNet;
+using ApplicationJsonSerializerContext = AutoscalerApi.Models.ApplicationJsonSerializerContext;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,7 +13,8 @@ var appConfig = AppConfiguration.FromConfiguration(builder.Configuration);
 // Add services to the container.
 if (appConfig.UseWebEndpoint)
 {
-    builder.Services.AddControllers();
+    builder.Services.AddControllers().AddJsonOptions(options => options.JsonSerializerOptions.AddContext<ApplicationJsonSerializerContext>());
+
     builder.Services.AddEndpointsApiExplorer();
 }
 
