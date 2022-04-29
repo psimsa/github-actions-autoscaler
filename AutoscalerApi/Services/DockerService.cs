@@ -42,7 +42,7 @@ public class DockerService : IDockerService
         _repoBlacklist = configuration.RepoBlacklist;
         _isRepoBlacklistExactMatch = configuration.IsRepoBlacklistExactMatch;
         _labels = configuration.Labels;
-        _labelField = string.Join(',', _labels);
+        _labelField = string.Join(',', _labels).ToLowerInvariant();
     }
 
     public async Task<IList<ContainerListResponse>> GetAutoscalerContainersAsync()
@@ -88,7 +88,7 @@ public class DockerService : IDockerService
 
     private bool CheckIfHasAllLabels(string[] jobLabels)
     {
-        return jobLabels.All(l => _labels.Contains(l)) && jobLabels.Any(l => l == "self-hosted");
+        return jobLabels.All(l => _labels.Contains(l.ToLowerInvariant())) && jobLabels.Any(l => l == "self-hosted");
     }
 
     private async Task<bool> StartEphemeralContainer(string repositoryFullName, string containerName, long jobRunId)
@@ -107,8 +107,8 @@ public class DockerService : IDockerService
         };
 
         var cts = new CancellationTokenSource();
-        cts.CancelAfter(TimeSpan.FromSeconds(5));
-        if (await PullImageIfNotExists(cts.Token))
+        cts.CancelAfter(TimeSpan.FromSeconds(20));
+        if (!await PullImageIfNotExists(cts.Token))
             return false;
 
         var mounts = new List<Mount>(new[]

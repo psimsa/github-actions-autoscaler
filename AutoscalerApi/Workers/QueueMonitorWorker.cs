@@ -1,5 +1,6 @@
 ﻿using System.Text;
 using System.Text.Json;
+using AutoscalerApi.Models;
 using AutoscalerApi.Services;
 using Azure.Storage.Queues;
 using Azure.Storage.Queues.Models;
@@ -33,7 +34,8 @@ public class QueueMonitorWorker : IHostedService
             QueueMessage message = null!;
             try
             {
-                message = await client.ReceiveMessageAsync(TimeSpan.FromSeconds(10), cancellationToken);
+                message = await client.ReceiveMessageAsync(cancellationToken: cancellationToken);
+                
                 if(message == null)
                 {
                     await Task.Delay(TimeSpan.FromSeconds(10), cancellationToken);
@@ -41,8 +43,10 @@ public class QueueMonitorWorker : IHostedService
                 }
 
                 _logger.LogInformation("Dequeued message");
-                var decodedMessage = Encoding.UTF8.GetString(Convert.FromBase64String(message.MessageText));
-                var workflow = JsonSerializer.Deserialize(decodedMessage,
+                
+                var msg = Convert.FromBase64String(message.MessageText);
+
+                var workflow = JsonSerializer.Deserialize(msg,
                     Models.ApplicationJsonSerializerContext.Default.Workflow);
                 _logger.LogInformation("Executing workflow");
                 var workflowResult = await _dockerService.ProcessWorkflow(workflow);
