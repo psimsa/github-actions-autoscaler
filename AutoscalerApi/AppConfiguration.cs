@@ -32,13 +32,13 @@ public class AppConfiguration
             < 0 => int.MaxValue,
             _ => maxRunners
         };
-        var architecture = System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture;
-        string os = "";
-        os = architecture switch
+        
+        var architecture = RuntimeInformation.ProcessArchitecture.ToString().ToLowerInvariant();
+        var os = architecture switch
         {
-            _ when System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(OSPlatform.Windows) => "windows",
-            _ when System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(OSPlatform.Linux) => "linux",
-            _ when System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(OSPlatform.OSX) => "osx",
+            _ when RuntimeInformation.IsOSPlatform(OSPlatform.Windows) => "windows",
+            _ when RuntimeInformation.IsOSPlatform(OSPlatform.Linux) => "linux",
+            _ when RuntimeInformation.IsOSPlatform(OSPlatform.OSX) => "osx",
             _ => ""
         };
 
@@ -63,7 +63,12 @@ public class AppConfiguration
             Labels = (configuration.GetValue<string>("Labels")?.ToLowerInvariant().Split(',',
                           StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
                       ?? Array.Empty<string>())
-                .Concat(new[] {"self-hosted", architecture.ToString().ToLowerInvariant(), os}).Distinct().ToArray()
+                .Concat(new[]
+                {
+                    "self-hosted",
+                    architecture,
+                    os
+                }).Distinct().ToArray()
         };
     }
 }
