@@ -1,5 +1,6 @@
 ﻿using System.Text;
 using System.Text.Json;
+using AutoscalerApi.Models;
 using AutoscalerApi.Services;
 using Azure.Storage.Queues;
 using Azure.Storage.Queues.Models;
@@ -27,31 +28,44 @@ public class QueueMonitorWorker : IHostedService
         var client = new QueueClient(_connectionString, _queueName);
 
         await client.CreateIfNotExistsAsync(cancellationToken: cancellationToken);
+        var lastUnsuccessfulMessageId = "";
 
         while (!cancellationToken.IsCancellationRequested)
         {
             QueueMessage message = null!;
             try
             {
-                message = await client.ReceiveMessageAsync(TimeSpan.FromSeconds(10), cancellationToken);
-
-                if (message != null)
-                {
-                    _logger.LogInformation("Dequeued message");
-                    var decodedMessage = Encoding.UTF8.GetString(Convert.FromBase64String(message.MessageText));
-                    var workflow = JsonSerializer.Deserialize(decodedMessage, Models.ApplicationJsonSerializerContext.Default.Workflow);
-                    if (workflow != null)
-                    {
-                        _logger.LogInformation("Executing workflow");
-                        await _dockerService.ProcessWorkflow(workflow);
-                    }
-
-                    await client.DeleteMessageAsync(message.MessageId, message.PopReceipt,
-                        cancellationToken);
-                }
-                else
+                await _dockerService.WaitForAvailableRunner();
+                
+                PeekedMessage pms = await client.PeekMessageAsync(cancellationToken);
+                if (pms.MessageId == lastUnsuccessfulMessageId)
                 {
                     await Task.Delay(TimeSpan.FromSeconds(10), cancellationToken);
+                }
+
+                message = await client.ReceiveMessageAsync(cancellationToken: cancellationToken);
+
+                if (message == null)
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(10), cancellationToken);
+                    continue;
+                }
+
+                _logger.LogInformation("Dequeued message");
+
+                var msg = Convert.FromBase64String(message.MessageText);
+
+                var workflow = JsonSerializer.Deserialize(msg,
+                    Models.ApplicationJsonSerializerContext.Default.Workflow);
+                _logger.LogInformation("Executing workflow");
+                var workflowResult = await _dockerService.ProcessWorkflow(workflow);
+
+                if (workflowResult)
+                    await client.DeleteMessageAsync(message.MessageId, message.PopReceipt,
+                        cancellationToken);
+                else
+                {
+                    lastUnsuccessfulMessageId = message.MessageId;
                 }
             }
             catch (Exception ex)

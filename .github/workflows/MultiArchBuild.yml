@@ -34,3 +34,5 @@ jobs:
           platforms: linux/amd64,linux/arm64
           cache-from: type=gha
           cache-to: type=gha,mode=max
+      - name: Docker clean-up
+        run: docker image rm ${{env.image}}${{env.tag_suffix}}

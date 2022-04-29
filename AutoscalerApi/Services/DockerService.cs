@@ -1,11 +1,6 @@
-﻿using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
-using System.Threading.Tasks;
-using AutoscalerApi.Controllers;
-using AutoscalerApi.Models;
+﻿using AutoscalerApi.Models;
 using Docker.DotNet;
 using Docker.DotNet.Models;
-using Microsoft.Extensions.Logging;
 
 namespace AutoscalerApi.Services;
 
@@ -24,6 +19,10 @@ public class DockerService : IDockerService
     private readonly string _repoBlacklistPrefix;
     private readonly string[] _repoBlacklist;
     private readonly bool _isRepoBlacklistExactMatch;
+    private readonly string[] _labels;
+    private readonly string _labelField;
+
+    private Task _containerGuardTask;
 
     public DockerService(DockerClient client, AppConfiguration configuration, ILogger<DockerService> logger)
     {
@@ -39,6 +38,9 @@ public class DockerService : IDockerService
         _repoBlacklistPrefix = configuration.RepoBlacklistPrefix;
         _repoBlacklist = configuration.RepoBlacklist;
         _isRepoBlacklistExactMatch = configuration.IsRepoBlacklistExactMatch;
+        _labels = configuration.Labels;
+        _labelField = string.Join(',', _labels).ToLowerInvariant();
+        _containerGuardTask = ContainerGuard(CancellationToken.None);
     }
 
     public async Task<IList<ContainerListResponse>> GetAutoscalerContainersAsync()
@@ -57,11 +59,63 @@ public class DockerService : IDockerService
         });
     }
 
-    private async Task StartEphemeralContainer(string repositoryFullName, string containerName, long jobRunId)
+    public async Task<bool> ProcessWorkflow(Workflow? workflow)
     {
-        while ((await GetAutoscalerContainersAsync()).Count >= _maxRunners)
+        switch (workflow?.Action)
         {
-            await Task.Delay(3000);
+            case "queued" when !CheckIfHasAllLabels(workflow.Job.Labels):
+                return false;
+            case "queued" when CheckIfRepoIsWhitelistedOrHasAllowedPrefix(workflow.Repository.FullName) &&
+                               workflow.Job.Labels.Any(_ => _ == "self-hosted"):
+                _logger.LogInformation(
+                    "Workflow '{Workflow}' is self-hosted and repository {Repository} whitelisted, starting container",
+                    workflow.Job.Name, workflow.Repository.FullName);
+                Interlocked.Increment(ref _totalCount);
+                var containerName = $"{workflow.Repository.Name}-{workflow.Job.RunId}-{_totalCount}";
+                return await StartEphemeralContainer(workflow.Repository.FullName,
+                    containerName, workflow.Job.RunId);
+            case "completed":
+                await _client.Volumes.PruneAsync();
+                break;
+            case null:
+                break;
+        }
+
+        return true;
+    }
+
+    public async Task WaitForAvailableRunner()
+    {
+        while ((await GetAutoscalerContainersAsync()).Count >= _maxRunners) await Task.Delay(TimeSpan.FromSeconds(3));
+    }
+
+    private async Task ContainerGuard(CancellationToken token)
+    {
+        bool IsContainerTooOld(ContainerListResponse _) => _.Created.ToUniversalTime().AddHours(1) < DateTime.UtcNow;
+
+        while (!token.IsCancellationRequested)
+        {
+            var containers = await GetAutoscalerContainersAsync();
+            foreach (var containerListResponse in containers.Where(IsContainerTooOld))
+            {
+                await _client.Containers.StopContainerAsync(containerListResponse.ID,
+                    new ContainerStopParameters() {WaitBeforeKillSeconds = 20});
+            }
+
+            await Task.Delay(TimeSpan.FromMinutes(5), token);
+        }
+    }
+
+    private bool CheckIfHasAllLabels(string[] jobLabels)
+    {
+        return jobLabels.All(l => _labels.Contains(l.ToLowerInvariant())) && jobLabels.Any(l => l == "self-hosted");
+    }
+
+    private async Task<bool> StartEphemeralContainer(string repositoryFullName, string containerName, long jobRunId)
+    {
+        if ((await GetAutoscalerContainersAsync()).Count >= _maxRunners)
+        {
+            return false;
         }
 
         var volume = await _client.Volumes.CreateAsync(new VolumesCreateParameters());
@@ -72,7 +126,11 @@ public class DockerService : IDockerService
             {volume.Mountpoint, new EmptyStruct()}
         };
 
-        await PullImageIfNotExists();
+        var cts = new CancellationTokenSource();
+        cts.CancelAfter(TimeSpan.FromSeconds(20));
+
+        if (!await PullImageIfNotExists(cts.Token))
+            return false;
 
         var mounts = new List<Mount>(new[]
         {
@@ -110,6 +168,7 @@ public class DockerService : IDockerService
                 $"RUNNER_NAME={containerName}",
                 "EPHEMERAL=TRUE",
                 "DISABLE_AUTO_UPDATE=TRUE",
+                $"LABELS={_labelField}",
             }),
             Labels = new Dictionary<string, string>()
             {
@@ -121,30 +180,34 @@ public class DockerService : IDockerService
         };
 
         _logger.LogInformation("Creating container for {repositoryFullName}", repositoryFullName);
-        var response = await _client.Containers.CreateContainerAsync(container);
+        var response = await _client.Containers.CreateContainerAsync(container, cts.Token);
         _logger.LogInformation("Container for {repositoryFullName} created", repositoryFullName);
-        await _client.Containers.StartContainerAsync(response.ID, new ContainerStartParameters());
+        await _client.Containers.StartContainerAsync(response.ID, new ContainerStartParameters(), cts.Token);
         _logger.LogInformation("Container for {repositoryFullName} started", repositoryFullName);
+        return true;
     }
 
-    private async Task PullImageIfNotExists()
+    private async Task<bool> PullImageIfNotExists(CancellationToken token)
     {
-        var imagesListResponses = await _client.Images.ListImagesAsync(new ImagesListParameters() {All = true});
+        var success = true;
+
+        var imagesListResponses = await _client.Images.ListImagesAsync(new ImagesListParameters() {All = true}, token);
         var tags = imagesListResponses
-            .Where(_ => _.RepoTags != null && _.RepoTags.Count > 0).SelectMany(_ => _.RepoTags);
+            .Where(_ => _.RepoTags is {Count: > 0}).SelectMany(_ => _.RepoTags);
 
         if (tags.Any(_ => _.Equals("myoung34/github-runner:latest")) &&
             _lastPullCheck.AddHours(1) > DateTime.UtcNow)
         {
-            return;
+            return success;
         }
 
         _logger.LogInformation("Checking for latest image");
 
         _lastPullCheck = DateTime.UtcNow;
         var m = new ManualResetEventSlim();
+
         var progress = new Progress<JSONMessage>();
-        await _client.Images.CreateImageAsync(
+        var t = Task.Run(async () => await _client.Images.CreateImageAsync(
             new ImagesCreateParameters
             {
                 FromImage = "myoung34/github-runner",
@@ -156,29 +219,15 @@ public class DockerService : IDockerService
                     {
                         m.Set();
                     }
-                }));
-        m.Wait();
-        _logger.LogInformation("Downloaded new docker image");
-    }
+                }), CancellationToken.None), token);
 
-    public async Task ProcessWorkflow(Workflow workflow)
-    {
-        switch (workflow.Action)
-        {
-            case "queued" when CheckIfRepoIsWhitelistedOrHasAllowedPrefix(workflow.Repository.FullName) &&
-                               workflow.Job.Labels.Any(_ => _ == "self-hosted"):
-                _logger.LogInformation(
-                    "Workflow '{workflow}' is self-hosted and repository {repository} whitelisted, starting container",
-                    workflow.Job.Name, workflow.Repository.FullName);
-                Interlocked.Increment(ref _totalCount);
-                var containerName = $"{workflow.Repository.Name}-{workflow.Job.RunId}-{_totalCount}";
-                await StartEphemeralContainer(workflow.Repository.FullName,
-                    containerName, workflow.Job.RunId);
-                break;
-            case "completed":
-                await _client.Volumes.PruneAsync();
-                break;
-        }
+        WaitHandle.WaitAny(new[] {m.WaitHandle, token.WaitHandle});
+
+        if (token.IsCancellationRequested)
+            return false;
+
+        _logger.LogInformation("Downloaded new docker image");
+        return success;
     }
 
     private bool CheckIfRepoIsWhitelistedOrHasAllowedPrefix(string repositoryFullName)
@@ -203,10 +252,4 @@ public class DockerService : IDockerService
             _ => _repoWhitelist.Any(repo => repositoryFullName.StartsWith(repo) || repo.Equals("*"))
         };
     }
-}
-
-public interface IDockerService
-{
-    Task ProcessWorkflow(Workflow workflow);
-    Task<IList<ContainerListResponse>> GetAutoscalerContainersAsync();
 }

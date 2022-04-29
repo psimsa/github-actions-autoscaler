@@ -17,6 +17,7 @@ public class AppConfiguration
     public string[] RepoBlacklist { get; set; } = Array.Empty<string>();
     public bool IsRepoBlacklistExactMatch { get; set; }
     public string DockerHost { get; set; } = "";
+    public string[] Labels { get; set; } = Array.Empty<string>();
 
     [UnconditionalSuppressMessage("Trimming",
         "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code",
@@ -30,7 +31,7 @@ public class AppConfiguration
             < 0 => int.MaxValue,
             _ => maxRunners
         };
-        
+
         return new AppConfiguration()
         {
             AzureStorageQueue = configuration.GetValue<string>("AzureStorageQueue"),
@@ -41,13 +42,16 @@ public class AppConfiguration
             MaxRunners = maxRunners,
             RepoWhitelistPrefix = configuration.GetValue<string>("RepoWhitelistPrefix"),
             RepoWhitelist = configuration.GetValue<string>("RepoWhitelist").Split(',',
-                StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries),
+                StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).Distinct().ToArray(),
             IsRepoWhitelistExactMatch = configuration.GetValue<bool>("IsRepoWhitelistExactMatch"),
             RepoBlacklistPrefix = configuration.GetValue<string>("RepoBlacklistPrefix"),
             RepoBlacklist = configuration.GetValue<string>("RepoBlacklist").Split(',',
-                StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries),
+                StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).Distinct().ToArray(),
             IsRepoBlacklistExactMatch = configuration.GetValue<bool>("IsRepoBlacklistExactMatch"),
-            DockerHost = configuration.GetValue<string>("DockerHost"),
+            DockerHost = configuration.GetValue<string>("DockerHost") ?? "unix:/var/run/docker.sock",
+            Labels = (configuration.GetValue<string>("Labels")?.ToLowerInvariant().Split(',',
+                          StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
+                      ?? Array.Empty<string>()).Append("self-hosted").Distinct().ToArray()
         };
     }
 }
