@@ -34,13 +34,13 @@ public class AppConfiguration
         };
         
         var architecture = RuntimeInformation.ProcessArchitecture.ToString().ToLowerInvariant();
-        var os = architecture switch
+        /*var os = architecture switch
         {
             _ when RuntimeInformation.IsOSPlatform(OSPlatform.Windows) => "windows",
             _ when RuntimeInformation.IsOSPlatform(OSPlatform.Linux) => "linux",
             _ when RuntimeInformation.IsOSPlatform(OSPlatform.OSX) => "osx",
             _ => ""
-        };
+        };*/
 
 
         return new AppConfiguration()
@@ -67,7 +67,7 @@ public class AppConfiguration
                 {
                     "self-hosted",
                     architecture,
-                    os
+                    // os
                 }).Distinct().ToArray()
         };
     }
