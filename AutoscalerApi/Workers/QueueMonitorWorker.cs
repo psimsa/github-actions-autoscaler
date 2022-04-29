@@ -44,9 +44,8 @@ public class QueueMonitorWorker : IHostedService
                 var decodedMessage = Encoding.UTF8.GetString(Convert.FromBase64String(message.MessageText));
                 var workflow = JsonSerializer.Deserialize(decodedMessage,
                     Models.ApplicationJsonSerializerContext.Default.Workflow);
-                var workflowResult = true;
                 _logger.LogInformation("Executing workflow");
-                workflowResult = await _dockerService.ProcessWorkflow(workflow);
+                var workflowResult = await _dockerService.ProcessWorkflow(workflow);
 
                 if (workflowResult)
                     await client.DeleteMessageAsync(message.MessageId, message.PopReceipt,
