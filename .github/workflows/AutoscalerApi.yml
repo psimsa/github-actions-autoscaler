@@ -1,4 +1,4 @@
-name: Build docker file
+name: Build Autoscaler - docker file
 
 on:
   push:

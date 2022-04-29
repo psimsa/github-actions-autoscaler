@@ -1,4 +1,4 @@
-name: Docker Image BuildX CI
+name: Build Multiscaler - docker BuildX
 
 on:
   push:

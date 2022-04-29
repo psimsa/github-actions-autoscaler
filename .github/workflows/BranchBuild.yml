@@ -1,4 +1,4 @@
-name: Build branch
+name: Build full solution
 
 on:
   push:
