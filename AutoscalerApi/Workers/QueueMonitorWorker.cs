@@ -28,6 +28,8 @@ public class QueueMonitorWorker : IHostedService
         var client = new QueueClient(_connectionString, _queueName);
 
         await client.CreateIfNotExistsAsync(cancellationToken: cancellationToken);
+        var lastSuccessfulMessageId = "";
+        var lastSuccessfulMessageIdCount = 0;
 
         while (!cancellationToken.IsCancellationRequested)
         {
@@ -35,15 +37,25 @@ public class QueueMonitorWorker : IHostedService
             try
             {
                 message = await client.ReceiveMessageAsync(cancellationToken: cancellationToken);
-                
-                if(message == null)
+
+                if (message == null)
                 {
                     await Task.Delay(TimeSpan.FromSeconds(10), cancellationToken);
                     continue;
                 }
 
+                if (message.MessageId == lastSuccessfulMessageId)
+                {
+                    lastSuccessfulMessageIdCount++;
+                }
+                else
+                {
+                    lastSuccessfulMessageIdCount = 0;
+                    lastSuccessfulMessageId = message.MessageId;
+                }
+
                 _logger.LogInformation("Dequeued message");
-                
+
                 var msg = Convert.FromBase64String(message.MessageText);
 
                 var workflow = JsonSerializer.Deserialize(msg,

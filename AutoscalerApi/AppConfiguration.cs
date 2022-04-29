@@ -49,9 +49,9 @@ public class AppConfiguration
                 StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).Distinct().ToArray(),
             IsRepoBlacklistExactMatch = configuration.GetValue<bool>("IsRepoBlacklistExactMatch"),
             DockerHost = configuration.GetValue<string>("DockerHost") ?? "unix:/var/run/docker.sock",
-            Labels = configuration.GetValue<string>("Labels")?.ToLowerInvariant().Split(',',
-                StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).Append("self-hosted").Distinct().ToArray()
-                     ?? Array.Empty<string>()
+            Labels = (configuration.GetValue<string>("Labels")?.ToLowerInvariant().Split(',',
+                          StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
+                      ?? Array.Empty<string>()).Append("self-hosted").Distinct().ToArray()
         };
     }
 }

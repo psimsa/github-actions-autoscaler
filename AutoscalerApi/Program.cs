@@ -13,7 +13,8 @@ var appConfig = AppConfiguration.FromConfiguration(builder.Configuration);
 // Add services to the container.
 if (appConfig.UseWebEndpoint)
 {
-    builder.Services.AddControllers().AddJsonOptions(options => options.JsonSerializerOptions.AddContext<ApplicationJsonSerializerContext>());
+    builder.Services.AddControllers().AddJsonOptions(options =>
+        options.JsonSerializerOptions.AddContext<ApplicationJsonSerializerContext>());
 
     builder.Services.AddEndpointsApiExplorer();
 }

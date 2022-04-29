@@ -1,11 +1,6 @@
-﻿using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
-using System.Threading.Tasks;
-using AutoscalerApi.Controllers;
-using AutoscalerApi.Models;
+﻿using AutoscalerApi.Models;
 using Docker.DotNet;
 using Docker.DotNet.Models;
-using Microsoft.Extensions.Logging;
 
 namespace AutoscalerApi.Services;
 
@@ -27,6 +22,8 @@ public class DockerService : IDockerService
     private readonly string[] _labels;
     private readonly string _labelField;
 
+    private Task _containerGuardTask;
+
     public DockerService(DockerClient client, AppConfiguration configuration, ILogger<DockerService> logger)
     {
         _client = client;
@@ -43,6 +40,7 @@ public class DockerService : IDockerService
         _isRepoBlacklistExactMatch = configuration.IsRepoBlacklistExactMatch;
         _labels = configuration.Labels;
         _labelField = string.Join(',', _labels).ToLowerInvariant();
+        _containerGuardTask = ContainerGuard(CancellationToken.None);
     }
 
     public async Task<IList<ContainerListResponse>> GetAutoscalerContainersAsync()
@@ -86,6 +84,26 @@ public class DockerService : IDockerService
         return true;
     }
 
+    private async Task ContainerGuard(CancellationToken token)
+    {
+        bool IsContainerTooOld(ContainerListResponse _)
+        {
+            return _.Created.ToUniversalTime().AddHours(1) < DateTime.UtcNow;
+        }
+
+        while (!token.IsCancellationRequested)
+        {
+            var containers = await GetAutoscalerContainersAsync();
+            foreach (var containerListResponse in containers.Where(IsContainerTooOld))
+            {
+                await _client.Containers.StopContainerAsync(containerListResponse.ID,
+                    new ContainerStopParameters() {WaitBeforeKillSeconds = 20});
+            }
+
+            await Task.Delay(TimeSpan.FromMinutes(1), token);
+        }
+    }
+
     private bool CheckIfHasAllLabels(string[] jobLabels)
     {
         return jobLabels.All(l => _labels.Contains(l.ToLowerInvariant())) && jobLabels.Any(l => l == "self-hosted");
@@ -93,9 +111,9 @@ public class DockerService : IDockerService
 
     private async Task<bool> StartEphemeralContainer(string repositoryFullName, string containerName, long jobRunId)
     {
-        while ((await GetAutoscalerContainersAsync()).Count >= _maxRunners)
+        if ((await GetAutoscalerContainersAsync()).Count >= _maxRunners)
         {
-            await Task.Delay(3000);
+            return false;
         }
 
         var volume = await _client.Volumes.CreateAsync(new VolumesCreateParameters());
@@ -108,6 +126,7 @@ public class DockerService : IDockerService
 
         var cts = new CancellationTokenSource();
         cts.CancelAfter(TimeSpan.FromSeconds(20));
+
         if (!await PullImageIfNotExists(cts.Token))
             return false;
 
@@ -159,9 +178,9 @@ public class DockerService : IDockerService
         };
 
         _logger.LogInformation("Creating container for {repositoryFullName}", repositoryFullName);
-        var response = await _client.Containers.CreateContainerAsync(container);
+        var response = await _client.Containers.CreateContainerAsync(container, cts.Token);
         _logger.LogInformation("Container for {repositoryFullName} created", repositoryFullName);
-        await _client.Containers.StartContainerAsync(response.ID, new ContainerStartParameters());
+        await _client.Containers.StartContainerAsync(response.ID, new ContainerStartParameters(), cts.Token);
         _logger.LogInformation("Container for {repositoryFullName} started", repositoryFullName);
         return true;
     }
@@ -169,10 +188,10 @@ public class DockerService : IDockerService
     private async Task<bool> PullImageIfNotExists(CancellationToken token)
     {
         var success = true;
-        
-        var imagesListResponses = await _client.Images.ListImagesAsync(new ImagesListParameters() {All = true});
+
+        var imagesListResponses = await _client.Images.ListImagesAsync(new ImagesListParameters() {All = true}, token);
         var tags = imagesListResponses
-            .Where(_ => _.RepoTags != null && _.RepoTags.Count > 0).SelectMany(_ => _.RepoTags);
+            .Where(_ => _.RepoTags is {Count: > 0}).SelectMany(_ => _.RepoTags);
 
         if (tags.Any(_ => _.Equals("myoung34/github-runner:latest")) &&
             _lastPullCheck.AddHours(1) > DateTime.UtcNow)
@@ -184,8 +203,9 @@ public class DockerService : IDockerService
 
         _lastPullCheck = DateTime.UtcNow;
         var m = new ManualResetEventSlim();
+
         var progress = new Progress<JSONMessage>();
-        await _client.Images.CreateImageAsync(
+        var t = Task.Run(async () => await _client.Images.CreateImageAsync(
             new ImagesCreateParameters
             {
                 FromImage = "myoung34/github-runner",
@@ -193,17 +213,17 @@ public class DockerService : IDockerService
             }, new AuthConfig() {Password = _dockerToken}, new Progress<JSONMessage>(
                 message =>
                 {
-                    if (token.IsCancellationRequested)
-                    {
-                        success = false;
-                        m.Set();
-                    }
                     if (message.Status.StartsWith("Status:"))
                     {
                         m.Set();
                     }
-                }));
-        m.Wait();
+                }), CancellationToken.None), token);
+
+        WaitHandle.WaitAny(new[] {m.WaitHandle, token.WaitHandle});
+
+        if (token.IsCancellationRequested)
+            return false;
+
         _logger.LogInformation("Downloaded new docker image");
         return success;
     }
@@ -230,10 +250,4 @@ public class DockerService : IDockerService
             _ => _repoWhitelist.Any(repo => repositoryFullName.StartsWith(repo) || repo.Equals("*"))
         };
     }
-}
-
-public interface IDockerService
-{
-    Task<bool> ProcessWorkflow(Workflow? workflow);
-    Task<IList<ContainerListResponse>> GetAutoscalerContainersAsync();
 }

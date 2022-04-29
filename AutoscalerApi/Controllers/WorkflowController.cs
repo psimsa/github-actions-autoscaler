@@ -31,8 +31,9 @@ public class WorkflowController : ControllerBase
     public async Task<IActionResult> Post([FromBody] Workflow? workflow)
     {
         if (workflow == null) return Ok();
-        _logger.LogInformation("Workflow hook '{Action}' on repo '{FullName}' received", workflow.Action, workflow.Repository.FullName);
-        
+        _logger.LogInformation("Workflow hook '{Action}' on repo '{FullName}' received", workflow.Action,
+            workflow.Repository.FullName);
+
         await _dockerService.ProcessWorkflow(workflow);
         return Ok();
     }
