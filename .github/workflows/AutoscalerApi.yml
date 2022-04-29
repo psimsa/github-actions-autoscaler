@@ -3,8 +3,8 @@ name: Build Autoscaler - docker file
 on:
   push:
     paths: [AutoscalerApi/**, .github/workflows/AutoscalerApi.yml]
-  pull_request:
-    paths: [AutoscalerApi/**, .github/workflows/AutoscalerApi.yml]
+  #pull_request:
+  #  paths: [AutoscalerApi/**, .github/workflows/AutoscalerApi.yml]
 
 env:
   DOTNET_VERSION: '6.0.x'
