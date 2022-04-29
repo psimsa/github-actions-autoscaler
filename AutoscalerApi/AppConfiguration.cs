@@ -48,7 +48,7 @@ public class AppConfiguration
             RepoBlacklist = configuration.GetValue<string>("RepoBlacklist").Split(',',
                 StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).Distinct().ToArray(),
             IsRepoBlacklistExactMatch = configuration.GetValue<bool>("IsRepoBlacklistExactMatch"),
-            DockerHost = configuration.GetValue<string>("DockerHost"),
+            DockerHost = configuration.GetValue<string>("DockerHost") ?? "unix:/var/run/docker.sock",
             Labels = configuration.GetValue<string>("Labels")?.Split(',',
                 StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).Append("self-hosted").Distinct().ToArray()
                      ?? Array.Empty<string>()

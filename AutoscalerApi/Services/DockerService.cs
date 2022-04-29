@@ -70,13 +70,12 @@ public class DockerService : IDockerService
             case "queued" when CheckIfRepoIsWhitelistedOrHasAllowedPrefix(workflow.Repository.FullName) &&
                                workflow.Job.Labels.Any(_ => _ == "self-hosted"):
                 _logger.LogInformation(
-                    "Workflow '{workflow}' is self-hosted and repository {repository} whitelisted, starting container",
+                    "Workflow '{Workflow}' is self-hosted and repository {Repository} whitelisted, starting container",
                     workflow.Job.Name, workflow.Repository.FullName);
                 Interlocked.Increment(ref _totalCount);
                 var containerName = $"{workflow.Repository.Name}-{workflow.Job.RunId}-{_totalCount}";
-                await StartEphemeralContainer(workflow.Repository.FullName,
+                return await StartEphemeralContainer(workflow.Repository.FullName,
                     containerName, workflow.Job.RunId);
-                break;
             case "completed":
                 await _client.Volumes.PruneAsync();
                 break;
@@ -92,7 +91,7 @@ public class DockerService : IDockerService
         return jobLabels.All(l => _labels.Contains(l)) && jobLabels.Any(l => l == "self-hosted");
     }
 
-    private async Task StartEphemeralContainer(string repositoryFullName, string containerName, long jobRunId)
+    private async Task<bool> StartEphemeralContainer(string repositoryFullName, string containerName, long jobRunId)
     {
         while ((await GetAutoscalerContainersAsync()).Count >= _maxRunners)
         {
@@ -107,7 +106,10 @@ public class DockerService : IDockerService
             {volume.Mountpoint, new EmptyStruct()}
         };
 
-        await PullImageIfNotExists();
+        var cts = new CancellationTokenSource();
+        cts.CancelAfter(TimeSpan.FromSeconds(5));
+        if (await PullImageIfNotExists(cts.Token))
+            return false;
 
         var mounts = new List<Mount>(new[]
         {
@@ -161,10 +163,13 @@ public class DockerService : IDockerService
         _logger.LogInformation("Container for {repositoryFullName} created", repositoryFullName);
         await _client.Containers.StartContainerAsync(response.ID, new ContainerStartParameters());
         _logger.LogInformation("Container for {repositoryFullName} started", repositoryFullName);
+        return true;
     }
 
-    private async Task PullImageIfNotExists()
+    private async Task<bool> PullImageIfNotExists(CancellationToken token)
     {
+        var success = true;
+        
         var imagesListResponses = await _client.Images.ListImagesAsync(new ImagesListParameters() {All = true});
         var tags = imagesListResponses
             .Where(_ => _.RepoTags != null && _.RepoTags.Count > 0).SelectMany(_ => _.RepoTags);
@@ -172,7 +177,7 @@ public class DockerService : IDockerService
         if (tags.Any(_ => _.Equals("myoung34/github-runner:latest")) &&
             _lastPullCheck.AddHours(1) > DateTime.UtcNow)
         {
-            return;
+            return success;
         }
 
         _logger.LogInformation("Checking for latest image");
@@ -188,6 +193,11 @@ public class DockerService : IDockerService
             }, new AuthConfig() {Password = _dockerToken}, new Progress<JSONMessage>(
                 message =>
                 {
+                    if (token.IsCancellationRequested)
+                    {
+                        success = false;
+                        m.Set();
+                    }
                     if (message.Status.StartsWith("Status:"))
                     {
                         m.Set();
@@ -195,6 +205,7 @@ public class DockerService : IDockerService
                 }));
         m.Wait();
         _logger.LogInformation("Downloaded new docker image");
+        return success;
     }
 
     private bool CheckIfRepoIsWhitelistedOrHasAllowedPrefix(string repositoryFullName)
