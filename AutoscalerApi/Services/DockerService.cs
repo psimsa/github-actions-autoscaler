@@ -24,6 +24,8 @@ public class DockerService : IDockerService
     private readonly string _repoBlacklistPrefix;
     private readonly string[] _repoBlacklist;
     private readonly bool _isRepoBlacklistExactMatch;
+    private readonly string[] _labels;
+    private readonly string _labelField;
 
     public DockerService(DockerClient client, AppConfiguration configuration, ILogger<DockerService> logger)
     {
@@ -39,6 +41,8 @@ public class DockerService : IDockerService
         _repoBlacklistPrefix = configuration.RepoBlacklistPrefix;
         _repoBlacklist = configuration.RepoBlacklist;
         _isRepoBlacklistExactMatch = configuration.IsRepoBlacklistExactMatch;
+        _labels = configuration.Labels;
+        _labelField = string.Join(',', _labels);
     }
 
     public async Task<IList<ContainerListResponse>> GetAutoscalerContainersAsync()
@@ -55,6 +59,37 @@ public class DockerService : IDockerService
                 }
             }
         });
+    }
+
+    public async Task<bool> ProcessWorkflow(Workflow? workflow)
+    {
+        switch (workflow?.Action)
+        {
+            case "queued" when !CheckIfHasAllLabels(workflow.Job.Labels):
+                return false;
+            case "queued" when CheckIfRepoIsWhitelistedOrHasAllowedPrefix(workflow.Repository.FullName) &&
+                               workflow.Job.Labels.Any(_ => _ == "self-hosted"):
+                _logger.LogInformation(
+                    "Workflow '{workflow}' is self-hosted and repository {repository} whitelisted, starting container",
+                    workflow.Job.Name, workflow.Repository.FullName);
+                Interlocked.Increment(ref _totalCount);
+                var containerName = $"{workflow.Repository.Name}-{workflow.Job.RunId}-{_totalCount}";
+                await StartEphemeralContainer(workflow.Repository.FullName,
+                    containerName, workflow.Job.RunId);
+                break;
+            case "completed":
+                await _client.Volumes.PruneAsync();
+                break;
+            case null:
+                break;
+        }
+
+        return true;
+    }
+
+    private bool CheckIfHasAllLabels(string[] jobLabels)
+    {
+        return jobLabels.All(l => _labels.Contains(l)) && jobLabels.Any(l => l == "self-hosted");
     }
 
     private async Task StartEphemeralContainer(string repositoryFullName, string containerName, long jobRunId)
@@ -110,6 +145,7 @@ public class DockerService : IDockerService
                 $"RUNNER_NAME={containerName}",
                 "EPHEMERAL=TRUE",
                 "DISABLE_AUTO_UPDATE=TRUE",
+                $"LABELS={_labelField}",
             }),
             Labels = new Dictionary<string, string>()
             {
@@ -161,26 +197,6 @@ public class DockerService : IDockerService
         _logger.LogInformation("Downloaded new docker image");
     }
 
-    public async Task ProcessWorkflow(Workflow workflow)
-    {
-        switch (workflow.Action)
-        {
-            case "queued" when CheckIfRepoIsWhitelistedOrHasAllowedPrefix(workflow.Repository.FullName) &&
-                               workflow.Job.Labels.Any(_ => _ == "self-hosted"):
-                _logger.LogInformation(
-                    "Workflow '{workflow}' is self-hosted and repository {repository} whitelisted, starting container",
-                    workflow.Job.Name, workflow.Repository.FullName);
-                Interlocked.Increment(ref _totalCount);
-                var containerName = $"{workflow.Repository.Name}-{workflow.Job.RunId}-{_totalCount}";
-                await StartEphemeralContainer(workflow.Repository.FullName,
-                    containerName, workflow.Job.RunId);
-                break;
-            case "completed":
-                await _client.Volumes.PruneAsync();
-                break;
-        }
-    }
-
     private bool CheckIfRepoIsWhitelistedOrHasAllowedPrefix(string repositoryFullName)
     {
         bool IsRepoBlacklisted(string repoName)
@@ -207,6 +223,6 @@ public class DockerService : IDockerService
 
 public interface IDockerService
 {
-    Task ProcessWorkflow(Workflow workflow);
+    Task<bool> ProcessWorkflow(Workflow? workflow);
     Task<IList<ContainerListResponse>> GetAutoscalerContainersAsync();
 }

@@ -35,24 +35,17 @@ public class QueueMonitorWorker : IHostedService
             {
                 message = await client.ReceiveMessageAsync(TimeSpan.FromSeconds(10), cancellationToken);
 
-                if (message != null)
-                {
-                    _logger.LogInformation("Dequeued message");
-                    var decodedMessage = Encoding.UTF8.GetString(Convert.FromBase64String(message.MessageText));
-                    var workflow = JsonSerializer.Deserialize(decodedMessage, Models.ApplicationJsonSerializerContext.Default.Workflow);
-                    if (workflow != null)
-                    {
-                        _logger.LogInformation("Executing workflow");
-                        await _dockerService.ProcessWorkflow(workflow);
-                    }
+                _logger.LogInformation("Dequeued message");
+                var decodedMessage = Encoding.UTF8.GetString(Convert.FromBase64String(message.MessageText));
+                var workflow = JsonSerializer.Deserialize(decodedMessage,
+                    Models.ApplicationJsonSerializerContext.Default.Workflow);
+                var workflowResult = true;
+                _logger.LogInformation("Executing workflow");
+                workflowResult = await _dockerService.ProcessWorkflow(workflow);
 
+                if (workflowResult)
                     await client.DeleteMessageAsync(message.MessageId, message.PopReceipt,
                         cancellationToken);
-                }
-                else
-                {
-                    await Task.Delay(TimeSpan.FromSeconds(10), cancellationToken);
-                }
             }
             catch (Exception ex)
             {
