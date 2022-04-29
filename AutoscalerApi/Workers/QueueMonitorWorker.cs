@@ -34,6 +34,11 @@ public class QueueMonitorWorker : IHostedService
             try
             {
                 message = await client.ReceiveMessageAsync(TimeSpan.FromSeconds(10), cancellationToken);
+                if(message == null)
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(10), cancellationToken);
+                    continue;
+                }
 
                 _logger.LogInformation("Dequeued message");
                 var decodedMessage = Encoding.UTF8.GetString(Convert.FromBase64String(message.MessageText));
