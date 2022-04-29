@@ -31,9 +31,6 @@ jobs:
       - name: Docker push
         run: docker push ${{env.image}}${{env.tag_suffix}}
         if: github.ref == 'refs/heads/main'
-      - name: Clean up
-        uses: docker/cleanup-action@v1
-        with:
-          image: ${{env.image}}${{env.tag_suffix}}
-          tags: ${{env.image}}${{env.tag_suffix}}
+      - name: Docker clean-up
+        run: docker image rm ${{env.image}}${{env.tag_suffix}}
 
