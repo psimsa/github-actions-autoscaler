@@ -34,18 +34,23 @@ public class QueueMonitorWorker : IHostedService
             try
             {
                 await _dockerService.WaitForAvailableRunner();
-                
-                PeekedMessage pms = await client.PeekMessageAsync(cancellationToken);
-                if (pms?.MessageId == lastUnsuccessfulMessageId)
+
+                if (lastUnsuccessfulMessageId != "")
                 {
-                    await Task.Delay(TimeSpan.FromSeconds(10), cancellationToken);
+                    PeekedMessage pms = await client.PeekMessageAsync(cancellationToken);
+                    if (pms?.MessageId == lastUnsuccessfulMessageId)
+                    {
+                        await Task.Delay(10_000, cancellationToken);
+                    }
                 }
+
+                lastUnsuccessfulMessageId = "";
 
                 message = await client.ReceiveMessageAsync(cancellationToken: cancellationToken);
 
                 if (message == null)
                 {
-                    await Task.Delay(TimeSpan.FromSeconds(10), cancellationToken);
+                    await Task.Delay(10_000, cancellationToken);
                     continue;
                 }
 
@@ -74,7 +79,7 @@ public class QueueMonitorWorker : IHostedService
                     await client.DeleteMessageAsync(message.MessageId, message.PopReceipt, cancellationToken);
                 }
 
-                await Task.Delay(TimeSpan.FromSeconds(10), cancellationToken);
+                await Task.Delay(10_000, cancellationToken);
             }
         }
     }

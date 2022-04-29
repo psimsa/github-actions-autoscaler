@@ -23,6 +23,17 @@ public class DockerService : IDockerService
     private readonly string _labelField;
 
     private Task _containerGuardTask;
+    private readonly Dictionary<string, IDictionary<string, bool>> _autoscalerContainersDefinition = new()
+    {
+        {
+            "label", new Dictionary<string, bool>()
+            {
+                {"autoscaler=true", true}
+            }
+        }
+    };
+
+    private EmptyStruct _emptyStruct = new EmptyStruct();
 
     public DockerService(DockerClient client, AppConfiguration configuration, ILogger<DockerService> logger)
     {
@@ -45,17 +56,10 @@ public class DockerService : IDockerService
 
     public async Task<IList<ContainerListResponse>> GetAutoscalerContainersAsync()
     {
+        
         return await _client.Containers.ListContainersAsync(new ContainersListParameters()
         {
-            Filters = new Dictionary<string, IDictionary<string, bool>>()
-            {
-                {
-                    "label", new Dictionary<string, bool>()
-                    {
-                        {"autoscaler=true", true}
-                    }
-                }
-            }
+            Filters = _autoscalerContainersDefinition
         });
     }
 
@@ -86,7 +90,7 @@ public class DockerService : IDockerService
 
     public async Task WaitForAvailableRunner()
     {
-        while ((await GetAutoscalerContainersAsync()).Count >= _maxRunners) await Task.Delay(TimeSpan.FromSeconds(3));
+        while ((await GetAutoscalerContainersAsync()).Count >= _maxRunners) await Task.Delay(3_000);
     }
 
     private async Task ContainerGuard(CancellationToken token)
@@ -125,12 +129,12 @@ public class DockerService : IDockerService
 
         var volumes = new Dictionary<string, EmptyStruct>
         {
-            {"/var/run/docker.sock", new EmptyStruct()},
-            {volume.Mountpoint, new EmptyStruct()}
+            {"/var/run/docker.sock", _emptyStruct},
+            {volume.Mountpoint, _emptyStruct}
         };
 
         var cts = new CancellationTokenSource();
-        cts.CancelAfter(TimeSpan.FromSeconds(20));
+        cts.CancelAfter(20_000);
 
         if (!await PullImageIfNotExists(cts.Token))
             return false;
