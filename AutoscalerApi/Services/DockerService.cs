@@ -84,12 +84,14 @@ public class DockerService : IDockerService
         return true;
     }
 
+    public async Task WaitForAvailableRunner()
+    {
+        while ((await GetAutoscalerContainersAsync()).Count >= _maxRunners) await Task.Delay(TimeSpan.FromSeconds(3));
+    }
+
     private async Task ContainerGuard(CancellationToken token)
     {
-        bool IsContainerTooOld(ContainerListResponse _)
-        {
-            return _.Created.ToUniversalTime().AddHours(1) < DateTime.UtcNow;
-        }
+        bool IsContainerTooOld(ContainerListResponse _) => _.Created.ToUniversalTime().AddHours(1) < DateTime.UtcNow;
 
         while (!token.IsCancellationRequested)
         {
@@ -100,7 +102,7 @@ public class DockerService : IDockerService
                     new ContainerStopParameters() {WaitBeforeKillSeconds = 20});
             }
 
-            await Task.Delay(TimeSpan.FromMinutes(1), token);
+            await Task.Delay(TimeSpan.FromMinutes(5), token);
         }
     }
 

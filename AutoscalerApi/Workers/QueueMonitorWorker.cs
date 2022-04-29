@@ -28,30 +28,27 @@ public class QueueMonitorWorker : IHostedService
         var client = new QueueClient(_connectionString, _queueName);
 
         await client.CreateIfNotExistsAsync(cancellationToken: cancellationToken);
-        var lastSuccessfulMessageId = "";
-        var lastSuccessfulMessageIdCount = 0;
+        var lastUnsuccessfulMessageId = "";
 
         while (!cancellationToken.IsCancellationRequested)
         {
             QueueMessage message = null!;
             try
             {
+                await _dockerService.WaitForAvailableRunner();
+                
+                PeekedMessage pms = await client.PeekMessageAsync(cancellationToken);
+                if (pms.MessageId == lastUnsuccessfulMessageId)
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(10), cancellationToken);
+                }
+
                 message = await client.ReceiveMessageAsync(cancellationToken: cancellationToken);
 
                 if (message == null)
                 {
                     await Task.Delay(TimeSpan.FromSeconds(10), cancellationToken);
                     continue;
-                }
-
-                if (message.MessageId == lastSuccessfulMessageId)
-                {
-                    lastSuccessfulMessageIdCount++;
-                }
-                else
-                {
-                    lastSuccessfulMessageIdCount = 0;
-                    lastSuccessfulMessageId = message.MessageId;
                 }
 
                 _logger.LogInformation("Dequeued message");
@@ -66,6 +63,10 @@ public class QueueMonitorWorker : IHostedService
                 if (workflowResult)
                     await client.DeleteMessageAsync(message.MessageId, message.PopReceipt,
                         cancellationToken);
+                else
+                {
+                    lastUnsuccessfulMessageId = message.MessageId;
+                }
             }
             catch (Exception ex)
             {
