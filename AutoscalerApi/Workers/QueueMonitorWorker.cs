@@ -1,6 +1,4 @@
-﻿using System.Text;
-using System.Text.Json;
-using AutoscalerApi.Models;
+﻿using System.Text.Json;
 using AutoscalerApi.Services;
 using Azure.Storage.Queues;
 using Azure.Storage.Queues.Models;
@@ -38,7 +36,7 @@ public class QueueMonitorWorker : IHostedService
                 await _dockerService.WaitForAvailableRunner();
                 
                 PeekedMessage pms = await client.PeekMessageAsync(cancellationToken);
-                if (pms.MessageId == lastUnsuccessfulMessageId)
+                if (pms?.MessageId == lastUnsuccessfulMessageId)
                 {
                     await Task.Delay(TimeSpan.FromSeconds(10), cancellationToken);
                 }
