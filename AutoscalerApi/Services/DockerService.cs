@@ -96,6 +96,9 @@ public class DockerService : IDockerService
         while (!token.IsCancellationRequested)
         {
             var containers = await GetAutoscalerContainersAsync();
+            if(!containers.Any())
+                return;
+            
             foreach (var containerListResponse in containers.Where(IsContainerTooOld))
             {
                 await _client.Containers.StopContainerAsync(containerListResponse.ID,
@@ -184,6 +187,11 @@ public class DockerService : IDockerService
         _logger.LogInformation("Container for {repositoryFullName} created", repositoryFullName);
         await _client.Containers.StartContainerAsync(response.ID, new ContainerStartParameters(), cts.Token);
         _logger.LogInformation("Container for {repositoryFullName} started", repositoryFullName);
+        if (_containerGuardTask.IsCompleted)
+        {
+            _containerGuardTask = ContainerGuard(CancellationToken.None);
+        }
+        
         return true;
     }
 
