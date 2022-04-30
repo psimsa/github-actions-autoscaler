@@ -10,13 +10,11 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Build solution
-        #uses: mosteo-actions/docker-run@v1
-        uses: kohlerdominik/docker-run-action@v1
+        uses: mosteo-actions/docker-run@v1
         with:
           image: mcr.microsoft.com/dotnet/sdk:6.0-alpine
-          #command: dotnet build
-          run: dotnet build
-
+          command: dotnet build
+          
   create-binary:
     runs-on: self-hosted
     if: github.ref == 'refs/heads/main'
