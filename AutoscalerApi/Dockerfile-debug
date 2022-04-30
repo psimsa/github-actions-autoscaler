@@ -20,7 +20,7 @@ FROM base AS final
 RUN dotnet tool install --global dotnet-trace
 RUN dotnet tool install --global dotnet-dump
 RUN dotnet tool install --global dotnet-counters
-RUN echo "export PATH='$PATH:/root/.dotnet/tools'" >> ~/.bash_profile
+# RUN echo "export PATH='$PATH:/root/.dotnet/tools'" >> ~/.bash_profile
 
 WORKDIR /app
 COPY --from=publish /app/publish .
