@@ -20,6 +20,10 @@ FROM base AS final
 RUN dotnet tool install --global dotnet-trace
 RUN dotnet tool install --global dotnet-dump
 RUN dotnet tool install --global dotnet-counters
+RUN cat << \EOF >> ~/.bash_profile
+	# Add .NET Core SDK tools
+	export PATH="$PATH:/root/.dotnet/tools"
+	EOF
 
 WORKDIR /app
 COPY --from=publish /app/publish .
