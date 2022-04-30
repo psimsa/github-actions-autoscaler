@@ -1,13 +1,8 @@
-name: Build Autoscaler - docker file
+name: Build Autoscaler - debug image
 
 on:
-  push:
-    branches-ignore:
-      - main
-    paths: [AutoscalerApi/**, .github/workflows/AutoscalerApi.yml]
-  #pull_request:
-  #  paths: [AutoscalerApi/**, .github/workflows/AutoscalerApi.yml]
-
+  workflow_dispatch:
+  
 env:
   DOTNET_VERSION: '6.0.x'
 
@@ -31,7 +26,5 @@ jobs:
           password: ${{ secrets.DOCKER_TOKEN }}
       - name: Docker push
         run: docker push ${{env.image}}${{env.tag_suffix}}
-        # if: github.ref == 'refs/heads/main'
       - name: Docker clean-up
         run: docker image rm ${{env.image}}${{env.tag_suffix}}
-
