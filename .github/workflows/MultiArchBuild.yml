@@ -11,9 +11,12 @@ jobs:
     runs-on: self-hosted
     env:
       image: docker.io/ofcoursedude/moje:multiscaler-${{ github.RUN_ID }}
-    if: github.ref == 'refs/heads/main'
+      should_push: true
     steps:
       - uses: actions/checkout@v3
+      - name: Set suffix
+        if: github.ref != 'refs/heads/main'
+        run: echo "should_push=false" >> $GITHUB_ENV
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
       - name: Set up Docker Buildx
@@ -29,7 +32,7 @@ jobs:
           context: .
           file: AutoscalerApi/Dockerfile
           pull: true
-          push: true
+          push: ${{env.should_push}}
           tags: ${{env.image}}
           platforms: linux/amd64,linux/arm64
           cache-from: type=gha
