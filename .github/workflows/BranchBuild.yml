@@ -11,12 +11,11 @@ jobs:
       - uses: actions/checkout@v3
       - name: Build solution
         #uses: mosteo-actions/docker-run@v1
-        uses: addnab/docker-run-action@v3
+        uses: kohlerdominik/docker-run-action@v1
         with:
           image: mcr.microsoft.com/dotnet/sdk:6.0-alpine
-          # command: dotnet build
-          run: |
-            dotnet build -c Release
+          #command: dotnet build
+          run: dotnet build
 
   create-binary:
     runs-on: self-hosted
