@@ -14,7 +14,9 @@ jobs:
         uses: addnab/docker-run-action@v3
         with:
           image: mcr.microsoft.com/dotnet/sdk:6.0-alpine
-          command: dotnet build
+          # command: dotnet build
+          run: |
+            dotnet build -c Release
 
   create-binary:
     runs-on: self-hosted
