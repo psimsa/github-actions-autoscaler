@@ -10,6 +10,9 @@ env:
 jobs:
   create-binary:
     runs-on: self-hosted
+    strategy:
+      matrix: 
+        arch: [x64, arm64]
     steps:
       - uses: actions/checkout@v3
       - name: Setup DotNet ${{ env.DOTNET_VERSION }} Environment
@@ -17,11 +20,11 @@ jobs:
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
       - name: Publish package
-        run: dotnet publish AutoscalerApi --self-contained -p:PublishSingleFile=true -p:PublishTrimmed=true -r linux-x64 -c Release -o artifacts
+        run: dotnet publish AutoscalerApi --self-contained -p:PublishSingleFile=true -p:PublishTrimmed=true -r linux-${{ matrix.arch }} -c Release -o artifacts
       - name: Publish artifacts
         if: github.ref == 'refs/heads/main'
         uses: actions/upload-artifact@v3.0.0
         with:
-          name: github-autoscaler-linux-amd64
+          name: github-autoscaler-linux-${{ matrix.arch }}
           path: artifacts/*
           retention-days: 1
