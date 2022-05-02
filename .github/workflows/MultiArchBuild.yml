@@ -33,7 +33,7 @@ jobs:
           file: AutoscalerApi/Dockerfile
           pull: true
           push: ${{env.should_push}}
-          tags: ${{env.image}}
+          tags: ${{env.image}},docker.io/ofcoursedude/github-actions-runner:autoscaler-${{ github.RUN_ID }}
           platforms: linux/amd64,linux/arm64
           cache-from: type=gha
           cache-to: type=gha,mode=max
