@@ -203,7 +203,7 @@ public class DockerService : IDockerService
                 return false;
             }
 
-            await Task.Delay(TimeSpan.FromSeconds(1));
+            await Task.Delay(TimeSpan.FromSeconds(1), cts.Token);
         }
 
         _logger.LogInformation("Container for {repositoryFullName} started", repositoryFullName);
