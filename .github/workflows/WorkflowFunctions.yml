@@ -18,22 +18,22 @@ jobs:
     runs-on: 
       - self-hosted
       - x64
+    concurrency:
+      group: workflow-functions-${{ github.head_ref }}
+      cancel-in-progress: true
     steps:
       - name: 'Checkout GitHub Action'
         uses: actions/checkout@v3
-
       - name: Setup DotNet ${{ env.DOTNET_VERSION }} Environment
         uses: actions/setup-dotnet@v2
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
-
       - name: 'Resolve Project Dependencies Using Dotnet'
         shell: bash
         run: |
           pushd './${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}'
           dotnet build --configuration Release --output ./output
           popd
-
       - name: 'Run Azure Functions Action'
         uses: Azure/functions-action@v1
         if: github.ref == 'refs/heads/main'

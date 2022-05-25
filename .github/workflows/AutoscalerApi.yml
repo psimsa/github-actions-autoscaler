@@ -9,6 +9,9 @@ env:
 jobs:
   build:
     runs-on: self-hosted
+    concurrency:
+      group: autoscaler-api-${{ github.head_ref }}
+      cancel-in-progress: true
     env:
       image: docker.io/ofcoursedude/moje:autoscaler-${{ github.RUN_ID }}
       tag_suffix: ""
