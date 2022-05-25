@@ -13,6 +13,7 @@ jobs:
         uses: mosteo-actions/docker-run@v1
         with:
           image: mcr.microsoft.com/dotnet/sdk:6.0-alpine
+          params: --rm
           command: dotnet build
           
   create-binary:
