@@ -5,8 +5,19 @@ on:
   workflow_dispatch:
 
 jobs:
+  build-solution:
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v3
+      - name: Build solution
+        uses: mosteo-actions/docker-run@v1
+        with:
+          image: mcr.microsoft.com/dotnet/sdk:6.0-alpine
+          command: dotnet build
+          
   create-binary:
     runs-on: self-hosted
+    if: github.ref == 'refs/heads/main'
     strategy:
       matrix: 
         arch: [x64, arm64]
