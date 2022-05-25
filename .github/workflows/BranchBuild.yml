@@ -8,7 +8,7 @@ jobs:
   build-solution:
     runs-on: self-hosted
     concurrency:
-      group: branch-build-solution-${{ github.head_ref }}
+      group: branch-build-solution-${{ github.ref_name }}
       cancel-in-progress: true
     steps:
       - uses: actions/checkout@v3
@@ -22,7 +22,7 @@ jobs:
   create-binary:
     runs-on: self-hosted
     concurrency:
-      group: branch-build-binary-${{ github.head_ref }}
+      group: branch-build-binary-${{ github.ref_name }}
       cancel-in-progress: true
     if: github.ref == 'refs/heads/main'
     strategy:

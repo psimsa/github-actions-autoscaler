@@ -19,7 +19,7 @@ jobs:
       - self-hosted
       - x64
     concurrency:
-      group: workflow-functions-${{ github.head_ref }}
+      group: workflow-functions-${{ github.ref_name }}
       cancel-in-progress: true
     steps:
       - name: 'Checkout GitHub Action'

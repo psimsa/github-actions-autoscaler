@@ -10,7 +10,7 @@ jobs:
   multiarch-build:
     runs-on: self-hosted
     concurrency:
-      group: multiarch-build-${{ github.head_ref }}
+      group: multiarch-build-${{ github.ref_name }}
       cancel-in-progress: true
     env:
       image: docker.io/ofcoursedude/moje:multiscaler-${{ github.RUN_ID }}

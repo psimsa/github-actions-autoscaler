@@ -10,7 +10,7 @@ jobs:
   build:
     runs-on: self-hosted
     concurrency:
-      group: autoscaler-api-${{ github.head_ref }}
+      group: autoscaler-api-${{ github.ref_name }}
       cancel-in-progress: true
     env:
       image: docker.io/ofcoursedude/moje:autoscaler-${{ github.RUN_ID }}
