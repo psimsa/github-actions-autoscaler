@@ -68,10 +68,13 @@ public class DockerService : IDockerService
     {
         switch (workflow?.Action)
         {
+            case "queued" when workflow.Job.Labels.All(l => l != "self-hosted"):
+                _logger.LogInformation("Removing non-selfhosted job {jobName} from queue", workflow.Job.Name);
+                return true;
             case "queued" when !CheckIfHasAllLabels(workflow.Job.Labels):
+                _logger.LogInformation("Job {jobName} does not have all necessary labels, returning to queue", workflow.Job.Name);
                 return false;
-            case "queued" when CheckIfRepoIsWhitelistedOrHasAllowedPrefix(workflow.Repository.FullName) &&
-                               workflow.Job.Labels.Any(_ => _ == "self-hosted"):
+            case "queued" when CheckIfRepoIsWhitelistedOrHasAllowedPrefix(workflow.Repository.FullName):
                 _logger.LogInformation(
                     "Workflow '{Workflow}' is self-hosted and repository {Repository} whitelisted, starting container",
                     workflow.Job.Name, workflow.Repository.FullName);
