@@ -19,6 +19,7 @@ public class AppConfiguration
     public bool IsRepoBlacklistExactMatch { get; set; }
     public string DockerHost { get; set; } = "";
     public string[] Labels { get; set; } = Array.Empty<string>();
+    public string ApplicationInsightsConnectionString { get; set; } = "";
 
     [UnconditionalSuppressMessage("Trimming",
         "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code",
@@ -68,7 +69,8 @@ public class AppConfiguration
                     "self-hosted",
                     architecture,
                     // os
-                }).Distinct().ToArray()
+                }).Distinct().ToArray(),
+            ApplicationInsightsConnectionString = configuration.GetValue<string>("APPLICATIONINSIGHTS_CONNECTION_STRING")
         };
     }
 }

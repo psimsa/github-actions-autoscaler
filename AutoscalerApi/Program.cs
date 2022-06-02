@@ -20,7 +20,10 @@ if (appConfig.UseWebEndpoint)
 }
 
 builder.Services.AddSingleton<IDockerService, DockerService>();
-builder.Services.AddApplicationInsightsTelemetryWorkerService();
+if (!string.IsNullOrWhiteSpace(appConfig.ApplicationInsightsConnectionString))
+{
+    builder.Services.AddApplicationInsightsTelemetryWorkerService();
+}
 
 var dockerConfig = !string.IsNullOrWhiteSpace(appConfig.DockerHost)
     ? new DockerClientConfiguration(new Uri(appConfig.DockerHost))
