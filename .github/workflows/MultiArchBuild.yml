@@ -18,7 +18,7 @@ jobs:
       - uses: actions/checkout@v3
       - name: Set suffix
         if: github.ref != 'refs/heads/main'
-        run: echo "should_push=false" >> $GITHUB_ENV
+        run: echo "suffix='-preview'" >> $GITHUB_ENV
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
       - name: Set up Docker Buildx
@@ -34,8 +34,8 @@ jobs:
           context: .
           file: AutoscalerApi/Dockerfile
           pull: true
-          push: ${{env.should_push}}
-          tags: docker.io/ofcoursedude/github-actions-runner:${{ github.RUN_ID }},docker.io/ofcoursedude/github-actions-runner:latest
+          push: true
+          tags: docker.io/ofcoursedude/github-actions-runner:${{ github.RUN_ID }}${{env.suffix}},docker.io/ofcoursedude/github-actions-runner:latest${{env.suffix}}
           platforms: linux/amd64,linux/arm64
           cache-from: type=gha
           cache-to: type=gha,mode=max

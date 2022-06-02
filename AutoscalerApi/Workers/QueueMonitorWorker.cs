@@ -23,6 +23,7 @@ public class QueueMonitorWorker : IHostedService
 
     public async Task StartAsync(CancellationToken cancellationToken)
     {
+        _logger.LogInformation("QueueMonitorWorker is starting");
         var client = new QueueClient(_connectionString, _queueName);
 
         await client.CreateIfNotExistsAsync(cancellationToken: cancellationToken);
@@ -86,5 +87,6 @@ public class QueueMonitorWorker : IHostedService
 
     public async Task StopAsync(CancellationToken cancellationToken)
     {
+        _logger.LogInformation("QueueMonitorWorker is stopping");
     }
 }
