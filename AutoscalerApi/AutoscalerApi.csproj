@@ -14,7 +14,7 @@
 	<ItemGroup>
 		<PackageReference Include="Microsoft.ApplicationInsights.WorkerService" Version="2.20.0" />
 		<TrimmerRootAssembly Include="AutoscalerApi" />
-		<PackageReference Include="Azure.Storage.Queues" Version="12.10.0" />
+		<PackageReference Include="Azure.Storage.Queues" Version="12.11.0" />
 		<PackageReference Include="Docker.DotNet" Version="3.125.10">
 			<IsTrimmable>false</IsTrimmable>
 		</PackageReference>
