@@ -171,7 +171,7 @@ public class DockerService : IDockerService
 
         var container = new CreateContainerParameters()
         {
-            Image = "myoung34/github-runner",
+            Image = "myoung34/github-runner:2.294.0-ubuntu-focal",
             Name = containerName,
             HostConfig = new HostConfig()
             {
@@ -236,7 +236,7 @@ public class DockerService : IDockerService
         var tags = imagesListResponses
             .Where(_ => _.RepoTags is { Count: > 0 }).SelectMany(_ => _.RepoTags);
 
-        if (tags.Any(_ => _.Equals("myoung34/github-runner:latest")) &&
+        if (tags.Any(_ => _.Equals("myoung34/github-runner:2.294.0-ubuntu-focal")) &&
             _lastPullCheck.AddHours(1) > DateTime.UtcNow)
         {
             return success;
@@ -252,7 +252,7 @@ public class DockerService : IDockerService
             new ImagesCreateParameters
             {
                 FromImage = "myoung34/github-runner",
-                Tag = "latest",
+                Tag = "2.294.0-ubuntu-focal",
             }, new AuthConfig() { Password = _dockerToken }, new Progress<JSONMessage>(
                 message =>
                 {
