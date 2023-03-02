@@ -15,7 +15,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: 6.0.x
+          dotnet-version: 7.0.x
       - name: Build solution
         run: dotnet build -c Release
           
@@ -33,7 +33,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: 6.0.x
+          dotnet-version: 7.0.x
       - name: Publish package
         run: dotnet publish AutoscalerApi --self-contained -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:PublishTrimmed=true -r linux-${{ matrix.arch }} -c Release -o artifacts
       - name: Publish artifacts
@@ -42,4 +42,4 @@ jobs:
         with:
           name: github-autoscaler-linux-${{ matrix.arch }}
           path: artifacts/*
-          retention-days: 1
+          retention-days: 5
