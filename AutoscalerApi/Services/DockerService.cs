@@ -171,7 +171,7 @@ public class DockerService : IDockerService
 
         var container = new CreateContainerParameters()
         {
-            Image = "myoung34/github-runner:2.294.0-ubuntu-focal",
+            Image = "myoung34/github-runner:latest",
             Name = containerName,
             HostConfig = new HostConfig()
             {
