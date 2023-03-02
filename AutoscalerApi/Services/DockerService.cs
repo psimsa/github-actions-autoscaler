@@ -175,7 +175,7 @@ public class DockerService : IDockerService
             Name = containerName,
             HostConfig = new HostConfig()
             {
-                AutoRemove = true,
+                // AutoRemove = true,
                 Mounts = mounts,
             },
             Volumes = volumes,
