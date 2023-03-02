@@ -236,7 +236,7 @@ public class DockerService : IDockerService
         var tags = imagesListResponses
             .Where(_ => _.RepoTags is { Count: > 0 }).SelectMany(_ => _.RepoTags);
 
-        if (tags.Any(_ => _.Equals("myoung34/github-runner:2.294.0-ubuntu-focal")) &&
+        if (tags.Any(_ => _.Equals("myoung34/github-runner:latest")) &&
             _lastPullCheck.AddHours(1) > DateTime.UtcNow)
         {
             return success;
@@ -252,7 +252,7 @@ public class DockerService : IDockerService
             new ImagesCreateParameters
             {
                 FromImage = "myoung34/github-runner",
-                Tag = "2.294.0-ubuntu-focal",
+                Tag = "latest",
             }, new AuthConfig() { Password = _dockerToken }, new Progress<JSONMessage>(
                 message =>
                 {
