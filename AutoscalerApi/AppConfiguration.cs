@@ -9,7 +9,7 @@ public class AppConfiguration
     public string AzureStorage { get; set; } = "";
     public string AzureStorageQueue { get; set; } = "";
     public string DockerToken { get; set; } = "";
-    public string DockerImage { get; set; } = "myoung34/github-runner:latest";
+    public string DockerImage { get; set; }
     public string GithubToken { get; set; } = "";
     public int MaxRunners { get; set; }
     public string RepoWhitelistPrefix { get; set; } = "";
@@ -34,7 +34,7 @@ public class AppConfiguration
             < 0 => int.MaxValue,
             _ => maxRunners
         };
-        
+
         var architecture = RuntimeInformation.ProcessArchitecture.ToString().ToLowerInvariant();
         /*var os = architecture switch
         {
@@ -71,7 +71,9 @@ public class AppConfiguration
                     architecture,
                     // os
                 }).Distinct().ToArray(),
-            ApplicationInsightsConnectionString = configuration.GetValue<string>("APPLICATIONINSIGHTS_CONNECTION_STRING")
+            ApplicationInsightsConnectionString =
+                configuration.GetValue<string>("APPLICATIONINSIGHTS_CONNECTION_STRING"),
+            DockerImage = configuration.GetValue<string>("DockerImage") ?? "myoung34/github-runner:latest"
         };
     }
 }
