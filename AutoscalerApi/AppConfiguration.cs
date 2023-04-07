@@ -9,6 +9,7 @@ public class AppConfiguration
     public string AzureStorage { get; set; } = "";
     public string AzureStorageQueue { get; set; } = "";
     public string DockerToken { get; set; } = "";
+    public string DockerImage { get; set; } = "myoung34/github-runner:latest";
     public string GithubToken { get; set; } = "";
     public int MaxRunners { get; set; }
     public string RepoWhitelistPrefix { get; set; } = "";

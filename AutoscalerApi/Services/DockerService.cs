@@ -35,6 +35,7 @@ public class DockerService : IDockerService
     };
 
     private EmptyStruct _emptyStruct = new EmptyStruct();
+    private readonly string _dockerImage;
 
     public DockerService(DockerClient client, AppConfiguration configuration, ILogger<DockerService> logger)
     {
@@ -53,6 +54,7 @@ public class DockerService : IDockerService
         _labels = configuration.Labels;
         _labelField = string.Join(',', _labels).ToLowerInvariant();
         _containerGuardTask = ContainerGuard(CancellationToken.None);
+        _dockerImage = configuration.DockerImage;
     }
 
     public async Task<IList<ContainerListResponse>> GetAutoscalerContainersAsync()
@@ -171,7 +173,7 @@ public class DockerService : IDockerService
 
         var container = new CreateContainerParameters()
         {
-            Image = "myoung34/github-runner:2.294.0-ubuntu-focal",
+            Image = _dockerImage,
             Name = containerName,
             HostConfig = new HostConfig()
             {
@@ -248,11 +250,12 @@ public class DockerService : IDockerService
         var m = new ManualResetEventSlim();
 
         var progress = new Progress<JSONMessage>();
+        var imageFields = _dockerImage.Split(':');
         var t = Task.Run(async () => await _client.Images.CreateImageAsync(
             new ImagesCreateParameters
             {
-                FromImage = "myoung34/github-runner",
-                Tag = "latest",
+                FromImage = imageFields[0],
+                Tag = imageFields.Length==2 ? imageFields[1] : "latest",
             }, new AuthConfig() { Password = _dockerToken }, new Progress<JSONMessage>(
                 message =>
                 {
