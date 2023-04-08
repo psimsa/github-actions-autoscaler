@@ -21,6 +21,8 @@ public class AppConfiguration
     public string DockerHost { get; set; } = "";
     public string[] Labels { get; set; } = Array.Empty<string>();
     public string ApplicationInsightsConnectionString { get; set; } = "";
+    public bool AutoCheckForImageUpdates { get; set; }
+
 
     [UnconditionalSuppressMessage("Trimming",
         "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code",
@@ -73,7 +75,9 @@ public class AppConfiguration
                 }).Distinct().ToArray(),
             ApplicationInsightsConnectionString =
                 configuration.GetValue<string>("APPLICATIONINSIGHTS_CONNECTION_STRING"),
-            DockerImage = configuration.GetValue<string>("DockerImage") ?? "myoung34/github-runner:latest"
+            DockerImage = configuration.GetValue<string>("DockerImage") ?? "myoung34/github-runner:latest",
+            AutoCheckForImageUpdates = configuration.GetValue<bool>("AutoCheckForImageUpdates", true)
         };
     }
+
 }
