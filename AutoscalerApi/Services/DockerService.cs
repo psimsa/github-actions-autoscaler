@@ -35,6 +35,8 @@ public class DockerService : IDockerService
     };
 
     private EmptyStruct _emptyStruct = new EmptyStruct();
+    private readonly string _dockerImage;
+    private readonly bool _autoCheckForImageUpdates;
 
     public DockerService(DockerClient client, AppConfiguration configuration, ILogger<DockerService> logger)
     {
@@ -53,14 +55,16 @@ public class DockerService : IDockerService
         _labels = configuration.Labels;
         _labelField = string.Join(',', _labels).ToLowerInvariant();
         _containerGuardTask = ContainerGuard(CancellationToken.None);
+        _dockerImage = configuration.DockerImage;
+        _autoCheckForImageUpdates = configuration.AutoCheckForImageUpdates;
     }
 
     public async Task<IList<ContainerListResponse>> GetAutoscalerContainersAsync()
     {
         return await _client.Containers.ListContainersAsync(new ContainersListParameters()
         {
-           Filters = _autoscalerContainersDefinition,
-           All = true
+            Filters = _autoscalerContainersDefinition,
+            All = true
         });
     }
 
@@ -72,7 +76,8 @@ public class DockerService : IDockerService
                 _logger.LogInformation("Removing non-selfhosted job {jobName} from queue", workflow.Job.Name);
                 return true;
             case "queued" when !CheckIfHasAllLabels(workflow.Job.Labels):
-                _logger.LogInformation("Job {jobName} does not have all necessary labels, returning to queue", workflow.Job.Name);
+                _logger.LogInformation("Job {jobName} does not have all necessary labels, returning to queue",
+                    workflow.Job.Name);
                 return false;
             case "queued" when CheckIfRepoIsWhitelistedOrHasAllowedPrefix(workflow.Repository.FullName):
                 _logger.LogInformation(
@@ -171,7 +176,7 @@ public class DockerService : IDockerService
 
         var container = new CreateContainerParameters()
         {
-            Image = "myoung34/github-runner:2.294.0-ubuntu-focal",
+            Image = _dockerImage,
             Name = containerName,
             HostConfig = new HostConfig()
             {
@@ -229,6 +234,12 @@ public class DockerService : IDockerService
 
     private async Task<bool> PullImageIfNotExists(CancellationToken token)
     {
+        if(!_autoCheckForImageUpdates)
+        {
+            _logger.LogInformation("Auto download of builder image disabled, skipping...");
+            return true;
+        }
+
         var success = true;
 
         var imagesListResponses =
@@ -236,7 +247,7 @@ public class DockerService : IDockerService
         var tags = imagesListResponses
             .Where(_ => _.RepoTags is { Count: > 0 }).SelectMany(_ => _.RepoTags);
 
-        if (tags.Any(_ => _.Equals("myoung34/github-runner:latest")) &&
+        if (tags.Any(_ => _.Equals(_dockerImage)) &&
             _lastPullCheck.AddHours(1) > DateTime.UtcNow)
         {
             return success;
@@ -248,11 +259,12 @@ public class DockerService : IDockerService
         var m = new ManualResetEventSlim();
 
         var progress = new Progress<JSONMessage>();
+        var imageFields = _dockerImage.Split(':');
         var t = Task.Run(async () => await _client.Images.CreateImageAsync(
             new ImagesCreateParameters
             {
-                FromImage = "myoung34/github-runner",
-                Tag = "latest",
+                FromImage = imageFields[0],
+                Tag = imageFields.Length == 2 ? imageFields[1] : "latest",
             }, new AuthConfig() { Password = _dockerToken }, new Progress<JSONMessage>(
                 message =>
                 {

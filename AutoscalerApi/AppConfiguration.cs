@@ -9,6 +9,7 @@ public class AppConfiguration
     public string AzureStorage { get; set; } = "";
     public string AzureStorageQueue { get; set; } = "";
     public string DockerToken { get; set; } = "";
+    public string DockerImage { get; set; }
     public string GithubToken { get; set; } = "";
     public int MaxRunners { get; set; }
     public string RepoWhitelistPrefix { get; set; } = "";
@@ -20,6 +21,8 @@ public class AppConfiguration
     public string DockerHost { get; set; } = "";
     public string[] Labels { get; set; } = Array.Empty<string>();
     public string ApplicationInsightsConnectionString { get; set; } = "";
+    public bool AutoCheckForImageUpdates { get; set; }
+
 
     [UnconditionalSuppressMessage("Trimming",
         "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code",
@@ -33,7 +36,7 @@ public class AppConfiguration
             < 0 => int.MaxValue,
             _ => maxRunners
         };
-        
+
         var architecture = RuntimeInformation.ProcessArchitecture.ToString().ToLowerInvariant();
         /*var os = architecture switch
         {
@@ -70,7 +73,11 @@ public class AppConfiguration
                     architecture,
                     // os
                 }).Distinct().ToArray(),
-            ApplicationInsightsConnectionString = configuration.GetValue<string>("APPLICATIONINSIGHTS_CONNECTION_STRING")
+            ApplicationInsightsConnectionString =
+                configuration.GetValue<string>("APPLICATIONINSIGHTS_CONNECTION_STRING"),
+            DockerImage = configuration.GetValue<string>("DockerImage") ?? "myoung34/github-runner:latest",
+            AutoCheckForImageUpdates = configuration.GetValue<bool>("AutoCheckForImageUpdates", true)
         };
     }
+
 }
