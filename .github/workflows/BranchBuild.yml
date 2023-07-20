@@ -18,7 +18,7 @@ jobs:
           dotnet-version: 7.0.x
       - name: Build solution
         run: dotnet build -c Release
-          
+
   create-binary:
     runs-on: ubuntu-latest
     concurrency:
@@ -26,7 +26,7 @@ jobs:
       cancel-in-progress: true
     if: github.ref == 'refs/heads/main'
     strategy:
-      matrix: 
+      matrix:
         arch: [x64, arm64]
     steps:
       - uses: actions/checkout@v3
