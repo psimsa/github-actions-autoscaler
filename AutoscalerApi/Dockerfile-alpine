@@ -4,7 +4,7 @@ FROM alpine AS base
 WORKDIR /app
 EXPOSE 80
 
-FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:7.0 AS build
 WORKDIR /src
 COPY ["AutoscalerApi/AutoscalerApi.csproj", "AutoscalerApi/"]
 RUN dotnet restore -r linux-musl-x64 "AutoscalerApi/AutoscalerApi.csproj"
@@ -16,12 +16,12 @@ FROM build AS publish
 RUN dotnet publish --self-contained -p:PublishSingleFile=true -p:PublishTrimmed=false -r linux-musl-x64 -c Release -o /app/publish
 
 FROM base AS final
-RUN apk add --no-cache \ 
-    openssh libunwind \
-    nghttp2-libs libidn krb5-libs libuuid lttng-ust zlib \
-    libstdc++ libintl \
-    icu
-	
+RUN apk add --no-cache \
+openssh libunwind \
+nghttp2-libs libidn krb5-libs libuuid lttng-ust zlib \
+libstdc++ libintl \
+icu
+
 WORKDIR /app
 COPY --from=publish /app/publish .
 ENTRYPOINT ["./AutoscalerApi", "--urls", "http://0.0.0.0:80"]
