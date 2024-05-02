@@ -5,6 +5,7 @@ WORKDIR /app
 EXPOSE 8080
 
 FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+ARG TARGETARCH
 WORKDIR /src
 COPY ["AutoscalerApi/AutoscalerApi.csproj", "AutoscalerApi/"]
 RUN dotnet restore "AutoscalerApi/AutoscalerApi.csproj" -a $TARGETARCH
@@ -13,6 +14,7 @@ WORKDIR "/src/AutoscalerApi"
 RUN dotnet build "AutoscalerApi.csproj" -c Release -o /app/build -a $TARGETARCH
 
 FROM build AS publish
+ARG TARGETARCH
 RUN dotnet publish "AutoscalerApi.csproj" -c Release -o /app/publish -a $TARGETARCH
 
 FROM base AS final
