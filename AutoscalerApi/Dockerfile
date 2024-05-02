@@ -2,18 +2,18 @@
 
 FROM mcr.microsoft.com/dotnet/aspnet:8.0-alpine AS base
 WORKDIR /app
-EXPOSE 80
+EXPOSE 8080
 
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 COPY ["AutoscalerApi/AutoscalerApi.csproj", "AutoscalerApi/"]
-RUN dotnet restore "AutoscalerApi/AutoscalerApi.csproj"
+RUN dotnet restore "AutoscalerApi/AutoscalerApi.csproj" -a $TARGETARCH
 COPY . .
 WORKDIR "/src/AutoscalerApi"
-RUN dotnet build "AutoscalerApi.csproj" -c Release -o /app/build
+RUN dotnet build "AutoscalerApi.csproj" -c Release -o /app/build -a $TARGETARCH
 
 FROM build AS publish
-RUN dotnet publish "AutoscalerApi.csproj" -c Release -o /app/publish
+RUN dotnet publish "AutoscalerApi.csproj" -c Release -o /app/publish -a $TARGETARCH
 
 FROM base AS final
 WORKDIR /app
