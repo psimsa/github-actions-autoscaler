@@ -84,7 +84,7 @@ public class DockerService : IDockerService
                     "Workflow '{Workflow}' is self-hosted and repository {Repository} whitelisted, starting container",
                     workflow.Job.Name, workflow.Repository.FullName);
                 Interlocked.Increment(ref _totalCount);
-                var containerName = $"{workflow.Repository.Name}-{workflow.Job.RunId}-{_totalCount}";
+                var containerName = $"{Environment.MachineName}-{workflow.Repository.Name}-{workflow.Job.RunId}-{_totalCount}";
                 return await StartEphemeralContainer(workflow.Repository.FullName,
                     containerName, workflow.Job.RunId);
             case "completed":
