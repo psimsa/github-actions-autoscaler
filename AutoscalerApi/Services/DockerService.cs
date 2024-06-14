@@ -1,4 +1,4 @@
-﻿using AutoscalerApi.Models;
+using AutoscalerApi.Models;
 using Docker.DotNet;
 using Docker.DotNet.Models;
 
@@ -118,7 +118,6 @@ public class DockerService : IDockerService
                 await _client.Containers.StartContainerAsync(createdContainer.ID, new ContainerStartParameters(),
                     token);
             }
-
 
             foreach (var containerListResponse in containers.Where(IsContainerTooOld))
             {
@@ -289,7 +288,7 @@ public class DockerService : IDockerService
         {
             return repoName switch
             {
-                var f when string.IsNullOrWhiteSpace(_repoBlacklistPrefix) && !_repoBlacklist.Any() => false,
+                var f when string.IsNullOrWhiteSpace(_repoBlacklistPrefix) && _repoBlacklist.Length == 0 => false,
                 var f when f.StartsWith(_repoBlacklistPrefix) => true,
                 var f when _isRepoBlacklistExactMatch => _repoBlacklist.Contains(f),
                 _ => _repoBlacklist.Any(repoName.StartsWith)
