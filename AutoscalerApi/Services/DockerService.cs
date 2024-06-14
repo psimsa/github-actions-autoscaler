@@ -1,4 +1,4 @@
-﻿using AutoscalerApi.Models;
+using AutoscalerApi.Models;
 using Docker.DotNet;
 using Docker.DotNet.Models;
 
@@ -84,7 +84,7 @@ public class DockerService : IDockerService
                     "Workflow '{Workflow}' is self-hosted and repository {Repository} whitelisted, starting container",
                     workflow.Job.Name, workflow.Repository.FullName);
                 Interlocked.Increment(ref _totalCount);
-                var containerName = $"{workflow.Repository.Name}-{workflow.Job.RunId}-{_totalCount}";
+                var containerName = $"{Environment.MachineName}-{workflow.Repository.Name}-{workflow.Job.RunId}-{_totalCount}";
                 return await StartEphemeralContainer(workflow.Repository.FullName,
                     containerName, workflow.Job.RunId);
             case "completed":
@@ -118,7 +118,6 @@ public class DockerService : IDockerService
                 await _client.Containers.StartContainerAsync(createdContainer.ID, new ContainerStartParameters(),
                     token);
             }
-
 
             foreach (var containerListResponse in containers.Where(IsContainerTooOld))
             {
@@ -289,7 +288,7 @@ public class DockerService : IDockerService
         {
             return repoName switch
             {
-                var f when string.IsNullOrWhiteSpace(_repoBlacklistPrefix) && !_repoBlacklist.Any() => false,
+                var f when string.IsNullOrWhiteSpace(_repoBlacklistPrefix) && _repoBlacklist.Length == 0 => false,
                 var f when f.StartsWith(_repoBlacklistPrefix) => true,
                 var f when _isRepoBlacklistExactMatch => _repoBlacklist.Contains(f),
                 _ => _repoBlacklist.Any(repoName.StartsWith)
