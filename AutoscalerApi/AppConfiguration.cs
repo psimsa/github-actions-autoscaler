@@ -23,7 +23,6 @@ public class AppConfiguration
     public string ApplicationInsightsConnectionString { get; set; } = "";
     public bool AutoCheckForImageUpdates { get; set; }
 
-
     [UnconditionalSuppressMessage("Trimming",
         "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code",
         Justification = "<Pending>")]
@@ -45,7 +44,6 @@ public class AppConfiguration
             _ when RuntimeInformation.IsOSPlatform(OSPlatform.OSX) => "osx",
             _ => ""
         };*/
-
 
         return new AppConfiguration()
         {
@@ -79,5 +77,4 @@ public class AppConfiguration
             AutoCheckForImageUpdates = configuration.GetValue<bool>("AutoCheckForImageUpdates", true)
         };
     }
-
 }
