@@ -1,0 +1,30 @@
+{
+  "projectPath": ".",
+  "outputPath": "aspirate-output",
+  "containerImageTags": [
+    "latest"
+  ],
+  "containerBuilder": "docker",
+  "outputFormat": "compose",
+  "privateRegistryEmail": "aspir8@aka.ms",
+  "includeDashboard": true,
+  "secrets": {
+    "salt": "5odaxZTiUiUSnBS5",
+    "hash": "shL/ubVStvXbVWESoGnQAaRZYnwe7Z\u002BTgX0IlhgvoIk=",
+    "secrets": {
+      "AzureStorage": {
+        "value": "5odaxZTiUiUSnBS5jHRawX6gRJsmgpkyOc3xIWVqguOSYavk\u002BFloqo0Y6qAMHG89AlSbOE/wQDsAw63cyViGRuCJB/MFSmYhjHE8m0FiNXKTPYkER4TeDpK8H6ifchlJpxXS045oJ7/qBFpyi9wcrVvVgPfbNs6PcMg\u002BpaBA6Z7boN7ZatTKUKgDd7y4tSMlppw97RFklo6ZR5Ij7tBKE9ogdhvgY5U4PWPzj3sc3cTgZ\u002BTHs4/HVFNOUnIY6T\u002BcktZhQF8gkXdTUgnX93k5fMx\u002BltGswAEtuhQ="
+      },
+      "AzureStorageQueue": {
+        "value": "5odaxZTiUiUSnBS5ukn9IID9svPcRHXaLwb1x1ZglumBYbDWu1d3p8kH67YpC2Q="
+      },
+      "autoscaler-api": {
+        "ConnectionStrings__AzureStorage": "5odaxZTiUiUSnBS5jHRawX6gRJsmgpkyOc3xIWVqguOSYavk\u002BFloqo0Y6qAMHG89AlSbOE/wQDsAw63cyViGRuCJB/MFSmYhjHE8m0FiNXKTPYkER4TeDpK8H6ifchlJpxXS045oJ7/qBFpyi9wcrVvVgPfbNs6PcMg\u002BpaBA6Z7boN7ZatTKUKgDd7y4tSMlppw97RFklo6ZR5Ij7tBKE9ogdhvgY5U4PWPzj3sc3cTgZ\u002BTHs4/HVFNOUnIY6T\u002BcktZhQF8gkXdTUgnX93k5fMx\u002BltGswAEtuhQ="
+      },
+      "autoscaler-worker": {
+        "ConnectionStrings__AzureStorage": "5odaxZTiUiUSnBS5jHRawX6gRJsmgpkyOc3xIWVqguOSYavk\u002BFloqo0Y6qAMHG89AlSbOE/wQDsAw63cyViGRuCJB/MFSmYhjHE8m0FiNXKTPYkER4TeDpK8H6ifchlJpxXS045oJ7/qBFpyi9wcrVvVgPfbNs6PcMg\u002BpaBA6Z7boN7ZatTKUKgDd7y4tSMlppw97RFklo6ZR5Ij7tBKE9ogdhvgY5U4PWPzj3sc3cTgZ\u002BTHs4/HVFNOUnIY6T\u002BcktZhQF8gkXdTUgnX93k5fMx\u002BltGswAEtuhQ="
+      }
+    }
+  },
+  "processAllComponents": true
+}

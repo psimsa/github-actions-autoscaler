@@ -454,3 +454,4 @@ $RECYCLE.BIN/
 !.vscode/extensions.json
 
 **/appsettings.custom.json
+/src/Autoscaler.AppHost/aspirate-output

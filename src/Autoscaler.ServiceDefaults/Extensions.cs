@@ -38,6 +38,8 @@ namespace Microsoft.Extensions.Hosting
             //     options.AllowedSchemes = ["https"];
             // });
 
+            builder.AddAzureQueueClient("AzureStorage");
+
             return builder;
         }
 
