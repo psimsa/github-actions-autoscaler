@@ -28,6 +28,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Autoscaler.Domain", "src\Au
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Autoscaler.Docker", "src\Autoscaler.Docker\Autoscaler.Docker.csproj", "{EBD204C2-3562-4A44-96C1-675EC23ACFF0}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Autoscaler.AppHost", "src\Autoscaler.AppHost\Autoscaler.AppHost.csproj", "{AC7D14A6-A40E-4F3F-A91B-E48AB294523C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Autoscaler.ServiceDefaults", "src\Autoscaler.ServiceDefaults\Autoscaler.ServiceDefaults.csproj", "{8CE23F72-07D9-4F2B-8F5B-83EF44337963}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -58,6 +62,14 @@ Global
 		{EBD204C2-3562-4A44-96C1-675EC23ACFF0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EBD204C2-3562-4A44-96C1-675EC23ACFF0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EBD204C2-3562-4A44-96C1-675EC23ACFF0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AC7D14A6-A40E-4F3F-A91B-E48AB294523C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AC7D14A6-A40E-4F3F-A91B-E48AB294523C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AC7D14A6-A40E-4F3F-A91B-E48AB294523C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AC7D14A6-A40E-4F3F-A91B-E48AB294523C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8CE23F72-07D9-4F2B-8F5B-83EF44337963}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8CE23F72-07D9-4F2B-8F5B-83EF44337963}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8CE23F72-07D9-4F2B-8F5B-83EF44337963}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8CE23F72-07D9-4F2B-8F5B-83EF44337963}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -67,6 +79,8 @@ Global
 		{1840A305-5132-4098-980A-394E94D492A5} = {2D7FA837-3F28-4E77-AFC4-127940E93C73}
 		{F59886C2-4BDB-4412-8182-E819449BB031} = {2D7FA837-3F28-4E77-AFC4-127940E93C73}
 		{EBD204C2-3562-4A44-96C1-675EC23ACFF0} = {2D7FA837-3F28-4E77-AFC4-127940E93C73}
+		{AC7D14A6-A40E-4F3F-A91B-E48AB294523C} = {2D7FA837-3F28-4E77-AFC4-127940E93C73}
+		{8CE23F72-07D9-4F2B-8F5B-83EF44337963} = {2D7FA837-3F28-4E77-AFC4-127940E93C73}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {D99C66B7-0E98-4B09-B977-6C4D83E168BD}

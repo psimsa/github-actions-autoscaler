@@ -20,5 +20,6 @@
   <ItemGroup>
     <ProjectReference Include="..\Autoscaler.Docker\Autoscaler.Docker.csproj" />
     <ProjectReference Include="..\Autoscaler.Domain\Autoscaler.Domain.csproj" />
+    <ProjectReference Include="..\Autoscaler.ServiceDefaults\Autoscaler.ServiceDefaults.csproj" />
   </ItemGroup>
 </Project>
