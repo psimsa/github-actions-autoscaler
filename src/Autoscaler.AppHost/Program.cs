@@ -5,19 +5,15 @@ var builder = DistributedApplication.CreateBuilder(args);
 var queueName = builder.AddParameter("AzureStorageQueue", secret: false);
 
 IResourceBuilder<IResourceWithConnectionString> azureStorage;
-if (builder.Environment.IsDevelopment())
-{
-    var storage = builder.AddAzureStorage("storage");
-    storage.RunAsEmulator(cc =>
-    {
-        // cc.WithArgs("azurite", "--skipApiVersionCheck", "--loose");
-    });
-    azureStorage = storage.AddQueues("AzureStorage");
-}
-else
-{
-    azureStorage = builder.AddConnectionString("AzureStorage");
-}
+
+azureStorage = builder.ExecutionContext.IsPublishMode
+    ? builder.AddConnectionString("AzureStorage")
+    : builder.AddAzureStorage("storage")
+        .RunAsEmulator().AddQueues("AzureStorage");
+
+
+var dockerToken = builder.AddParameter("DockerToken", secret: true);
+var githubToken = builder.AddParameter("GithubToken", secret: true);
 
 builder.AddProject<Projects.Autoscaler_Api>("autoscaler-api")
     .WithReference(azureStorage)
@@ -27,6 +23,8 @@ builder.AddProject<Projects.Autoscaler_Api>("autoscaler-api")
 builder.AddProject<Projects.Autoscaler_Worker>("autoscaler-worker")
     .WithReference(azureStorage)
     .WithEnvironment("AzureStorageQueue", queueName)
+    .WithEnvironment("DockerToken", dockerToken)
+    .WithEnvironment("GithubToken", githubToken)
     ;
 
 builder.Build().Run();

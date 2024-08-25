@@ -19,4 +19,8 @@
     <ProjectReference Include="..\Autoscaler.Worker\Autoscaler.Worker.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="aspirate-output\" />
+  </ItemGroup>
+
 </Project>

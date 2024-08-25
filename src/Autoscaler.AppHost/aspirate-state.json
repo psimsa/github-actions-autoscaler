@@ -9,20 +9,26 @@
   "privateRegistryEmail": "aspir8@aka.ms",
   "includeDashboard": true,
   "secrets": {
-    "salt": "5odaxZTiUiUSnBS5",
-    "hash": "shL/ubVStvXbVWESoGnQAaRZYnwe7Z\u002BTgX0IlhgvoIk=",
+    "salt": "0IWUcjtB8LKQmBUp",
+    "hash": "oZY\u002BSK2nTn47W7Twi0VHHIaijuZ595q6uH9YRp29PTY=",
     "secrets": {
-      "AzureStorage": {
-        "value": "5odaxZTiUiUSnBS5jHRawX6gRJsmgpkyOc3xIWVqguOSYavk\u002BFloqo0Y6qAMHG89AlSbOE/wQDsAw63cyViGRuCJB/MFSmYhjHE8m0FiNXKTPYkER4TeDpK8H6ifchlJpxXS045oJ7/qBFpyi9wcrVvVgPfbNs6PcMg\u002BpaBA6Z7boN7ZatTKUKgDd7y4tSMlppw97RFklo6ZR5Ij7tBKE9ogdhvgY5U4PWPzj3sc3cTgZ\u002BTHs4/HVFNOUnIY6T\u002BcktZhQF8gkXdTUgnX93k5fMx\u002BltGswAEtuhQ="
-      },
       "AzureStorageQueue": {
-        "value": "5odaxZTiUiUSnBS5ukn9IID9svPcRHXaLwb1x1ZglumBYbDWu1d3p8kH67YpC2Q="
+        "value": "0IWUcjtB8LKQmBUphnRFS9rlaR7E\u002BFZqRGoM78jFGL/s7\u002BQz71zhN65heBlZcVg="
+      },
+      "AzureStorage": {
+        "value": "0IWUcjtB8LKQmBUpqh9uSGQUYZkqfLD6zH0bnPvPDLX/7/8BrFL\u002BOup\u002BeQ98ZlORVvZXFQH\u002BL1M3WiKg0NywOVUZqjQDTqMD4vym8Albkt6xVwm5o44KepfvMjgfCRPfo5ZWozP2sNnVAGKd1yAl1U5rNcFsO3xhDHDPSVMzbApUJEvwTaAVKannjjflP7FVKFMXmwd8Im3ngC91SxsBi5YxhJwq0daPzCth1U/8FrHPavAExAFCHksHOjW22mq0uxAEN4YiXi\u002BiymIInlnh9NM8B1ckaI3y57Y="
+      },
+      "DockerToken": {
+        "value": "0IWUcjtB8LKQmBUp4BramK8dG5TIVGRqonmbH9vJAabV8\u002BownRvvAutqWhQUQFXUD7haMQnxbxc\u002BHG6\u002B9tKoIw=="
+      },
+      "GithubToken": {
+        "value": "0IWUcjtB8LKQmBUpG3D8nmB1PwRZsUlt0/r/6tjCGovssu0v\u002BmO8OvVJQA9qJXKQYPpSTgX7KXQKeEG04ertHW1Uvjw="
       },
       "autoscaler-api": {
-        "ConnectionStrings__AzureStorage": "5odaxZTiUiUSnBS5jHRawX6gRJsmgpkyOc3xIWVqguOSYavk\u002BFloqo0Y6qAMHG89AlSbOE/wQDsAw63cyViGRuCJB/MFSmYhjHE8m0FiNXKTPYkER4TeDpK8H6ifchlJpxXS045oJ7/qBFpyi9wcrVvVgPfbNs6PcMg\u002BpaBA6Z7boN7ZatTKUKgDd7y4tSMlppw97RFklo6ZR5Ij7tBKE9ogdhvgY5U4PWPzj3sc3cTgZ\u002BTHs4/HVFNOUnIY6T\u002BcktZhQF8gkXdTUgnX93k5fMx\u002BltGswAEtuhQ="
+        "ConnectionStrings__AzureStorage": "0IWUcjtB8LKQmBUpqh9uSGQUYZkqfLD6zH0bnPvPDLX/7/8BrFL\u002BOup\u002BeQ98ZlORVvZXFQH\u002BL1M3WiKg0NywOVUZqjQDTqMD4vym8Albkt6xVwm5o44KepfvMjgfCRPfo5ZWozP2sNnVAGKd1yAl1U5rNcFsO3xhDHDPSVMzbApUJEvwTaAVKannjjflP7FVKFMXmwd8Im3ngC91SxsBi5YxhJwq0daPzCth1U/8FrHPavAExAFCHksHOjW22mq0uxAEN4YiXi\u002BiymIInlnh9NM8B1ckaI3y57Y="
       },
       "autoscaler-worker": {
-        "ConnectionStrings__AzureStorage": "5odaxZTiUiUSnBS5jHRawX6gRJsmgpkyOc3xIWVqguOSYavk\u002BFloqo0Y6qAMHG89AlSbOE/wQDsAw63cyViGRuCJB/MFSmYhjHE8m0FiNXKTPYkER4TeDpK8H6ifchlJpxXS045oJ7/qBFpyi9wcrVvVgPfbNs6PcMg\u002BpaBA6Z7boN7ZatTKUKgDd7y4tSMlppw97RFklo6ZR5Ij7tBKE9ogdhvgY5U4PWPzj3sc3cTgZ\u002BTHs4/HVFNOUnIY6T\u002BcktZhQF8gkXdTUgnX93k5fMx\u002BltGswAEtuhQ="
+        "ConnectionStrings__AzureStorage": "0IWUcjtB8LKQmBUpqh9uSGQUYZkqfLD6zH0bnPvPDLX/7/8BrFL\u002BOup\u002BeQ98ZlORVvZXFQH\u002BL1M3WiKg0NywOVUZqjQDTqMD4vym8Albkt6xVwm5o44KepfvMjgfCRPfo5ZWozP2sNnVAGKd1yAl1U5rNcFsO3xhDHDPSVMzbApUJEvwTaAVKannjjflP7FVKFMXmwd8Im3ngC91SxsBi5YxhJwq0daPzCth1U/8FrHPavAExAFCHksHOjW22mq0uxAEN4YiXi\u002BiymIInlnh9NM8B1ckaI3y57Y="
       }
     }
   },

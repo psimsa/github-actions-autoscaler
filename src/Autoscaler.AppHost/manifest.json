@@ -10,17 +10,36 @@
         }
       }
     },
-    "storage": {
-      "type": "azure.bicep.v0",
-      "path": "storage.module.bicep",
-      "params": {
-        "principalId": "",
-        "principalType": ""
+    "AzureStorage": {
+      "type": "parameter.v0",
+      "connectionString": "{AzureStorage.value}",
+      "value": "{AzureStorage.inputs.value}",
+      "inputs": {
+        "value": {
+          "type": "string",
+          "secret": true
+        }
       }
     },
-    "AzureStorage": {
-      "type": "value.v0",
-      "connectionString": "{storage.outputs.queueEndpoint}"
+    "DockerToken": {
+      "type": "parameter.v0",
+      "value": "{DockerToken.inputs.value}",
+      "inputs": {
+        "value": {
+          "type": "string",
+          "secret": true
+        }
+      }
+    },
+    "GithubToken": {
+      "type": "parameter.v0",
+      "value": "{GithubToken.inputs.value}",
+      "inputs": {
+        "value": {
+          "type": "string",
+          "secret": true
+        }
+      }
     },
     "autoscaler-api": {
       "type": "project.v0",
@@ -55,7 +74,9 @@
         "OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EVENT_LOG_ATTRIBUTES": "true",
         "OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY": "in_memory",
         "ConnectionStrings__AzureStorage": "{AzureStorage.connectionString}",
-        "AzureStorageQueue": "{AzureStorageQueue.value}"
+        "AzureStorageQueue": "{AzureStorageQueue.value}",
+        "DockerToken": "{DockerToken.value}",
+        "GithubToken": "{GithubToken.value}"
       }
     }
   }
