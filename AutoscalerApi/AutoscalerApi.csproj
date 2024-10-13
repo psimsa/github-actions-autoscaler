@@ -6,8 +6,8 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<UserSecretsId>6bf2578d-1c88-4b7b-bc10-92aac6445754</UserSecretsId>
 		<DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
-		<EnableTrimAnalyzer>true</EnableTrimAnalyzer>
-		<!--<TrimmerDefaultAction>Link</TrimmerDefaultAction>-->
+<!-- 		<EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+ -->		<!--<TrimmerDefaultAction>Link</TrimmerDefaultAction>-->
 		<TrimMode>copyused</TrimMode>
 	</PropertyGroup>
 
