@@ -1,22 +1,18 @@
 using AutoscalerApi;
 using AutoscalerApi.Services;
 using AutoscalerApi.Workers;
+using Azure.Storage.Queues;
 using Docker.DotNet;
-using ApplicationJsonSerializerContext = AutoscalerApi.Models.ApplicationJsonSerializerContext;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Configuration.AddJsonFile("appsettings.custom.json", true);
 var appConfig = AppConfiguration.FromConfiguration(builder.Configuration);
-/*builder.Configuration.Bind(appConfig);*/
 
-// Add services to the container.
 if (appConfig.UseWebEndpoint)
 {
-    builder.Services.AddControllers().AddJsonOptions(options =>
-        options.JsonSerializerOptions.AddContext<ApplicationJsonSerializerContext>());
-
     builder.Services.AddEndpointsApiExplorer();
+    builder.Services.AddSwaggerGen();
 }
 
 builder.Services.AddSingleton<IDockerService, DockerService>();
@@ -36,19 +32,26 @@ if (!string.IsNullOrWhiteSpace(appConfig.AzureStorage))
 }
 
 builder.Services.AddSingleton(appConfig);
+builder.Services.AddSingleton(serviceProvider =>
+{
+    var appConfig = serviceProvider.GetRequiredService<AppConfiguration>();
+    return new QueueClient(appConfig.AzureStorage, appConfig.AzureStorageQueue);
+});
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-if (!app.Environment.IsDevelopment())
-{
-    app.UseHttpsRedirection();
-}
-
 if (appConfig.UseWebEndpoint)
 {
-    app.UseAuthorization();
-    app.MapControllers();
+    app.UseHttpsRedirection();
+    if (app.Environment.IsDevelopment())
+    {
+        app.UseSwagger();
+        app.UseSwaggerUI();
+    }
+
+    app.MapGet("/", () => Results.Ok("alive"));
+
+    app.MapWorkflowEndpoints();
 }
 
 app.Run();

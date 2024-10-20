@@ -5,8 +5,6 @@ VisualStudioVersion = 17.1.32319.34
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AutoscalerApi", "AutoscalerApi\AutoscalerApi.csproj", "{066012FA-13F6-48A6-945E-DA4B72B12E1C}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WorkflowFunctions", "WorkflowFunctions\WorkflowFunctions.csproj", "{E367E936-7274-48BD-9FA7-3E6698D4D2C5}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{5BACFA97-6325-4FBE-859F-5AC2C4E47428}"
 	ProjectSection(SolutionItems) = preProject
 		.dockerignore = .dockerignore
@@ -15,7 +13,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		.github\workflows\MultiArchBuild.yml = .github\workflows\MultiArchBuild.yml
 		README.md = README.md
 		renovate.json = renovate.json
-		.github\workflows\WorkflowFunctions.yml = .github\workflows\WorkflowFunctions.yml
 	EndProjectSection
 EndProject
 Global
@@ -28,10 +25,6 @@ Global
 		{066012FA-13F6-48A6-945E-DA4B72B12E1C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{066012FA-13F6-48A6-945E-DA4B72B12E1C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{066012FA-13F6-48A6-945E-DA4B72B12E1C}.Release|Any CPU.Build.0 = Release|Any CPU
-		{E367E936-7274-48BD-9FA7-3E6698D4D2C5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{E367E936-7274-48BD-9FA7-3E6698D4D2C5}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{E367E936-7274-48BD-9FA7-3E6698D4D2C5}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{E367E936-7274-48BD-9FA7-3E6698D4D2C5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
