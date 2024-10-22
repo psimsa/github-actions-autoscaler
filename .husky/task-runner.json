@@ -11,7 +11,6 @@
     {
       "name": "prettier",
       "group": "pre-commit",
-      "pathMode": "absolute",
       "command": "npx",
       "args": ["prettier", "--write", "${staged}"],
       "include": [
@@ -21,8 +20,16 @@
         "**/*.json",
         "**/*.yml",
         "**/*.css",
-        "**/*.scss"
+        "**/*.scss",
+        "**/*.md"
       ]
+    },
+    {
+      "name": "prettier-html",
+      "group": "pre-commit",
+      "command": "npx",
+      "args": ["prettier", "--write", "--parser=html", "${staged}"],
+      "include": ["**/*.csproj", "**/nuget.config"]
     }
   ]
 }
