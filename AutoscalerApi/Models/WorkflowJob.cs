@@ -11,9 +11,14 @@ public record WorkflowJob
         this.RunId = RunId;
     }
 
-    [JsonPropertyName("name")] public string Name { get; }
-    [JsonPropertyName("labels")] public string[] Labels { get; }
-    [JsonPropertyName("run_id")] public long RunId { get; }
+    [JsonPropertyName("name")]
+    public string Name { get; }
+
+    [JsonPropertyName("labels")]
+    public string[] Labels { get; }
+
+    [JsonPropertyName("run_id")]
+    public long RunId { get; }
 
     public void Deconstruct(out string Name, out string[] Labels, out long RunId)
     {
