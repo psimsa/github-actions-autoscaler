@@ -1,16 +1,28 @@
 {
-   "$schema": "https://alirezanet.github.io/Husky.Net/schema.json",
-   "tasks": [
-      {
-         "name": "Run csharpier",
-         "command": "dotnet",
-         "args": [
-            "csharpier",
-            "${staged}"
-         ],
-         "include": [
-            "**/*.cs"
-         ]
-      }
-   ]
+  "$schema": "https://alirezanet.github.io/Husky.Net/schema.json",
+  "tasks": [
+    {
+      "name": "Run csharpier",
+      "group": "pre-commit",
+      "command": "dotnet",
+      "args": ["csharpier", "${staged}"],
+      "include": ["**/*.cs"]
+    },
+    {
+      "name": "prettier",
+      "group": "pre-commit",
+      "pathMode": "absolute",
+      "command": "npx",
+      "args": ["prettier", "--write", "${staged}"],
+      "include": [
+        "**/*.ts",
+        "**/*.vue",
+        "**/*.js",
+        "**/*.json",
+        "**/*.yml",
+        "**/*.css",
+        "**/*.scss"
+      ]
+    }
+  ]
 }
