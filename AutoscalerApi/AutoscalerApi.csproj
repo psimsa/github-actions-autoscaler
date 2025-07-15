@@ -12,7 +12,7 @@
 		<PackageReference Include="Microsoft.ApplicationInsights.WorkerService" Version="2.23.0" />
 		<PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.18" />
 		<PackageReference Include="Swashbuckle.AspNetCore" Version="6.9.0" />
-		<PackageReference Include="Azure.Storage.Queues" Version="12.22.0" />
+		<PackageReference Include="Azure.Storage.Queues" Version="12.23.0" />
 		<PackageReference Include="Docker.DotNet" Version="3.125.15" />
 	</ItemGroup>
 </Project>
