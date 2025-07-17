@@ -6,38 +6,13 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<UserSecretsId>6bf2578d-1c88-4b7b-bc10-92aac6445754</UserSecretsId>
 		<DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
-<!-- 		<EnableTrimAnalyzer>true</EnableTrimAnalyzer>
- -->		<!--<TrimmerDefaultAction>Link</TrimmerDefaultAction>-->
-		<TrimMode>copyused</TrimMode>
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Microsoft.ApplicationInsights.WorkerService" Version="2.22.0" />
-		<TrimmerRootAssembly Include="AutoscalerApi" />
-		<PackageReference Include="Azure.Storage.Queues" Version="12.19.1" />
-		<PackageReference Include="Docker.DotNet" Version="3.125.15">
-			<IsTrimmable>false</IsTrimmable>
-		</PackageReference>
-		<!--<PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.15.1" />-->
+		<PackageReference Include="Microsoft.ApplicationInsights.WorkerService" Version="2.23.0" />
+		<PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.18" />
+		<PackageReference Include="Swashbuckle.AspNetCore" Version="6.9.0" />
+		<PackageReference Include="Azure.Storage.Queues" Version="12.23.0" />
+		<PackageReference Include="Docker.DotNet" Version="3.125.15" />
 	</ItemGroup>
-	<!--<Target Name="ConfigureTrimming"
-	        BeforeTargets="PrepareForILLink">
-		<ItemGroup>
-			<ManagedAssemblyToLink Condition="'%(Filename)' == 'Docker.DotNet'">
-				<IsTrimmable>false</IsTrimmable>
-			</ManagedAssemblyToLink>
-			<ManagedAssemblyToLink Condition="'%(Filename)' == 'Newtonsoft.Json'">
-				<IsTrimmable>false</IsTrimmable>
-			</ManagedAssemblyToLink>
-			<ManagedAssemblyToLink Condition="'%(Filename)' == 'Azure.Storage.Queues'">
-				<IsTrimmable>false</IsTrimmable>
-			</ManagedAssemblyToLink>
-			<ManagedAssemblyToLink Condition="'%(Filename)' == 'Microsoft.AspNetCore.Diagnostics'">
-				<IsTrimmable>false</IsTrimmable>
-			</ManagedAssemblyToLink>
-			<ManagedAssemblyToLink Condition="'%(Filename)' == 'Microsoft.AspNetCore.Diagnostics'">
-				<IsTrimmable>false</IsTrimmable>
-			</ManagedAssemblyToLink>
-		</ItemGroup>
-	</Target>-->
 </Project>

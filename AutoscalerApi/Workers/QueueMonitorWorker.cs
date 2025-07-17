@@ -1,4 +1,6 @@
 ﻿using System.Text.Json;
+using System.Threading;
+using AutoscalerApi.Models;
 using AutoscalerApi.Services;
 using Azure.Storage.Queues;
 using Azure.Storage.Queues.Models;
@@ -12,8 +14,13 @@ public class QueueMonitorWorker : IHostedService
     private readonly string _connectionString;
     private readonly string _queueName;
 
-    public QueueMonitorWorker(AppConfiguration configuration, IDockerService dockerService,
-        ILogger<QueueMonitorWorker> logger)
+    private Task worker;
+
+    public QueueMonitorWorker(
+        AppConfiguration configuration,
+        IDockerService dockerService,
+        ILogger<QueueMonitorWorker> logger
+    )
     {
         _dockerService = dockerService;
         _logger = logger;
@@ -21,15 +28,15 @@ public class QueueMonitorWorker : IHostedService
         _queueName = configuration.AzureStorageQueue;
     }
 
-    public async Task StartAsync(CancellationToken cancellationToken)
+    private async Task MonitorQueue(CancellationToken token)
     {
         _logger.LogInformation("QueueMonitorWorker is starting");
         var client = new QueueClient(_connectionString, _queueName);
 
-        await client.CreateIfNotExistsAsync(cancellationToken: cancellationToken);
+        await client.CreateIfNotExistsAsync(cancellationToken: token);
         var lastUnsuccessfulMessageId = "";
 
-        while (!cancellationToken.IsCancellationRequested)
+        while (!token.IsCancellationRequested)
         {
             QueueMessage message = null!;
             try
@@ -38,20 +45,20 @@ public class QueueMonitorWorker : IHostedService
 
                 if (lastUnsuccessfulMessageId != "")
                 {
-                    PeekedMessage pms = await client.PeekMessageAsync(cancellationToken);
+                    PeekedMessage pms = await client.PeekMessageAsync(token);
                     if (pms?.MessageId == lastUnsuccessfulMessageId)
                     {
-                        await Task.Delay(10_000, cancellationToken);
+                        await Task.Delay(10_000, token);
                     }
                 }
 
                 lastUnsuccessfulMessageId = "";
 
-                message = await client.ReceiveMessageAsync(cancellationToken: cancellationToken);
+                message = await client.ReceiveMessageAsync(cancellationToken: token);
 
                 if (message == null)
                 {
-                    await Task.Delay(10_000, cancellationToken);
+                    await Task.Delay(10_000, token);
                     continue;
                 }
 
@@ -59,14 +66,12 @@ public class QueueMonitorWorker : IHostedService
 
                 var msg = Convert.FromBase64String(message.MessageText);
 
-                var workflow = JsonSerializer.Deserialize(msg,
-                    Models.ApplicationJsonSerializerContext.Default.Workflow);
+                var workflow = JsonSerializer.Deserialize<Workflow>(msg);
                 _logger.LogInformation("Executing workflow");
                 var workflowResult = await _dockerService.ProcessWorkflow(workflow);
 
                 if (workflowResult)
-                    await client.DeleteMessageAsync(message.MessageId, message.PopReceipt,
-                        cancellationToken);
+                    await client.DeleteMessageAsync(message.MessageId, message.PopReceipt, token);
                 else
                 {
                     lastUnsuccessfulMessageId = message.MessageId;
@@ -77,16 +82,26 @@ public class QueueMonitorWorker : IHostedService
                 _logger.LogError(ex, "Error receiving message");
                 if (message != null)
                 {
-                    await client.DeleteMessageAsync(message.MessageId, message.PopReceipt, cancellationToken);
+                    await client.DeleteMessageAsync(message.MessageId, message.PopReceipt, token);
                 }
 
-                await Task.Delay(10_000, cancellationToken);
+                await Task.Delay(10_000, token);
             }
         }
+    }
+
+    public async Task StartAsync(CancellationToken cancellationToken)
+    {
+        worker = MonitorQueue(cancellationToken);
     }
 
     public async Task StopAsync(CancellationToken cancellationToken)
     {
         _logger.LogInformation("QueueMonitorWorker is stopping");
+
+        if (worker != null)
+        {
+            await worker;
+        }
     }
 }

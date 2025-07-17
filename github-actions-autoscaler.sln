@@ -5,8 +5,6 @@ VisualStudioVersion = 17.1.32319.34
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AutoscalerApi", "AutoscalerApi\AutoscalerApi.csproj", "{066012FA-13F6-48A6-945E-DA4B72B12E1C}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WorkflowFunctions", "WorkflowFunctions\WorkflowFunctions.csproj", "{E367E936-7274-48BD-9FA7-3E6698D4D2C5}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{5BACFA97-6325-4FBE-859F-5AC2C4E47428}"
 	ProjectSection(SolutionItems) = preProject
 		.dockerignore = .dockerignore
@@ -15,7 +13,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		.github\workflows\MultiArchBuild.yml = .github\workflows\MultiArchBuild.yml
 		README.md = README.md
 		renovate.json = renovate.json
-		.github\workflows\WorkflowFunctions.yml = .github\workflows\WorkflowFunctions.yml
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Autoscaler.Api", "src\Autoscaler.Api\Autoscaler.Api.csproj", "{77E22D4E-C5D6-40C0-AAE3-F62A97632DFF}"
@@ -42,34 +39,6 @@ Global
 		{066012FA-13F6-48A6-945E-DA4B72B12E1C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{066012FA-13F6-48A6-945E-DA4B72B12E1C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{066012FA-13F6-48A6-945E-DA4B72B12E1C}.Release|Any CPU.Build.0 = Release|Any CPU
-		{E367E936-7274-48BD-9FA7-3E6698D4D2C5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{E367E936-7274-48BD-9FA7-3E6698D4D2C5}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{E367E936-7274-48BD-9FA7-3E6698D4D2C5}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{E367E936-7274-48BD-9FA7-3E6698D4D2C5}.Release|Any CPU.Build.0 = Release|Any CPU
-		{77E22D4E-C5D6-40C0-AAE3-F62A97632DFF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{77E22D4E-C5D6-40C0-AAE3-F62A97632DFF}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{77E22D4E-C5D6-40C0-AAE3-F62A97632DFF}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{77E22D4E-C5D6-40C0-AAE3-F62A97632DFF}.Release|Any CPU.Build.0 = Release|Any CPU
-		{1840A305-5132-4098-980A-394E94D492A5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{1840A305-5132-4098-980A-394E94D492A5}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{1840A305-5132-4098-980A-394E94D492A5}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{1840A305-5132-4098-980A-394E94D492A5}.Release|Any CPU.Build.0 = Release|Any CPU
-		{F59886C2-4BDB-4412-8182-E819449BB031}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{F59886C2-4BDB-4412-8182-E819449BB031}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{F59886C2-4BDB-4412-8182-E819449BB031}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{F59886C2-4BDB-4412-8182-E819449BB031}.Release|Any CPU.Build.0 = Release|Any CPU
-		{EBD204C2-3562-4A44-96C1-675EC23ACFF0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{EBD204C2-3562-4A44-96C1-675EC23ACFF0}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{EBD204C2-3562-4A44-96C1-675EC23ACFF0}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{EBD204C2-3562-4A44-96C1-675EC23ACFF0}.Release|Any CPU.Build.0 = Release|Any CPU
-		{AC7D14A6-A40E-4F3F-A91B-E48AB294523C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{AC7D14A6-A40E-4F3F-A91B-E48AB294523C}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{AC7D14A6-A40E-4F3F-A91B-E48AB294523C}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{AC7D14A6-A40E-4F3F-A91B-E48AB294523C}.Release|Any CPU.Build.0 = Release|Any CPU
-		{8CE23F72-07D9-4F2B-8F5B-83EF44337963}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{8CE23F72-07D9-4F2B-8F5B-83EF44337963}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{8CE23F72-07D9-4F2B-8F5B-83EF44337963}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{8CE23F72-07D9-4F2B-8F5B-83EF44337963}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -23,9 +23,11 @@ public class AppConfiguration
     public string ApplicationInsightsConnectionString { get; set; } = "";
     public bool AutoCheckForImageUpdates { get; set; }
 
-    [UnconditionalSuppressMessage("Trimming",
+    [UnconditionalSuppressMessage(
+        "Trimming",
         "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code",
-        Justification = "<Pending>")]
+        Justification = "<Pending>"
+    )]
     public static AppConfiguration FromConfiguration(IConfiguration configuration)
     {
         var maxRunners = configuration.GetValue<int>("MaxRunners", 4);
@@ -33,7 +35,7 @@ public class AppConfiguration
         {
             0 => 1,
             < 0 => int.MaxValue,
-            _ => maxRunners
+            _ => maxRunners,
         };
 
         var architecture = RuntimeInformation.ProcessArchitecture.ToString().ToLowerInvariant();
@@ -54,27 +56,52 @@ public class AppConfiguration
             GithubToken = configuration.GetValue<string>("GithubToken"),
             MaxRunners = maxRunners,
             RepoWhitelistPrefix = configuration.GetValue<string>("RepoWhitelistPrefix"),
-            RepoWhitelist = configuration.GetValue<string>("RepoWhitelist").Split(',',
-                StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).Distinct().ToArray(),
-            IsRepoWhitelistExactMatch = configuration.GetValue<bool>("IsRepoWhitelistExactMatch", true),
+            RepoWhitelist = configuration
+                .GetValue<string>("RepoWhitelist")
+                .Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
+                .Distinct()
+                .ToArray(),
+            IsRepoWhitelistExactMatch = configuration.GetValue<bool>(
+                "IsRepoWhitelistExactMatch",
+                true
+            ),
             RepoBlacklistPrefix = configuration.GetValue<string>("RepoBlacklistPrefix"),
-            RepoBlacklist = configuration.GetValue<string>("RepoBlacklist").Split(',',
-                StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).Distinct().ToArray(),
+            RepoBlacklist = configuration
+                .GetValue<string>("RepoBlacklist")
+                .Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
+                .Distinct()
+                .ToArray(),
             IsRepoBlacklistExactMatch = configuration.GetValue<bool>("IsRepoBlacklistExactMatch"),
-            DockerHost = configuration.GetValue<string>("DockerHost") ?? "unix:/var/run/docker.sock",
-            Labels = (configuration.GetValue<string>("Labels")?.ToLowerInvariant().Split(',',
-                          StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
-                      ?? Array.Empty<string>())
-                .Concat(new[]
-                {
-                    "self-hosted",
-                    architecture,
-                    // os
-                }).Distinct().ToArray(),
-            ApplicationInsightsConnectionString =
-                configuration.GetValue<string>("APPLICATIONINSIGHTS_CONNECTION_STRING"),
-            DockerImage = configuration.GetValue<string>("DockerImage") ?? "myoung34/github-runner:latest",
-            AutoCheckForImageUpdates = configuration.GetValue<bool>("AutoCheckForImageUpdates", true)
+            DockerHost =
+                configuration.GetValue<string>("DockerHost") ?? "unix:/var/run/docker.sock",
+            Labels = (
+                configuration
+                    .GetValue<string>("Labels")
+                    ?.ToLowerInvariant()
+                    .Split(
+                        ',',
+                        StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries
+                    ) ?? Array.Empty<string>()
+            )
+                .Concat(
+                    new[]
+                    {
+                        "self-hosted",
+                        architecture,
+                        // os
+                    }
+                )
+                .Distinct()
+                .ToArray(),
+            ApplicationInsightsConnectionString = configuration.GetValue<string>(
+                "APPLICATIONINSIGHTS_CONNECTION_STRING"
+            ),
+            DockerImage =
+                configuration.GetValue<string>("DockerImage") ?? "myoung34/github-runner:latest",
+            AutoCheckForImageUpdates = configuration.GetValue<bool>(
+                "AutoCheckForImageUpdates",
+                true
+            ),
         };
     }
 }
