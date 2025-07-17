@@ -9,19 +9,19 @@ public class AppConfiguration
     public string AzureStorage { get; set; } = "";
     public string AzureStorageQueue { get; set; } = "";
     public string DockerToken { get; set; } = "";
-    public string DockerImage { get; set; }
+    public string DockerImage { get; set; } = "myoung34/github-runner:latest";
     public string GithubToken { get; set; } = "";
-    public int MaxRunners { get; set; }
+    public int MaxRunners { get; set; } = 4;
     public string RepoWhitelistPrefix { get; set; } = "";
     public string[] RepoWhitelist { get; set; } = Array.Empty<string>();
-    public bool IsRepoWhitelistExactMatch { get; set; }
+    public bool IsRepoWhitelistExactMatch { get; set; } = true;
     public string RepoBlacklistPrefix { get; set; } = "";
     public string[] RepoBlacklist { get; set; } = Array.Empty<string>();
-    public bool IsRepoBlacklistExactMatch { get; set; }
-    public string DockerHost { get; set; } = "";
+    public bool IsRepoBlacklistExactMatch { get; set; } = false;
+    public string DockerHost { get; set; } = "unix:/var/run/docker.sock";
     public string[] Labels { get; set; } = Array.Empty<string>();
     public string ApplicationInsightsConnectionString { get; set; } = "";
-    public bool AutoCheckForImageUpdates { get; set; }
+    public bool AutoCheckForImageUpdates { get; set; } = true;
 
     [UnconditionalSuppressMessage(
         "Trimming",
@@ -47,57 +47,48 @@ public class AppConfiguration
             _ => ""
         };*/
 
+        var repoWhitelist = configuration.GetValue<string>("RepoWhitelist") ?? string.Empty;
+        var repoBlacklist = configuration.GetValue<string>("RepoBlacklist") ?? string.Empty;
+        var labels = configuration.GetValue<string>("Labels") ?? string.Empty;
+
         return new AppConfiguration()
         {
-            AzureStorageQueue = configuration.GetValue<string>("AzureStorageQueue"),
-            AzureStorage = configuration.GetValue<string>("AzureStorage"),
-            UseWebEndpoint = configuration.GetValue<bool>("UseWebEndpoint"),
-            DockerToken = configuration.GetValue<string>("DockerToken"),
-            GithubToken = configuration.GetValue<string>("GithubToken"),
+            AzureStorageQueue = configuration.GetValue<string>("AzureStorageQueue") ?? string.Empty,
+            AzureStorage = configuration.GetValue<string>("AzureStorage") ?? string.Empty,
+            UseWebEndpoint = configuration.GetValue<bool>("UseWebEndpoint", false),
+            DockerToken = configuration.GetValue<string>("DockerToken") ?? string.Empty,
+            GithubToken = configuration.GetValue<string>("GithubToken") ?? string.Empty,
             MaxRunners = maxRunners,
-            RepoWhitelistPrefix = configuration.GetValue<string>("RepoWhitelistPrefix"),
-            RepoWhitelist = configuration
-                .GetValue<string>("RepoWhitelist")
-                .Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
-                .Distinct()
-                .ToArray(),
+            RepoWhitelistPrefix = configuration.GetValue<string>("RepoWhitelistPrefix") ?? string.Empty,
+            RepoWhitelist = string.IsNullOrWhiteSpace(repoWhitelist)
+                ? Array.Empty<string>()
+                : repoWhitelist.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
+                    .Distinct()
+                    .ToArray(),
             IsRepoWhitelistExactMatch = configuration.GetValue<bool>(
                 "IsRepoWhitelistExactMatch",
                 true
             ),
-            RepoBlacklistPrefix = configuration.GetValue<string>("RepoBlacklistPrefix"),
-            RepoBlacklist = configuration
-                .GetValue<string>("RepoBlacklist")
-                .Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
-                .Distinct()
-                .ToArray(),
-            IsRepoBlacklistExactMatch = configuration.GetValue<bool>("IsRepoBlacklistExactMatch"),
-            DockerHost =
-                configuration.GetValue<string>("DockerHost") ?? "unix:/var/run/docker.sock",
-            Labels = (
-                configuration
-                    .GetValue<string>("Labels")
-                    ?.ToLowerInvariant()
-                    .Split(
+            RepoBlacklistPrefix = configuration.GetValue<string>("RepoBlacklistPrefix") ?? string.Empty,
+            RepoBlacklist = string.IsNullOrWhiteSpace(repoBlacklist)
+                ? Array.Empty<string>()
+                : repoBlacklist.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
+                    .Distinct()
+                    .ToArray(),
+            IsRepoBlacklistExactMatch = configuration.GetValue<bool>("IsRepoBlacklistExactMatch", false),
+            DockerHost = configuration.GetValue<string>("DockerHost") ?? "unix:/var/run/docker.sock",
+            Labels = string.IsNullOrWhiteSpace(labels)
+                ? new[] { "self-hosted", architecture }
+                : labels.ToLowerInvariant().Split(
                         ',',
                         StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries
-                    ) ?? Array.Empty<string>()
-            )
-                .Concat(
-                    new[]
-                    {
-                        "self-hosted",
-                        architecture,
-                        // os
-                    }
-                )
-                .Distinct()
-                .ToArray(),
+                    )
+                    .Concat(new[] { "self-hosted", architecture })
+                    .Distinct()
+                    .ToArray(),
             ApplicationInsightsConnectionString = configuration.GetValue<string>(
                 "APPLICATIONINSIGHTS_CONNECTION_STRING"
-            ),
-            DockerImage =
-                configuration.GetValue<string>("DockerImage") ?? "myoung34/github-runner:latest",
+            ) ?? string.Empty,
             AutoCheckForImageUpdates = configuration.GetValue<bool>(
                 "AutoCheckForImageUpdates",
                 true

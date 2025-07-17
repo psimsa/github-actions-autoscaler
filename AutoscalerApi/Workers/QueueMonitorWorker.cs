@@ -14,7 +14,7 @@ public class QueueMonitorWorker : IHostedService
     private readonly string _connectionString;
     private readonly string _queueName;
 
-    private Task worker;
+    private Task? worker;
 
     public QueueMonitorWorker(
         AppConfiguration configuration,
@@ -24,8 +24,8 @@ public class QueueMonitorWorker : IHostedService
     {
         _dockerService = dockerService;
         _logger = logger;
-        _connectionString = configuration.AzureStorage;
-        _queueName = configuration.AzureStorageQueue;
+        _connectionString = configuration.AzureStorage ?? string.Empty;
+        _queueName = configuration.AzureStorageQueue ?? string.Empty;
     }
 
     private async Task MonitorQueue(CancellationToken token)
@@ -93,6 +93,10 @@ public class QueueMonitorWorker : IHostedService
     public async Task StartAsync(CancellationToken cancellationToken)
     {
         worker = MonitorQueue(cancellationToken);
+        if (worker != null)
+        {
+            await worker;
+        }
     }
 
     public async Task StopAsync(CancellationToken cancellationToken)
