@@ -30,26 +30,11 @@ public class AppConfiguration
     )]
     public static AppConfiguration FromConfiguration(IConfiguration configuration)
     {
-        var maxRunners = configuration.GetValue<int>("MaxRunners", 4);
-        maxRunners = maxRunners switch
-        {
-            0 => 1,
-            < 0 => int.MaxValue,
-            _ => maxRunners,
-        };
-
-        var architecture = RuntimeInformation.ProcessArchitecture.ToString().ToLowerInvariant();
-        /*var os = architecture switch
-        {
-            _ when RuntimeInformation.IsOSPlatform(OSPlatform.Windows) => "windows",
-            _ when RuntimeInformation.IsOSPlatform(OSPlatform.Linux) => "linux",
-            _ when RuntimeInformation.IsOSPlatform(OSPlatform.OSX) => "osx",
-            _ => ""
-        };*/
-
-        var repoWhitelist = configuration.GetValue<string>("RepoWhitelist") ?? string.Empty;
-        var repoBlacklist = configuration.GetValue<string>("RepoBlacklist") ?? string.Empty;
-        var labels = configuration.GetValue<string>("Labels") ?? string.Empty;
+        var maxRunners = GetMaxRunners(configuration);
+        var architecture = GetArchitecture();
+        var repoWhitelist = GetRepoWhitelist(configuration);
+        var repoBlacklist = GetRepoBlacklist(configuration);
+        var labels = GetLabels(configuration, architecture);
 
         return new AppConfiguration()
         {
@@ -60,32 +45,16 @@ public class AppConfiguration
             GithubToken = configuration.GetValue<string>("GithubToken") ?? string.Empty,
             MaxRunners = maxRunners,
             RepoWhitelistPrefix = configuration.GetValue<string>("RepoWhitelistPrefix") ?? string.Empty,
-            RepoWhitelist = string.IsNullOrWhiteSpace(repoWhitelist)
-                ? Array.Empty<string>()
-                : repoWhitelist.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
-                    .Distinct()
-                    .ToArray(),
+            RepoWhitelist = repoWhitelist,
             IsRepoWhitelistExactMatch = configuration.GetValue<bool>(
                 "IsRepoWhitelistExactMatch",
                 true
             ),
             RepoBlacklistPrefix = configuration.GetValue<string>("RepoBlacklistPrefix") ?? string.Empty,
-            RepoBlacklist = string.IsNullOrWhiteSpace(repoBlacklist)
-                ? Array.Empty<string>()
-                : repoBlacklist.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
-                    .Distinct()
-                    .ToArray(),
+            RepoBlacklist = repoBlacklist,
             IsRepoBlacklistExactMatch = configuration.GetValue<bool>("IsRepoBlacklistExactMatch", false),
             DockerHost = configuration.GetValue<string>("DockerHost") ?? "unix:/var/run/docker.sock",
-            Labels = string.IsNullOrWhiteSpace(labels)
-                ? new[] { "self-hosted", architecture }
-                : labels.ToLowerInvariant().Split(
-                        ',',
-                        StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries
-                    )
-                    .Concat(new[] { "self-hosted", architecture })
-                    .Distinct()
-                    .ToArray(),
+            Labels = labels,
             ApplicationInsightsConnectionString = configuration.GetValue<string>(
                 "APPLICATIONINSIGHTS_CONNECTION_STRING"
             ) ?? string.Empty,
@@ -94,5 +63,58 @@ public class AppConfiguration
                 true
             ),
         };
+    }
+
+    private static int GetMaxRunners(IConfiguration configuration)
+    {
+        var maxRunners = configuration.GetValue<int>("MaxRunners", 4);
+        return maxRunners switch
+        {
+            0 => 1,
+            < 0 => int.MaxValue,
+            _ => maxRunners,
+        };
+    }
+
+    private static string GetArchitecture()
+    {
+        return RuntimeInformation.ProcessArchitecture.ToString().ToLowerInvariant();
+    }
+
+    private static string[] GetRepoWhitelist(IConfiguration configuration)
+    {
+        var repoWhitelist = configuration.GetValue<string>("RepoWhitelist") ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(repoWhitelist))
+            return Array.Empty<string>();
+
+        return repoWhitelist.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
+            .Distinct()
+            .ToArray();
+    }
+
+    private static string[] GetRepoBlacklist(IConfiguration configuration)
+    {
+        var repoBlacklist = configuration.GetValue<string>("RepoBlacklist") ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(repoBlacklist))
+            return Array.Empty<string>();
+
+        return repoBlacklist.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
+            .Distinct()
+            .ToArray();
+    }
+
+    private static string[] GetLabels(IConfiguration configuration, string architecture)
+    {
+        var labels = configuration.GetValue<string>("Labels") ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(labels))
+            return new[] { "self-hosted", architecture };
+
+        return labels.ToLowerInvariant().Split(
+                ',',
+                StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries
+            )
+            .Concat(new[] { "self-hosted", architecture })
+            .Distinct()
+            .ToArray();
     }
 }

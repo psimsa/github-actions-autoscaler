@@ -286,24 +286,35 @@ internal class DockerService : IDockerService
 
     private bool CheckIfRepoIsWhitelistedOrHasAllowedPrefix(string repositoryFullName)
     {
-        bool IsRepoBlacklisted(string repoName)
-        {
-            return repoName switch
-            {
-                var f when string.IsNullOrWhiteSpace(_repoBlacklistPrefix) && _repoBlacklist.Length == 0 => false,
-                var f when f.StartsWith(_repoBlacklistPrefix) => true,
-                var f when _isRepoBlacklistExactMatch => _repoBlacklist.Contains(f),
-                _ => _repoBlacklist.Any(repoName.StartsWith)
-            };
-        }
+        // Check if the repository is blacklisted
+        bool isBlacklisted = IsRepoBlacklisted(repositoryFullName);
+        if (isBlacklisted)
+            return false;
 
-        return repositoryFullName switch
-        {
-            var f when IsRepoBlacklisted(f) => false,
-            var f when f.StartsWith(_repoWhitelistPrefix) => true,
-            _ when _repoWhitelist.Length == 0 => false,
-            var f when _isRepoWhitelistExactMatch => _repoWhitelist.Contains(f),
-            _ => _repoWhitelist.Any(repo => repositoryFullName.StartsWith(repo) || repo.Equals("*"))
-        };
+        // Check whitelist conditions
+        if (repositoryFullName.StartsWith(_repoWhitelistPrefix))
+            return true;
+
+        if (_repoWhitelist.Length == 0)
+            return false;
+
+        if (_isRepoWhitelistExactMatch)
+            return _repoWhitelist.Contains(repositoryFullName);
+
+        return _repoWhitelist.Any(repo => repositoryFullName.StartsWith(repo) || repo.Equals("*"));
+    }
+
+    private bool IsRepoBlacklisted(string repoName)
+    {
+        if (string.IsNullOrWhiteSpace(_repoBlacklistPrefix) && _repoBlacklist.Length == 0)
+            return false;
+
+        if (repoName.StartsWith(_repoBlacklistPrefix))
+            return true;
+
+        if (_isRepoBlacklistExactMatch)
+            return _repoBlacklist.Contains(repoName);
+
+        return _repoBlacklist.Any(repoName.StartsWith);
     }
 }
