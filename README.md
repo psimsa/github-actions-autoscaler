@@ -38,12 +38,12 @@ Configuration can be done either as environment variables or via a `application.
 | DockerToken                             |                             | PAT for Docker hub (to avoid daily limits)                 |
 | GithubToken                             |                             | PAT for GitHub (to register runners)                       |
 | MaxRunners                              | 4                           | Max number of concurrent runners                           |
-| RepoWhitelistPrefix                     |                             | Whitelist prefix for GitHub repos                         |
-| RepoWhitelist                           |                             | Comma-separated list of whitelisted GitHub repos           |
-| IsRepoWhitelistExactMatch               | true                        | Whether items in whitelist are exact matches or prefixes   |
-| RepoBlacklistPrefix                     |                             | Blacklist prefix for GitHub repos                          |
-| RepoBlacklist                           |                             | Comma-separated list of blacklisted GitHub repos           |
-| IsRepoBlacklistExactMatch               | false                       | Whether items in blacklist are exact matches or prefixes   |
+| RepoAllowlistPrefix                     |                             | Allowlist prefix for GitHub repos                         |
+| RepoAllowlist                           |                             | Comma-separated list of allowlisted GitHub repos            |
+| IsRepoAllowlistExactMatch               | true                        | Whether items in allowlist are exact matches or prefixes    |
+| RepoBlocklistPrefix                     |                             | Blocklist prefix for GitHub repos                          |
+| RepoBlocklist                           |                             | Comma-separated list of blocklisted GitHub repos            |
+| IsRepoBlocklistExactMatch               | false                       | Whether items in blocklist are exact matches or prefixes    |
 | DockerHost                              | unix:/var/run/docker.sock   | Docker endpoint the autoscaler should use                  |
 | Labels                                  | self-hosted,[host-arch]     | Comma-separated list of labels applied to runners          |
 | ApplicationInsightsConnectionString     |                             | Connection string for Application Insights                 | 
@@ -61,10 +61,10 @@ Configuration can be done either as environment variables or via a `application.
   "DockerHost": "tcp://localhost:2375",
   "DockerToken": "99e16562.......",
   "GithubToken": "ghp_.......",
-  "IsRepoWhitelistExactMatch": true,
+  "IsRepoAllowlistExactMatch": true,
   "MaxRunners": 3,
-  "RepoWhitelist": "",
-  "RepoWhitelistPrefix": "ofcoursedude/",
+  "RepoAllowlist": "",
+  "RepoAllowlistPrefix": "ofcoursedude/",
   "UseWebEndpoint": true,
   "APPLICATIONINSIGHTS_CONNECTION_STRING": "InstrumentationKey=dbca7bfd-......."
 }

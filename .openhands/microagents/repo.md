@@ -55,7 +55,7 @@ Key configuration options include:
 - `DockerToken`: Docker Hub PAT
 - `GithubToken`: GitHub PAT for runner registration
 - `MaxRunners`: Maximum concurrent runners
-- `RepoWhitelist/Blacklist`: Repository access control
+- `RepoAllowlist/Blocklist`: Repository access control
 - `DockerHost`: Docker endpoint configuration
 - `Labels`: Labels applied to runners
 - `ApplicationInsightsConnectionString`: Telemetry configuration

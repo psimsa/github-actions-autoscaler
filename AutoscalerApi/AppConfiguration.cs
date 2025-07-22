@@ -12,12 +12,12 @@ public class AppConfiguration
     public string DockerImage { get; set; }
     public string GithubToken { get; set; } = "";
     public int MaxRunners { get; set; }
-    public string RepoWhitelistPrefix { get; set; } = "";
-    public string[] RepoWhitelist { get; set; } = Array.Empty<string>();
-    public bool IsRepoWhitelistExactMatch { get; set; }
-    public string RepoBlacklistPrefix { get; set; } = "";
-    public string[] RepoBlacklist { get; set; } = Array.Empty<string>();
-    public bool IsRepoBlacklistExactMatch { get; set; }
+    public string RepoAllowlistPrefix { get; set; } = "";
+    public string[] RepoAllowlist { get; set; } = Array.Empty<string>();
+    public bool IsRepoAllowlistExactMatch { get; set; }
+    public string RepoBlocklistPrefix { get; set; } = "";
+    public string[] RepoBlocklist { get; set; } = Array.Empty<string>();
+    public bool IsRepoBlocklistExactMatch { get; set; }
     public string DockerHost { get; set; } = "";
     public string[] Labels { get; set; } = Array.Empty<string>();
     public string ApplicationInsightsConnectionString { get; set; } = "";
@@ -55,23 +55,23 @@ public class AppConfiguration
             DockerToken = configuration.GetValue<string>("DockerToken"),
             GithubToken = configuration.GetValue<string>("GithubToken"),
             MaxRunners = maxRunners,
-            RepoWhitelistPrefix = configuration.GetValue<string>("RepoWhitelistPrefix"),
-            RepoWhitelist = configuration
-                .GetValue<string>("RepoWhitelist")
+            RepoAllowlistPrefix = configuration.GetValue<string>("RepoAllowlistPrefix"),
+            RepoAllowlist = configuration
+                .GetValue<string>("RepoAllowlist")
                 .Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
                 .Distinct()
                 .ToArray(),
-            IsRepoWhitelistExactMatch = configuration.GetValue<bool>(
-                "IsRepoWhitelistExactMatch",
+            IsRepoAllowlistExactMatch = configuration.GetValue<bool>(
+                "IsRepoAllowlistExactMatch",
                 true
             ),
-            RepoBlacklistPrefix = configuration.GetValue<string>("RepoBlacklistPrefix"),
-            RepoBlacklist = configuration
-                .GetValue<string>("RepoBlacklist")
+            RepoBlocklistPrefix = configuration.GetValue<string>("RepoBlocklistPrefix"),
+            RepoBlocklist = configuration
+                .GetValue<string>("RepoBlocklist")
                 .Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
                 .Distinct()
                 .ToArray(),
-            IsRepoBlacklistExactMatch = configuration.GetValue<bool>("IsRepoBlacklistExactMatch"),
+            IsRepoBlocklistExactMatch = configuration.GetValue<bool>("IsRepoBlocklistExactMatch"),
             DockerHost =
                 configuration.GetValue<string>("DockerHost") ?? "unix:/var/run/docker.sock",
             Labels = (
