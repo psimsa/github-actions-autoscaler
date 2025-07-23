@@ -14,7 +14,7 @@ public class QueueMonitorWorker : IHostedService
     private readonly string _connectionString;
     private readonly string _queueName;
 
-    private Task worker;
+    private Task? worker;
 
     public QueueMonitorWorker(
         AppConfiguration configuration,
@@ -93,6 +93,7 @@ public class QueueMonitorWorker : IHostedService
     public async Task StartAsync(CancellationToken cancellationToken)
     {
         worker = MonitorQueue(cancellationToken);
+        await Task.CompletedTask;
     }
 
     public async Task StopAsync(CancellationToken cancellationToken)
