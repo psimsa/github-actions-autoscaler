@@ -34,7 +34,7 @@ public class DockerService : IDockerService
         };
 
     private EmptyStruct _emptyStruct = new EmptyStruct();
-    private readonly string _dockerImage;
+    private readonly string? _dockerImage;
     private readonly bool _autoCheckForImageUpdates;
 
     public DockerService(
@@ -45,20 +45,20 @@ public class DockerService : IDockerService
     {
         _client = client;
         _logger = logger;
-        _accessToken = configuration.GithubToken;
-        _dockerToken = configuration.DockerToken;
+        _accessToken = configuration.GithubToken ?? "";
+        _dockerToken = configuration.DockerToken ?? "";
         var maxRunners = configuration.MaxRunners;
         _maxRunners = maxRunners > 0 ? maxRunners : 3;
-        _repoWhitelistPrefix = configuration.RepoWhitelistPrefix;
-        _repoWhitelist = configuration.RepoWhitelist;
+        _repoWhitelistPrefix = configuration.RepoWhitelistPrefix ?? "";
+        _repoWhitelist = configuration.RepoWhitelist ?? Array.Empty<string>();
         _isRepoWhitelistExactMatch = configuration.IsRepoWhitelistExactMatch;
-        _repoBlacklistPrefix = configuration.RepoBlacklistPrefix;
-        _repoBlacklist = configuration.RepoBlacklist;
+        _repoBlacklistPrefix = configuration.RepoBlacklistPrefix ?? "";
+        _repoBlacklist = configuration.RepoBlacklist ?? Array.Empty<string>();
         _isRepoBlacklistExactMatch = configuration.IsRepoBlacklistExactMatch;
-        _labels = configuration.Labels;
+        _labels = configuration.Labels ?? Array.Empty<string>();
         _labelField = string.Join(',', _labels).ToLowerInvariant();
         _containerGuardTask = ContainerGuard(CancellationToken.None);
-        _dockerImage = configuration.DockerImage;
+        _dockerImage = configuration.DockerImage ?? "myoung34/github-runner:latest";
         _autoCheckForImageUpdates = configuration.AutoCheckForImageUpdates;
     }
 
@@ -310,7 +310,7 @@ public class DockerService : IDockerService
         var m = new ManualResetEventSlim();
 
         var progress = new Progress<JSONMessage>();
-        var imageFields = _dockerImage.Split(':');
+        var imageFields = (_dockerImage ?? "myoung34/github-runner:latest").Split(':');
         var t = Task.Run(
             async () =>
                 await _client.Images.CreateImageAsync(
