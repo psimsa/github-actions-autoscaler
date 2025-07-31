@@ -31,8 +31,10 @@ Configuration options:
 | RepoBlacklist                           |                             | Comma-separated list of blacklisted github repos           |
 | IsRepoBlacklistExactMatch               | false                       | Whether items in blacklisted are exact matches or prefixes |
 | DockerHost                              | unix:/var/run/docker.sock   | Docker endpoint the autoscaler should use                  |
-| Labels                                  | self-hosted,[host-arch]     | Comma-separated list of labels applied to runners          |
-| ApplicationInsightsConnectionString     |                             | Connection string for Application Insights                 | 
+| Labels                                  | self-hosted,[host-arch]     | Comma-separated list of labels applied to runners (self-hosted and architecture are added automatically) |
+| APPLICATIONINSIGHTS_CONNECTION_STRING   |                             | Connection string for Application Insights                 |
+| DockerImage                             | myoung34/github-runner:latest | Docker image to use for runners                            |
+| AutoCheckForImageUpdates                | true                        | Whether to automatically check for updates to the runner image | 
 
 Configuration sample:
 ```json
