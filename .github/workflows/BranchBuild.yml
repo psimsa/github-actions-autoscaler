@@ -38,7 +38,7 @@ jobs:
         run: dotnet publish AutoscalerApi --self-contained -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:PublishTrimmed=true -r linux-${{ matrix.arch }} -c Release -o artifacts
       - name: Publish artifacts
         if: github.ref == 'refs/heads/main'
-        uses: actions/upload-artifact@v4.6.2
+        uses: actions/upload-artifact@v5.0.0
         with:
           name: github-autoscaler-linux-${{ matrix.arch }}
           path: artifacts/*
