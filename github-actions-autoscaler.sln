@@ -15,6 +15,20 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		renovate.json = renovate.json
 	EndProjectSection
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Autoscaler.Api", "src\Autoscaler.Api\Autoscaler.Api.csproj", "{77E22D4E-C5D6-40C0-AAE3-F62A97632DFF}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Autoscaler.Worker", "src\Autoscaler.Worker\Autoscaler.Worker.csproj", "{1840A305-5132-4098-980A-394E94D492A5}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{2D7FA837-3F28-4E77-AFC4-127940E93C73}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Autoscaler.Domain", "src\Autoscaler.Domain\Autoscaler.Domain.csproj", "{F59886C2-4BDB-4412-8182-E819449BB031}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Autoscaler.Docker", "src\Autoscaler.Docker\Autoscaler.Docker.csproj", "{EBD204C2-3562-4A44-96C1-675EC23ACFF0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Autoscaler.AppHost", "src\Autoscaler.AppHost\Autoscaler.AppHost.csproj", "{AC7D14A6-A40E-4F3F-A91B-E48AB294523C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Autoscaler.ServiceDefaults", "src\Autoscaler.ServiceDefaults\Autoscaler.ServiceDefaults.csproj", "{8CE23F72-07D9-4F2B-8F5B-83EF44337963}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -28,6 +42,14 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{77E22D4E-C5D6-40C0-AAE3-F62A97632DFF} = {2D7FA837-3F28-4E77-AFC4-127940E93C73}
+		{1840A305-5132-4098-980A-394E94D492A5} = {2D7FA837-3F28-4E77-AFC4-127940E93C73}
+		{F59886C2-4BDB-4412-8182-E819449BB031} = {2D7FA837-3F28-4E77-AFC4-127940E93C73}
+		{EBD204C2-3562-4A44-96C1-675EC23ACFF0} = {2D7FA837-3F28-4E77-AFC4-127940E93C73}
+		{AC7D14A6-A40E-4F3F-A91B-E48AB294523C} = {2D7FA837-3F28-4E77-AFC4-127940E93C73}
+		{8CE23F72-07D9-4F2B-8F5B-83EF44337963} = {2D7FA837-3F28-4E77-AFC4-127940E93C73}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {D99C66B7-0E98-4B09-B977-6C4D83E168BD}
