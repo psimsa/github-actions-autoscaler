@@ -1,0 +1,27 @@
+# See https://aka.ms/containerfastmode to understand how Visual Studio uses this Dockerfile to build your images for faster debugging.
+
+FROM alpine AS base
+WORKDIR /app
+EXPOSE 80
+
+FROM mcr.microsoft.com/dotnet/sdk:10.0-preview AS build
+WORKDIR /src
+COPY ["src/GithubActionsAutoscaler/GithubActionsAutoscaler.csproj", "src/GithubActionsAutoscaler/"]
+RUN dotnet restore -r linux-musl-x64 "src/GithubActionsAutoscaler/GithubActionsAutoscaler.csproj"
+COPY . .
+WORKDIR "/src/src/GithubActionsAutoscaler"
+RUN dotnet build --no-restore -r linux-musl-x64 "GithubActionsAutoscaler.csproj" -c Release -o /app/build
+
+FROM build AS publish
+RUN dotnet publish --self-contained -p:PublishSingleFile=true -p:PublishTrimmed=false -r linux-musl-x64 -c Release -o /app/publish
+
+FROM base AS final
+RUN apk add --no-cache \
+openssh libunwind \
+nghttp2-libs libidn krb5-libs libuuid lttng-ust zlib \
+libstdc++ libintl \
+icu
+
+WORKDIR /app
+COPY --from=publish /app/publish .
+ENTRYPOINT ["./GithubActionsAutoscaler", "--urls", "http://0.0.0.0:8080"]

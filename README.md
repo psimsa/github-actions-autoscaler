@@ -1,52 +1,149 @@
-# Github Runner Docker Autoscaler
+# GitHub Actions Runner Autoscaler
 
-[![Build Multiscaler - docker BuildX](https://github.com/ofcoursedude/github-actions-autoscaler/actions/workflows/MultiArchBuild.yml/badge.svg)](https://github.com/ofcoursedude/github-actions-autoscaler/actions/workflows/MultiArchBuild.yml)
-[![Build and deploy Azure Function](https://github.com/ofcoursedude/github-actions-autoscaler/actions/workflows/WorkflowFunctions.yml/badge.svg)](https://github.com/ofcoursedude/github-actions-autoscaler/actions/workflows/WorkflowFunctions.yml)
-[![Build full solution](https://github.com/ofcoursedude/github-actions-autoscaler/actions/workflows/BranchBuild.yml/badge.svg)](https://github.com/ofcoursedude/github-actions-autoscaler/actions/workflows/BranchBuild.yml)
+[![Build Multiscaler - docker BuildX](https://github.com/psimsa/github-actions-autoscaler/actions/workflows/MultiArchBuild.yml/badge.svg)](https://github.com/psimsa/github-actions-autoscaler/actions/workflows/MultiArchBuild.yml)
+[![Build full solution](https://github.com/psimsa/github-actions-autoscaler/actions/workflows/BranchBuild.yml/badge.svg)](https://github.com/psimsa/github-actions-autoscaler/actions/workflows/BranchBuild.yml)
 
-This is a simple autoscaler for Github Actions Runner Docker containers. It also allows for a single instance to be shared across multiple projects.
+A self-hosted GitHub Actions runner autoscaler that dynamically creates ephemeral Docker containers to handle workflow jobs. Designed for personal repositories since GitHub only provides group runners for organizations.
 
-It uses the [myoung34/github-runner](https://github.com/myoung34/docker-github-actions-runner) image for running each job as an ephemeral container.
+## Features
 
-To run, you need the following:
-- Expose a public endpoint for receiving a webhook, or an Azure Storage queue + a way of filling it with Github workflow webhook events (a sample Azure function is included in this repo)
-- Start the container with appropriate configuration (e.g. make sure the container has network access and configured docker endpoint and bind)
+- **Dynamic Scaling**: Automatically spawns runner containers when jobs are queued
+- **Ephemeral Runners**: Each job gets a fresh container that's removed after completion
+- **Multi-Server Support**: Run coordinators on multiple servers for distributed scaling
+- **Repository Filtering**: Whitelist/blacklist repositories by name or prefix
+- **Label Matching**: Route jobs to appropriate runners based on labels
 
-Configuration can be done either as environment variables or as an application.custom.json JSON file.
+## Architecture
 
-Configuration options:
+The solution operates in two modes:
 
-| **Key**                                 | **Default**                 | **Description**                                            |
-|:----------------------------------------|:----------------------------|:-----------------------------------------------------------|
-| UseWebEndpoint                          | false                       | Use a web endpoint to receive webhook events.              |
-| AzureStorage                            |                             | Azure Storage connection string                            |
-| AzureStorageQueue                       |                             | Azure Storage Queue name                                   |
-| DockerToken                             |                             | PAT for Docker hub (to avoid daily limits)                 |
-| GithubToken                             |                             | PAT for GitHub.com (to register runners)                   |
-| MaxRunners                              | 4                           | Max number of concurrent runners                           |
-| RepoWhitelistPrefix                     |                             | Whitelist prefix for github repos                          |
-| RepoWhitelist                           |                             | Comma-separated list of whitelisted github repos           |
-| IsRepoWhitelistExactMatch               | true                        | Whether items in whitelist are exact matches or prefixes   |
-| RepoBlacklistPrefix                     |                             | Blacklist prefix for github repos                          |
-| RepoBlacklist                           |                             | Comma-separated list of blacklisted github repos           |
-| IsRepoBlacklistExactMatch               | false                       | Whether items in blacklisted are exact matches or prefixes |
-| DockerHost                              | unix:/var/run/docker.sock   | Docker endpoint the autoscaler should use                  |
-| Labels                                  | self-hosted,[host-arch]     | Comma-separated list of labels applied to runners          |
-| ApplicationInsightsConnectionString     |                             | Connection string for Application Insights                 | 
+1. **Web Endpoint Mode** (`UseWebEndpoint=true`)
+   - Accepts webhook calls from GitHub when a job is queued
+   - Places jobs into an Azure Storage Queue
 
-Configuration sample:
+2. **Runner Coordinator Mode** (`AzureStorage` configured)
+   - Monitors Azure Storage Queue for workflow events
+   - Spawns ephemeral Docker containers to execute jobs
+   - Removes containers after job completion
+
+## Requirements
+
+- .NET 10.0 Runtime or Docker
+- Docker daemon access (for spawning runner containers)
+- Azure Storage Queue (for job coordination)
+- GitHub Personal Access Token (for runner registration)
+
+## Project Structure
+
+```
+github-actions-autoscaler/
+├── src/
+│   └── GithubActionsAutoscaler/     # Main application
+│       ├── Configuration/           # App configuration
+│       ├── Endpoints/               # REST API endpoints
+│       ├── Models/                  # Data models
+│       ├── Services/                # Business logic
+│       │   ├── DockerService.cs     # Workflow orchestration
+│       │   ├── ContainerManager.cs  # Docker container management
+│       │   ├── ImageManager.cs      # Docker image management
+│       │   ├── RepositoryFilter.cs  # Filtering logic
+│       │   └── LabelMatcher.cs      # Label matching logic
+│       └── Workers/                 # Background services
+├── tests/
+│   └── GithubActionsAutoscaler.Tests.Unit/ # Unit tests
+├── docs/                            # Documentation
+└── Dockerfile                       # Production Docker image
+```
+
+## Configuration
+
+Configuration can be done via environment variables or `appsettings.custom.json`:
+
+| Key | Default | Description |
+|:----|:--------|:------------|
+| `UseWebEndpoint` | `false` | Enable web endpoint for receiving webhooks |
+| `AzureStorage` | | Azure Storage connection string |
+| `AzureStorageQueue` | | Azure Storage Queue name |
+| `DockerToken` | | Docker Hub PAT (to avoid rate limits) |
+| `GithubToken` | | GitHub PAT (for runner registration) |
+| `MaxRunners` | `4` | Maximum concurrent runners |
+| `RepoWhitelistPrefix` | | Prefix for allowed repositories |
+| `RepoWhitelist` | | Comma-separated list of allowed repos |
+| `IsRepoWhitelistExactMatch` | `true` | Whitelist uses exact matching |
+| `RepoBlacklistPrefix` | | Prefix for blocked repositories |
+| `RepoBlacklist` | | Comma-separated list of blocked repos |
+| `IsRepoBlacklistExactMatch` | `false` | Blacklist uses exact matching |
+| `DockerHost` | `unix:/var/run/docker.sock` | Docker daemon endpoint |
+| `Labels` | `self-hosted,[arch]` | Runner labels |
+| `APPLICATIONINSIGHTS_CONNECTION_STRING` | | Application Insights connection |
+| `DockerImage` | `myoung34/github-runner:latest` | Runner container image |
+| `AutoCheckForImageUpdates` | `true` | Auto-pull latest runner image |
+
+### Example Configuration
+
 ```json
 {
-  "AzureStorage" :"DefaultEndpointsProtocol=htt.......",
-  "AzureStorageQueue" : "workflow-job-queued",
-  "DockerHost" : "tcp://localhost :2375",
-  "DockerToken" : "99e16562.......",
-  "GithubToken" : "ghp_.......",
-  "IsRepoWhitelistExactMatch" : true,
-  "MaxRunners" : 3,
-  "RepoWhitelist" : "",
-  "RepoWhitelistPrefix" : "ofcoursedude/",
-  "UseWebEndpoint" : true,
-  "APPLICATIONINSIGHTS_CONNECTION_STRING" :"InstrumentationKey=dbca7bfd-......."
+  "AzureStorage": "DefaultEndpointsProtocol=https;AccountName=...",
+  "AzureStorageQueue": "workflow-job-queued",
+  "DockerHost": "tcp://localhost:2375",
+  "GithubToken": "ghp_...",
+  "MaxRunners": 3,
+  "RepoWhitelistPrefix": "myorg/",
+  "UseWebEndpoint": true
 }
 ```
+
+## Quick Start
+
+### Using Docker
+
+```bash
+docker run -d \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -e AzureStorage="your-connection-string" \
+  -e AzureStorageQueue="workflow-job-queued" \
+  -e GithubToken="ghp_..." \
+  -e RepoWhitelistPrefix="yourusername/" \
+  ofcoursedude/github-actions-runner:latest
+```
+
+### Using Docker Compose
+
+Create a `docker-compose.yml` file with appropriate environment variables.
+
+### Building from Source
+
+```bash
+# Build
+dotnet build src/GithubActionsAutoscaler
+
+# Run
+dotnet run --project src/GithubActionsAutoscaler
+```
+
+## Development
+
+### Prerequisites
+
+- .NET 10.0 SDK (preview)
+- Docker (for testing runner functionality)
+
+### Build Commands
+
+```bash
+# Build solution
+dotnet build
+
+# Run unit tests
+dotnet test
+
+# Run in development mode
+dotnet run --project src/GithubActionsAutoscaler
+
+# Build Docker image
+docker build -t github-actions-autoscaler .
+```
+
+## License
+
+MIT

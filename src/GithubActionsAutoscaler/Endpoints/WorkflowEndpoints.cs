@@ -1,11 +1,10 @@
-﻿using System.Runtime.CompilerServices;
 using System.Text.Json.Nodes;
 using Azure.Storage.Queues;
 using Microsoft.AspNetCore.Mvc;
 
-namespace AutoscalerApi;
+namespace GithubActionsAutoscaler.Endpoints;
 
-public static class EndpointRouteBuilderExtensions
+public static class WorkflowEndpoints
 {
     public static IEndpointRouteBuilder MapWorkflowEndpoints(this IEndpointRouteBuilder builder)
     {
