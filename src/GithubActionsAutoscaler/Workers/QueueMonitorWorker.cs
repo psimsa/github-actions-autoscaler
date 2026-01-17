@@ -1,6 +1,4 @@
 using System.Text.Json;
-using Azure.Storage.Queues;
-using Azure.Storage.Queues.Models;
 using GithubActionsAutoscaler.Models;
 using GithubActionsAutoscaler.Services;
 
@@ -10,19 +8,19 @@ public class QueueMonitorWorker : IHostedService
 {
     private readonly IDockerService _dockerService;
     private readonly ILogger<QueueMonitorWorker> _logger;
-    private readonly QueueClient _queueClient;
+    private readonly IQueueService _queueService;
     private string _lastUnsuccessfulMessageId = "";
 
     private Task? _worker;
     private CancellationTokenSource? _cts;
 
     public QueueMonitorWorker(
-        QueueClient queueClient,
+        IQueueService queueService,
         IDockerService dockerService,
         ILogger<QueueMonitorWorker> logger
     )
     {
-        _queueClient = queueClient;
+        _queueService = queueService;
         _dockerService = dockerService;
         _logger = logger;
     }
@@ -36,8 +34,8 @@ public class QueueMonitorWorker : IHostedService
 
             if (_lastUnsuccessfulMessageId != "")
             {
-                PeekedMessage? pms = await _queueClient.PeekMessageAsync(token);
-                if (pms?.MessageId == _lastUnsuccessfulMessageId)
+                var peekedMessageId = await _queueService.PeekMessageIdAsync(token);
+                if (peekedMessageId != null && peekedMessageId == _lastUnsuccessfulMessageId)
                 {
                     await Task.Delay(10_000, token);
                 }
@@ -45,8 +43,7 @@ public class QueueMonitorWorker : IHostedService
 
             _lastUnsuccessfulMessageId = "";
 
-            var response = await _queueClient.ReceiveMessageAsync(cancellationToken: token);
-            message = response.Value;
+            message = await _queueService.ReceiveMessageAsync(token);
 
             if (message == null)
             {
@@ -56,14 +53,16 @@ public class QueueMonitorWorker : IHostedService
 
             _logger.LogInformation("Dequeued message");
 
-            var msg = Convert.FromBase64String(message.MessageText);
-
-            var workflow = JsonSerializer.Deserialize<Workflow>(msg);
+            var workflow = JsonSerializer.Deserialize<Workflow>(message.Body);
             _logger.LogInformation("Executing workflow");
             var workflowResult = await _dockerService.ProcessWorkflowAsync(workflow);
 
             if (workflowResult)
-                await _queueClient.DeleteMessageAsync(message.MessageId, message.PopReceipt, token);
+                await _queueService.DeleteMessageAsync(
+                    message.MessageId,
+                    message.PopReceipt,
+                    token
+                );
             else
             {
                 _lastUnsuccessfulMessageId = message.MessageId;
@@ -76,7 +75,11 @@ public class QueueMonitorWorker : IHostedService
             {
                 // In case of processing error (serialization etc), we delete to avoid poison pill
                 // But we might want to reconsider this strategy later (dead letter queue?)
-                await _queueClient.DeleteMessageAsync(message.MessageId, message.PopReceipt, token);
+                await _queueService.DeleteMessageAsync(
+                    message.MessageId,
+                    message.PopReceipt,
+                    token
+                );
             }
 
             await Task.Delay(10_000, token);
@@ -87,7 +90,7 @@ public class QueueMonitorWorker : IHostedService
     {
         _logger.LogInformation("QueueMonitorWorker is starting");
 
-        await _queueClient.CreateIfNotExistsAsync(cancellationToken: token);
+        await _queueService.InitializeAsync(token);
 
         while (!token.IsCancellationRequested)
         {
