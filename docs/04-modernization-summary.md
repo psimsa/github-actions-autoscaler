@@ -21,7 +21,7 @@
 Refactored the monolithic `DockerService` into focused components:
 - **`IContainerManager`**: Handles Docker container lifecycle (create, start, stop, cleanup).
 - **`IImageManager`**: Handles Docker image pulling and updates.
-- **`IRepositoryFilter`**: Encapsulates repository whitelist/blacklist logic.
+- **`IRepositoryFilter`**: Encapsulates repository allowlist/denylist logic.
 - **`ILabelMatcher`**: Encapsulates runner label matching logic.
 - **`DockerService`**: Now acts as a lightweight orchestrator.
 - **`QueueMonitorWorker`**: Improved testability by injecting `QueueClient` and extracting message processing logic.

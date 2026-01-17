@@ -11,14 +11,14 @@ After the initial restructuring to .NET 10 and proper folder structure, the proj
 ### 1. DockerService is Too Large (314 lines)
 The `DockerService` class handles multiple concerns:
 - Container lifecycle management
-- Repository filtering (whitelist/blacklist)
+- Repository filtering (allowlist/denylist)
 - Label matching
 - Image pulling
 - Container guard (cleanup)
 
 **Recommendation:** Extract into smaller, focused services:
 - `IContainerManager` - Container creation, start, stop, remove
-- `IRepositoryFilter` - Whitelist/blacklist logic
+- `IRepositoryFilter` - Allowlist/denylist logic
 - `IImageManager` - Image pulling and updates
 - `IRunnerLabelMatcher` - Label matching logic
 
@@ -120,7 +120,7 @@ tests/
 
 ### Phase 1: Extract Repository Filtering (Easy Win)
 1. Create `IRepositoryFilter` interface
-2. Extract `CheckIfRepoIsWhitelistedOrHasAllowedPrefix` to new class
+2. Extract `CheckIfRepoIsAllowedOrHasAllowedPrefix` to new class
 3. Create unit tests for filtering logic
 4. Inject `IRepositoryFilter` into `DockerService`
 
