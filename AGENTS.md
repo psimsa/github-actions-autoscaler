@@ -4,14 +4,14 @@ This guide provides essential information for AI coding agents working in this r
 
 ## Project Overview
 
-This is a C# .NET 8.0 ASP.NET Core application that autoscales GitHub Actions runners using Docker containers. It monitors Azure Storage Queues for GitHub workflow events and dynamically creates ephemeral runner containers.
+This is a C# .NET 10.0 ASP.NET Core application that autoscales GitHub Actions runners using Docker containers. It monitors Azure Storage Queues for GitHub workflow events and dynamically creates ephemeral runner containers.
 
 ## Build, Test, and Lint Commands
 
 ### Build Commands
 ```bash
-# Build the main API
-dotnet build AutoscalerApi
+# Build the main project
+dotnet build src/GithubActionsAutoscaler
 
 # Build entire solution
 dotnet build
@@ -26,16 +26,16 @@ dotnet clean
 ### Test Commands
 **Note:** This project currently has no test suite. Before implementing tests:
 1. Check with the user about their preferred testing framework (xUnit, NUnit, MSTest)
-2. Create a test project following conventions: `AutoscalerApi.Tests`
+2. Create a test project following conventions: `GithubActionsAutoscaler.Tests.Unit`
 3. Add test project to solution
 
 ### Run Commands
 ```bash
 # Run the application
-dotnet run --project AutoscalerApi
+dotnet run --project src/GithubActionsAutoscaler
 
 # Run with specific configuration
-dotnet run --project AutoscalerApi -c Release
+dotnet run --project src/GithubActionsAutoscaler -c Release
 ```
 
 ### Lint/Format Commands
@@ -47,30 +47,34 @@ dotnet run --project AutoscalerApi -c Release
 ### Docker Commands
 ```bash
 # Build Docker image (from solution root)
-docker build -t autoscaler-api .
+docker build -t github-actions-autoscaler .
 
 # Run container
-docker run -p 8080:8080 autoscaler-api
+docker run -p 8080:8080 github-actions-autoscaler
 ```
 
 ## Code Style Guidelines
 
 ### General Principles
-- **Target Framework:** .NET 8.0
-- **Language Version:** C# 12 (implicit with .NET 8)
+- **Target Framework:** .NET 10.0
+- **Language Version:** C# 14
 - **Nullable Reference Types:** Enabled (strict null checking)
 - **Implicit Usings:** Enabled
 
 ### File Organization
-- Models: `AutoscalerApi/Models/`
-- Services: `AutoscalerApi/Services/` (with corresponding interfaces `I{ServiceName}`)
-- Workers: `AutoscalerApi/Workers/`
-- Configuration: `AutoscalerApi/AppConfiguration.cs`
-- Extensions: Pattern `{Type}Extensions.cs` (e.g., `EndpointRouteBuilderExtensions.cs`)
+```
+src/GithubActionsAutoscaler/
+├── Configuration/     # Configuration classes (AppConfiguration)
+├── Endpoints/         # API endpoint definitions (WorkflowEndpoints)
+├── Models/            # Data models (Workflow, WorkflowJob, Repository)
+├── Services/          # Business logic (IDockerService, DockerService)
+├── Workers/           # Background services (QueueMonitorWorker)
+└── Program.cs         # Application entry point
+```
 
 ### Naming Conventions
 - **Classes/Interfaces:** PascalCase (e.g., `DockerService`, `IDockerService`)
-- **Methods:** PascalCase (e.g., `ProcessWorkflow`, `GetAutoscalerContainersAsync`)
+- **Methods:** PascalCase with Async suffix for async methods (e.g., `ProcessWorkflowAsync`, `GetAutoscalerContainersAsync`)
 - **Properties:** PascalCase (e.g., `MaxRunners`, `AzureStorage`)
 - **Private Fields:** _camelCase with underscore prefix (e.g., `_client`, `_logger`, `_maxRunners`)
 - **Local Variables:** camelCase (e.g., `containerName`, `workflowResult`)
@@ -86,22 +90,22 @@ docker run -p 8080:8080 autoscaler-api
 ### Type Guidelines
 - Always use explicit types for clarity when declaring services/clients
 - Use `var` for obvious types (e.g., `var container = new CreateContainerParameters()`)
-- Always initialize collections: `Array.Empty<string>()` for empty arrays, never null
+- Always initialize collections: `[]` for empty arrays (C# 14 collection expressions), never null
 - Properties should have explicit types
 - Methods must have explicit return types
 - Use records for immutable DTOs (see `WorkflowJob`, `Repository`, `Workflow`)
 
 ### Imports
-- Use implicit usings (enabled by default for .NET 8 web projects)
+- Use implicit usings (enabled by default for .NET 10 web projects)
 - Explicit `using` statements only for non-standard namespaces
 - Standard order: System namespaces, third-party, local namespaces
 - Example from codebase:
 ```csharp
-using AutoscalerApi.Models;
+using GithubActionsAutoscaler.Models;
 using Docker.DotNet;
 using Docker.DotNet.Models;
 
-namespace AutoscalerApi.Services;
+namespace GithubActionsAutoscaler.Services;
 ```
 
 ### Async/Await Patterns
@@ -155,7 +159,7 @@ catch (Exception ex)
 ```
 
 ### Configuration
-- Configuration class: `AppConfiguration`
+- Configuration class: `AppConfiguration` in `Configuration/` folder
 - Supports both environment variables and JSON files
 - Custom config file: `appsettings.custom.json` (not committed)
 - Default values should be sensible
@@ -163,6 +167,7 @@ catch (Exception ex)
 
 ### API Endpoints
 - Use minimal APIs with `IEndpointRouteBuilder` extensions
+- Endpoint definitions in `Endpoints/` folder
 - Group related endpoints: `builder.MapGroup("workflow")`
 - Use `Results.Ok()`, `Results.BadRequest()`, etc.
 - Apply OpenAPI attributes: `.WithName()`, `.WithOpenApi()`
