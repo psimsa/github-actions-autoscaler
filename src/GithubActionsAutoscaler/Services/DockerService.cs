@@ -9,17 +9,13 @@ public class DockerService : IDockerService
 {
     private readonly DockerClient _client;
     private readonly ILogger<DockerService> _logger;
+    private readonly IRepositoryFilter _repositoryFilter;
+    private readonly ILabelMatcher _labelMatcher;
     private readonly string _accessToken;
     private readonly string _dockerToken;
     private readonly int _maxRunners;
-    private readonly string _repoWhitelistPrefix;
-    private readonly string[] _repoWhitelist;
-    private readonly bool _isRepoWhitelistExactMatch;
     private DateTime _lastPullCheck = DateTime.MinValue;
     private int _totalCount = 0;
-    private readonly string _repoBlacklistPrefix;
-    private readonly string[] _repoBlacklist;
-    private readonly bool _isRepoBlacklistExactMatch;
     private readonly string[] _labels;
     private readonly string _labelField;
 
@@ -41,21 +37,19 @@ public class DockerService : IDockerService
     public DockerService(
         DockerClient client,
         AppConfiguration configuration,
+        IRepositoryFilter repositoryFilter,
+        ILabelMatcher labelMatcher,
         ILogger<DockerService> logger
     )
     {
         _client = client;
         _logger = logger;
+        _repositoryFilter = repositoryFilter;
+        _labelMatcher = labelMatcher;
         _accessToken = configuration.GithubToken;
         _dockerToken = configuration.DockerToken;
         var maxRunners = configuration.MaxRunners;
         _maxRunners = maxRunners > 0 ? maxRunners : 3;
-        _repoWhitelistPrefix = configuration.RepoWhitelistPrefix;
-        _repoWhitelist = configuration.RepoWhitelist;
-        _isRepoWhitelistExactMatch = configuration.IsRepoWhitelistExactMatch;
-        _repoBlacklistPrefix = configuration.RepoBlacklistPrefix;
-        _repoBlacklist = configuration.RepoBlacklist;
-        _isRepoBlacklistExactMatch = configuration.IsRepoBlacklistExactMatch;
         _labels = configuration.Labels;
         _labelField = string.Join(',', _labels).ToLowerInvariant();
         _containerGuardTask = ContainerGuardAsync(CancellationToken.None);
@@ -80,14 +74,13 @@ public class DockerService : IDockerService
                     workflow.Job.Name
                 );
                 return true;
-            case "queued" when !CheckIfHasAllLabels(workflow.Job.Labels):
+            case "queued" when !_labelMatcher.HasAllRequiredLabels(workflow.Job.Labels):
                 _logger.LogInformation(
                     "Job {jobName} does not have all necessary labels, returning to queue",
                     workflow.Job.Name
                 );
                 return false;
-            case "queued"
-                when CheckIfRepoIsWhitelistedOrHasAllowedPrefix(workflow.Repository.FullName):
+            case "queued" when _repositoryFilter.IsRepositoryAllowed(workflow.Repository.FullName):
                 _logger.LogInformation(
                     "Workflow '{Workflow}' is self-hosted and repository {Repository} whitelisted, starting container",
                     workflow.Job.Name,
@@ -151,12 +144,6 @@ public class DockerService : IDockerService
 
             await Task.Delay(TimeSpan.FromMinutes(2), token);
         }
-    }
-
-    private bool CheckIfHasAllLabels(string[] jobLabels)
-    {
-        return jobLabels.All(l => _labels.Contains(l.ToLowerInvariant()))
-            && jobLabels.Any(l => l == "self-hosted");
     }
 
     private async Task<bool> StartEphemeralContainerAsync(
@@ -337,32 +324,5 @@ public class DockerService : IDockerService
 
         _logger.LogInformation("Downloaded new docker image");
         return success;
-    }
-
-    private bool CheckIfRepoIsWhitelistedOrHasAllowedPrefix(string repositoryFullName)
-    {
-        bool IsRepoBlacklisted(string repoName)
-        {
-            return repoName switch
-            {
-                var f
-                    when string.IsNullOrWhiteSpace(_repoBlacklistPrefix)
-                        && _repoBlacklist.Length == 0 => false,
-                var f when f.StartsWith(_repoBlacklistPrefix) => true,
-                var f when _isRepoBlacklistExactMatch => _repoBlacklist.Contains(f),
-                _ => _repoBlacklist.Any(repoName.StartsWith),
-            };
-        }
-
-        return repositoryFullName switch
-        {
-            var f when IsRepoBlacklisted(f) => false,
-            var f when f.StartsWith(_repoWhitelistPrefix) => true,
-            _ when _repoWhitelist.Length == 0 => false,
-            var f when _isRepoWhitelistExactMatch => _repoWhitelist.Contains(f),
-            _ => _repoWhitelist.Any(repo =>
-                repositoryFullName.StartsWith(repo) || repo.Equals("*")
-            ),
-        };
     }
 }

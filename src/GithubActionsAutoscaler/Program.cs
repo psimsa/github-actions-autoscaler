@@ -16,7 +16,11 @@ if (appConfig.UseWebEndpoint)
     builder.Services.AddSwaggerGen();
 }
 
+builder.Services.AddSingleton(appConfig);
+builder.Services.AddSingleton<IRepositoryFilter, RepositoryFilter>();
+builder.Services.AddSingleton<ILabelMatcher, LabelMatcher>();
 builder.Services.AddSingleton<IDockerService, DockerService>();
+
 if (!string.IsNullOrWhiteSpace(appConfig.ApplicationInsightsConnectionString))
 {
     builder.Services.AddApplicationInsightsTelemetryWorkerService();
@@ -32,7 +36,6 @@ if (!string.IsNullOrWhiteSpace(appConfig.AzureStorage))
     builder.Services.AddHostedService<QueueMonitorWorker>();
 }
 
-builder.Services.AddSingleton(appConfig);
 builder.Services.AddSingleton(serviceProvider =>
 {
     var config = serviceProvider.GetRequiredService<AppConfiguration>();
