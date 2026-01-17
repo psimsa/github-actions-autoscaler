@@ -17,7 +17,6 @@ github-actions-autoscaler/
 │   ├── GithubActionsAutoscaler.Tests.Unit/
 │   └── GithubActionsAutoscaler.Tests.Integration/
 ├── docs/                          # Documentation
-├── samples/                       # Sample configurations (renamed from sample-config)
 ├── README.md
 └── GithubActionsAutoscaler.sln    # Renamed solution file
 ```
@@ -31,7 +30,6 @@ github-actions-autoscaler/
 | Current Location | New Location |
 |-----------------|--------------|
 | `AutoscalerApi/` | `src/GithubActionsAutoscaler/` |
-| `sample-config/` | `samples/` |
 | `AutoscalerApi/AppConfiguration.cs` | `src/GithubActionsAutoscaler/Configuration/AppConfiguration.cs` |
 | `AutoscalerApi/EndpointRouteBuilderExtensions.cs` | `src/GithubActionsAutoscaler/Endpoints/WorkflowEndpoints.cs` |
 

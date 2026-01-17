@@ -52,7 +52,6 @@ github-actions-autoscaler/
 ├── tests/
 │   └── GithubActionsAutoscaler.Tests.Unit/ # Unit tests
 ├── docs/                            # Documentation
-├── samples/                         # Sample deployment configs
 └── Dockerfile                       # Production Docker image
 ```
 
@@ -110,7 +109,7 @@ docker run -d \
 
 ### Using Docker Compose
 
-See `samples/docker-compose.yml` for a complete example.
+Create a `docker-compose.yml` file with appropriate environment variables.
 
 ### Building from Source
 

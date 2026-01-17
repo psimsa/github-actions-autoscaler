@@ -8,7 +8,6 @@
 - Adopted standard `.NET` solution structure:
   - `src/GithubActionsAutoscaler/` - Main application
   - `tests/GithubActionsAutoscaler.Tests.Unit/` - Unit tests
-  - `samples/` - Sample configurations
   - `docs/` - Project documentation
 
 ### 2. Technology Upgrade

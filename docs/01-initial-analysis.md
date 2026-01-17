@@ -35,7 +35,6 @@ github-actions-autoscaler/
 │   ├── Dockerfile                 # Multi-arch production image
 │   ├── Dockerfile-alpine          # Alpine-based image
 │   └── Dockerfile-debug           # Debug image
-├── sample-config/                 # Example deployment configurations
 ├── .github/workflows/             # CI/CD pipelines
 ├── .devcontainer/                 # VS Code dev container
 ├── README.md                      # Project documentation
