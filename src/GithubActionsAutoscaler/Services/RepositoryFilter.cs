@@ -4,76 +4,76 @@ namespace GithubActionsAutoscaler.Services;
 
 public class RepositoryFilter : IRepositoryFilter
 {
-    private readonly string _repoWhitelistPrefix;
-    private readonly string[] _repoWhitelist;
-    private readonly bool _isRepoWhitelistExactMatch;
-    private readonly string _repoBlacklistPrefix;
-    private readonly string[] _repoBlacklist;
-    private readonly bool _isRepoBlacklistExactMatch;
+    private readonly string _repoAllowlistPrefix;
+    private readonly string[] _repoAllowlist;
+    private readonly bool _isRepoAllowlistExactMatch;
+    private readonly string _repoDenylistPrefix;
+    private readonly string[] _repoDenylist;
+    private readonly bool _isRepoDenylistExactMatch;
 
     public RepositoryFilter(AppConfiguration configuration)
     {
-        _repoWhitelistPrefix = configuration.RepoWhitelistPrefix;
-        _repoWhitelist = configuration.RepoWhitelist;
-        _isRepoWhitelistExactMatch = configuration.IsRepoWhitelistExactMatch;
-        _repoBlacklistPrefix = configuration.RepoBlacklistPrefix;
-        _repoBlacklist = configuration.RepoBlacklist;
-        _isRepoBlacklistExactMatch = configuration.IsRepoBlacklistExactMatch;
+        _repoAllowlistPrefix = configuration.RepoAllowlistPrefix;
+        _repoAllowlist = configuration.RepoAllowlist;
+        _isRepoAllowlistExactMatch = configuration.IsRepoAllowlistExactMatch;
+        _repoDenylistPrefix = configuration.RepoDenylistPrefix;
+        _repoDenylist = configuration.RepoDenylist;
+        _isRepoDenylistExactMatch = configuration.IsRepoDenylistExactMatch;
     }
 
     public bool IsRepositoryAllowed(string repositoryFullName)
     {
-        if (IsRepoBlacklisted(repositoryFullName))
+        if (IsRepoDenied(repositoryFullName))
         {
             return false;
         }
 
-        return IsRepoWhitelisted(repositoryFullName);
+        return IsRepoInAllowlist(repositoryFullName);
     }
 
-    private bool IsRepoBlacklisted(string repoName)
+    private bool IsRepoDenied(string repoName)
     {
-        if (string.IsNullOrWhiteSpace(_repoBlacklistPrefix) && _repoBlacklist.Length == 0)
+        if (string.IsNullOrWhiteSpace(_repoDenylistPrefix) && _repoDenylist.Length == 0)
         {
             return false;
         }
 
         if (
-            !string.IsNullOrWhiteSpace(_repoBlacklistPrefix)
-            && repoName.StartsWith(_repoBlacklistPrefix)
+            !string.IsNullOrWhiteSpace(_repoDenylistPrefix)
+            && repoName.StartsWith(_repoDenylistPrefix)
         )
         {
             return true;
         }
 
-        if (_isRepoBlacklistExactMatch)
+        if (_isRepoDenylistExactMatch)
         {
-            return _repoBlacklist.Contains(repoName);
+            return _repoDenylist.Contains(repoName);
         }
 
-        return _repoBlacklist.Any(repoName.StartsWith);
+        return _repoDenylist.Any(repoName.StartsWith);
     }
 
-    private bool IsRepoWhitelisted(string repositoryFullName)
+    private bool IsRepoInAllowlist(string repositoryFullName)
     {
         if (
-            !string.IsNullOrWhiteSpace(_repoWhitelistPrefix)
-            && repositoryFullName.StartsWith(_repoWhitelistPrefix)
+            !string.IsNullOrWhiteSpace(_repoAllowlistPrefix)
+            && repositoryFullName.StartsWith(_repoAllowlistPrefix)
         )
         {
             return true;
         }
 
-        if (_repoWhitelist.Length == 0)
+        if (_repoAllowlist.Length == 0)
         {
             return false;
         }
 
-        if (_isRepoWhitelistExactMatch)
+        if (_isRepoAllowlistExactMatch)
         {
-            return _repoWhitelist.Contains(repositoryFullName);
+            return _repoAllowlist.Contains(repositoryFullName);
         }
 
-        return _repoWhitelist.Any(repo => repositoryFullName.StartsWith(repo) || repo.Equals("*"));
+        return _repoAllowlist.Any(repo => repositoryFullName.StartsWith(repo) || repo.Equals("*"));
     }
 }

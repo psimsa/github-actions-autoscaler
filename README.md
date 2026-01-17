@@ -10,7 +10,7 @@ A self-hosted GitHub Actions runner autoscaler that dynamically creates ephemera
 - **Dynamic Scaling**: Automatically spawns runner containers when jobs are queued
 - **Ephemeral Runners**: Each job gets a fresh container that's removed after completion
 - **Multi-Server Support**: Run coordinators on multiple servers for distributed scaling
-- **Repository Filtering**: Whitelist/blacklist repositories by name or prefix
+- **Repository Filtering**: Allowlist/denylist repositories by name or prefix
 - **Label Matching**: Route jobs to appropriate runners based on labels
 
 ## Architecture
@@ -67,12 +67,12 @@ Configuration can be done via environment variables or `appsettings.custom.json`
 | `DockerToken` | | Docker Hub PAT (to avoid rate limits) |
 | `GithubToken` | | GitHub PAT (for runner registration) |
 | `MaxRunners` | `4` | Maximum concurrent runners |
-| `RepoWhitelistPrefix` | | Prefix for allowed repositories |
-| `RepoWhitelist` | | Comma-separated list of allowed repos |
-| `IsRepoWhitelistExactMatch` | `true` | Whitelist uses exact matching |
-| `RepoBlacklistPrefix` | | Prefix for blocked repositories |
-| `RepoBlacklist` | | Comma-separated list of blocked repos |
-| `IsRepoBlacklistExactMatch` | `false` | Blacklist uses exact matching |
+| `RepoAllowlistPrefix` | | Prefix for allowed repositories |
+| `RepoAllowlist` | | Comma-separated list of allowed repos |
+| `IsRepoAllowlistExactMatch` | `true` | Allowlist uses exact matching |
+| `RepoDenylistPrefix` | | Prefix for blocked repositories |
+| `RepoDenylist` | | Comma-separated list of blocked repos |
+| `IsRepoDenylistExactMatch` | `false` | Denylist uses exact matching |
 | `DockerHost` | `unix:/var/run/docker.sock` | Docker daemon endpoint |
 | `Labels` | `self-hosted,[arch]` | Runner labels |
 | `APPLICATIONINSIGHTS_CONNECTION_STRING` | | Application Insights connection |
@@ -88,7 +88,7 @@ Configuration can be done via environment variables or `appsettings.custom.json`
   "DockerHost": "tcp://localhost:2375",
   "GithubToken": "ghp_...",
   "MaxRunners": 3,
-  "RepoWhitelistPrefix": "myorg/",
+  "RepoAllowlistPrefix": "myorg/",
   "UseWebEndpoint": true
 }
 ```
@@ -103,7 +103,7 @@ docker run -d \
   -e AzureStorage="your-connection-string" \
   -e AzureStorageQueue="workflow-job-queued" \
   -e GithubToken="ghp_..." \
-  -e RepoWhitelistPrefix="yourusername/" \
+  -e RepoAllowlistPrefix="yourusername/" \
   ofcoursedude/github-actions-runner:latest
 ```
 

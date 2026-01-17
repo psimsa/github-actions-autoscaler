@@ -6,9 +6,9 @@ namespace GithubActionsAutoscaler.Tests.Unit.Services;
 public class RepositoryFilterTests
 {
     [Fact]
-    public void IsRepositoryAllowed_WithMatchingWhitelistPrefix_ReturnsTrue()
+    public void IsRepositoryAllowed_WithMatchingAllowlistPrefix_ReturnsTrue()
     {
-        var config = CreateConfiguration(repoWhitelistPrefix: "myorg/");
+        var config = CreateConfiguration(repoAllowlistPrefix: "myorg/");
         var filter = new RepositoryFilter(config);
 
         var result = filter.IsRepositoryAllowed("myorg/my-repo");
@@ -17,9 +17,9 @@ public class RepositoryFilterTests
     }
 
     [Fact]
-    public void IsRepositoryAllowed_WithNonMatchingWhitelistPrefix_ReturnsFalse()
+    public void IsRepositoryAllowed_WithNonMatchingAllowlistPrefix_ReturnsFalse()
     {
-        var config = CreateConfiguration(repoWhitelistPrefix: "myorg/");
+        var config = CreateConfiguration(repoAllowlistPrefix: "myorg/");
         var filter = new RepositoryFilter(config);
 
         var result = filter.IsRepositoryAllowed("otherorg/my-repo");
@@ -28,11 +28,11 @@ public class RepositoryFilterTests
     }
 
     [Fact]
-    public void IsRepositoryAllowed_WithExactWhitelistMatch_ReturnsTrue()
+    public void IsRepositoryAllowed_WithExactAllowlistMatch_ReturnsTrue()
     {
         var config = CreateConfiguration(
-            repoWhitelist: ["myorg/repo1", "myorg/repo2"],
-            isRepoWhitelistExactMatch: true
+            repoAllowlist: ["myorg/repo1", "myorg/repo2"],
+            isRepoAllowlistExactMatch: true
         );
         var filter = new RepositoryFilter(config);
 
@@ -42,11 +42,11 @@ public class RepositoryFilterTests
     }
 
     [Fact]
-    public void IsRepositoryAllowed_WithExactWhitelistNoMatch_ReturnsFalse()
+    public void IsRepositoryAllowed_WithExactAllowlistNoMatch_ReturnsFalse()
     {
         var config = CreateConfiguration(
-            repoWhitelist: ["myorg/repo1", "myorg/repo2"],
-            isRepoWhitelistExactMatch: true
+            repoAllowlist: ["myorg/repo1", "myorg/repo2"],
+            isRepoAllowlistExactMatch: true
         );
         var filter = new RepositoryFilter(config);
 
@@ -56,11 +56,11 @@ public class RepositoryFilterTests
     }
 
     [Fact]
-    public void IsRepositoryAllowed_WithPrefixWhitelistMatch_ReturnsTrue()
+    public void IsRepositoryAllowed_WithPrefixAllowlistMatch_ReturnsTrue()
     {
         var config = CreateConfiguration(
-            repoWhitelist: ["myorg/"],
-            isRepoWhitelistExactMatch: false
+            repoAllowlist: ["myorg/"],
+            isRepoAllowlistExactMatch: false
         );
         var filter = new RepositoryFilter(config);
 
@@ -70,9 +70,9 @@ public class RepositoryFilterTests
     }
 
     [Fact]
-    public void IsRepositoryAllowed_WithWildcardWhitelist_ReturnsTrue()
+    public void IsRepositoryAllowed_WithWildcardAllowlist_ReturnsTrue()
     {
-        var config = CreateConfiguration(repoWhitelist: ["*"], isRepoWhitelistExactMatch: false);
+        var config = CreateConfiguration(repoAllowlist: ["*"], isRepoAllowlistExactMatch: false);
         var filter = new RepositoryFilter(config);
 
         var result = filter.IsRepositoryAllowed("anyorg/any-repo");
@@ -81,11 +81,11 @@ public class RepositoryFilterTests
     }
 
     [Fact]
-    public void IsRepositoryAllowed_WithBlacklistPrefix_ReturnsFalse()
+    public void IsRepositoryAllowed_WithDenylistPrefix_ReturnsFalse()
     {
         var config = CreateConfiguration(
-            repoWhitelistPrefix: "myorg/",
-            repoBlacklistPrefix: "myorg/blocked-"
+            repoAllowlistPrefix: "myorg/",
+            repoDenylistPrefix: "myorg/blocked-"
         );
         var filter = new RepositoryFilter(config);
 
@@ -95,13 +95,13 @@ public class RepositoryFilterTests
     }
 
     [Fact]
-    public void IsRepositoryAllowed_BlacklistTakesPrecedenceOverWhitelist()
+    public void IsRepositoryAllowed_DenylistTakesPrecedenceOverAllowlist()
     {
         var config = CreateConfiguration(
-            repoWhitelist: ["myorg/blocked-repo"],
-            repoBlacklist: ["myorg/blocked-repo"],
-            isRepoWhitelistExactMatch: true,
-            isRepoBlacklistExactMatch: true
+            repoAllowlist: ["myorg/blocked-repo"],
+            repoDenylist: ["myorg/blocked-repo"],
+            isRepoAllowlistExactMatch: true,
+            isRepoDenylistExactMatch: true
         );
         var filter = new RepositoryFilter(config);
 
@@ -111,7 +111,7 @@ public class RepositoryFilterTests
     }
 
     [Fact]
-    public void IsRepositoryAllowed_WithEmptyWhitelistAndNoPrefix_ReturnsFalse()
+    public void IsRepositoryAllowed_WithEmptyAllowlistAndNoPrefix_ReturnsFalse()
     {
         var config = CreateConfiguration();
         var filter = new RepositoryFilter(config);
@@ -122,12 +122,12 @@ public class RepositoryFilterTests
     }
 
     [Fact]
-    public void IsRepositoryAllowed_WithPrefixBlacklistMatch_ReturnsFalse()
+    public void IsRepositoryAllowed_WithPrefixDenylistMatch_ReturnsFalse()
     {
         var config = CreateConfiguration(
-            repoWhitelistPrefix: "myorg/",
-            repoBlacklist: ["myorg/blocked"],
-            isRepoBlacklistExactMatch: false
+            repoAllowlistPrefix: "myorg/",
+            repoDenylist: ["myorg/blocked"],
+            isRepoDenylistExactMatch: false
         );
         var filter = new RepositoryFilter(config);
 
@@ -137,22 +137,22 @@ public class RepositoryFilterTests
     }
 
     private static AppConfiguration CreateConfiguration(
-        string repoWhitelistPrefix = "",
-        string[] repoWhitelist = null!,
-        bool isRepoWhitelistExactMatch = true,
-        string repoBlacklistPrefix = "",
-        string[] repoBlacklist = null!,
-        bool isRepoBlacklistExactMatch = false
+        string repoAllowlistPrefix = "",
+        string[] repoAllowlist = null!,
+        bool isRepoAllowlistExactMatch = true,
+        string repoDenylistPrefix = "",
+        string[] repoDenylist = null!,
+        bool isRepoDenylistExactMatch = false
     )
     {
         return new AppConfiguration
         {
-            RepoWhitelistPrefix = repoWhitelistPrefix,
-            RepoWhitelist = repoWhitelist ?? [],
-            IsRepoWhitelistExactMatch = isRepoWhitelistExactMatch,
-            RepoBlacklistPrefix = repoBlacklistPrefix,
-            RepoBlacklist = repoBlacklist ?? [],
-            IsRepoBlacklistExactMatch = isRepoBlacklistExactMatch,
+            RepoAllowlistPrefix = repoAllowlistPrefix,
+            RepoAllowlist = repoAllowlist ?? [],
+            IsRepoAllowlistExactMatch = isRepoAllowlistExactMatch,
+            RepoDenylistPrefix = repoDenylistPrefix,
+            RepoDenylist = repoDenylist ?? [],
+            IsRepoDenylistExactMatch = isRepoDenylistExactMatch,
             DockerImage = "test-image:latest",
         };
     }

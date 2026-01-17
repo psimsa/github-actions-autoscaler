@@ -60,7 +60,7 @@ public class DockerService : IDockerService
                 return false;
             case "queued" when _repositoryFilter.IsRepositoryAllowed(workflow.Repository.FullName):
                 _logger.LogInformation(
-                    "Workflow '{Workflow}' is self-hosted and repository {Repository} whitelisted, starting container",
+                    "Workflow '{Workflow}' is self-hosted and repository {Repository} allowed, starting container",
                     workflow.Job.Name,
                     workflow.Repository.FullName
                 );
