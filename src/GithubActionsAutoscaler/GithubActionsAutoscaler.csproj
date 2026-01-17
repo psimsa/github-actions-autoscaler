@@ -16,4 +16,9 @@
     <PackageReference Include="Azure.Storage.Queues" Version="12.25.0" />
     <PackageReference Include="Docker.DotNet" Version="3.125.15" />
   </ItemGroup>
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+      <_Parameter1>GithubActionsAutoscaler.Tests.Unit</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
 </Project>

@@ -19,6 +19,8 @@ if (appConfig.UseWebEndpoint)
 builder.Services.AddSingleton(appConfig);
 builder.Services.AddSingleton<IRepositoryFilter, RepositoryFilter>();
 builder.Services.AddSingleton<ILabelMatcher, LabelMatcher>();
+builder.Services.AddSingleton<IImageManager, ImageManager>();
+builder.Services.AddSingleton<IContainerManager, ContainerManager>();
 builder.Services.AddSingleton<IDockerService, DockerService>();
 
 if (!string.IsNullOrWhiteSpace(appConfig.ApplicationInsightsConnectionString))
