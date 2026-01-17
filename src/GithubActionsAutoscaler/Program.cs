@@ -4,6 +4,9 @@ using GithubActionsAutoscaler.Configuration;
 using GithubActionsAutoscaler.Endpoints;
 using GithubActionsAutoscaler.Services;
 using GithubActionsAutoscaler.Workers;
+using OpenTelemetry.Logs;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,9 +26,36 @@ builder.Services.AddSingleton<IImageManager, ImageManager>();
 builder.Services.AddSingleton<IContainerManager, ContainerManager>();
 builder.Services.AddSingleton<IDockerService, DockerService>();
 
-if (!string.IsNullOrWhiteSpace(appConfig.ApplicationInsightsConnectionString))
+if (appConfig.OpenTelemetry.Enabled)
 {
-    builder.Services.AddApplicationInsightsTelemetryWorkerService();
+    builder
+        .Services.AddOpenTelemetry()
+        .ConfigureResource(resource =>
+            resource.AddService(serviceName: appConfig.OpenTelemetry.ServiceName)
+        )
+        .WithTracing(tracing =>
+        {
+            tracing.AddAspNetCoreInstrumentation().AddHttpClientInstrumentation();
+
+            // Only add OTLP exporter if endpoint is configured (via config or env var)
+            var otlpEndpoint =
+                appConfig.OpenTelemetry.OtlpEndpoint
+                ?? Environment.GetEnvironmentVariable("OTEL_EXPORTER_OTLP_ENDPOINT");
+            if (!string.IsNullOrWhiteSpace(otlpEndpoint))
+            {
+                tracing.AddOtlpExporter();
+            }
+        })
+        .WithLogging(logging =>
+        {
+            var otlpEndpoint =
+                appConfig.OpenTelemetry.OtlpEndpoint
+                ?? Environment.GetEnvironmentVariable("OTEL_EXPORTER_OTLP_ENDPOINT");
+            if (!string.IsNullOrWhiteSpace(otlpEndpoint))
+            {
+                logging.AddOtlpExporter();
+            }
+        });
 }
 
 var dockerConfig = !string.IsNullOrWhiteSpace(appConfig.DockerHost)

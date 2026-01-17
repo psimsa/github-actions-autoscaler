@@ -75,9 +75,32 @@ Configuration can be done via environment variables or `appsettings.custom.json`
 | `IsRepoDenylistExactMatch` | `false` | Denylist uses exact matching |
 | `DockerHost` | `unix:/var/run/docker.sock` | Docker daemon endpoint |
 | `Labels` | `self-hosted,[arch]` | Runner labels |
-| `APPLICATIONINSIGHTS_CONNECTION_STRING` | | Application Insights connection |
 | `DockerImage` | `myoung34/github-runner:latest` | Runner container image |
 | `AutoCheckForImageUpdates` | `true` | Auto-pull latest runner image |
+| `CoordinatorHostname` | System hostname | Coordinator instance hostname |
+
+### OpenTelemetry Configuration
+
+Observability is provided via OpenTelemetry with OTLP exporter. Configure using standard OpenTelemetry environment variables or the `appsettings.json` section:
+
+| Key | Default | Description |
+|:----|:--------|:------------|
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | | OTLP exporter endpoint (e.g., `http://localhost:4317`) |
+| `OTEL_SERVICE_NAME` | `github-actions-autoscaler` | Service name for telemetry |
+
+Alternatively, configure in `appsettings.json`:
+
+```json
+{
+  "OpenTelemetry": {
+    "Enabled": true,
+    "ServiceName": "github-actions-autoscaler",
+    "OtlpEndpoint": "http://localhost:4317"
+  }
+}
+```
+
+Environment variables take precedence over configuration file settings.
 
 ### Example Configuration
 
