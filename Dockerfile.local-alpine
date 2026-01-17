@@ -4,7 +4,7 @@ FROM alpine AS base
 WORKDIR /app
 EXPOSE 80
 
-FROM mcr.microsoft.com/dotnet/sdk:10.0-preview AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 COPY ["src/GithubActionsAutoscaler/GithubActionsAutoscaler.csproj", "src/GithubActionsAutoscaler/"]
 RUN dotnet restore -r linux-musl-x64 "src/GithubActionsAutoscaler/GithubActionsAutoscaler.csproj"
