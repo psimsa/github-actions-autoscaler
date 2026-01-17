@@ -43,8 +43,14 @@ github-actions-autoscaler/
 │       ├── Endpoints/               # REST API endpoints
 │       ├── Models/                  # Data models
 │       ├── Services/                # Business logic
+│       │   ├── DockerService.cs     # Workflow orchestration
+│       │   ├── ContainerManager.cs  # Docker container management
+│       │   ├── ImageManager.cs      # Docker image management
+│       │   ├── RepositoryFilter.cs  # Filtering logic
+│       │   └── LabelMatcher.cs      # Label matching logic
 │       └── Workers/                 # Background services
-├── tests/                           # Test projects (coming soon)
+├── tests/
+│   └── GithubActionsAutoscaler.Tests.Unit/ # Unit tests
 ├── docs/                            # Documentation
 ├── samples/                         # Sample deployment configs
 └── Dockerfile                       # Production Docker image
@@ -128,6 +134,9 @@ dotnet run --project src/GithubActionsAutoscaler
 ```bash
 # Build solution
 dotnet build
+
+# Run unit tests
+dotnet test
 
 # Run in development mode
 dotnet run --project src/GithubActionsAutoscaler
