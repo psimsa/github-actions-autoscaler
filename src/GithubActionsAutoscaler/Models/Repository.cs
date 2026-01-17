@@ -1,6 +1,6 @@
-﻿using System.Text.Json.Serialization;
+using System.Text.Json.Serialization;
 
-namespace AutoscalerApi.Models;
+namespace GithubActionsAutoscaler.Models;
 
 public record Repository
 {

@@ -1,8 +1,9 @@
-using AutoscalerApi;
-using AutoscalerApi.Services;
-using AutoscalerApi.Workers;
 using Azure.Storage.Queues;
 using Docker.DotNet;
+using GithubActionsAutoscaler.Configuration;
+using GithubActionsAutoscaler.Endpoints;
+using GithubActionsAutoscaler.Services;
+using GithubActionsAutoscaler.Workers;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -34,8 +35,8 @@ if (!string.IsNullOrWhiteSpace(appConfig.AzureStorage))
 builder.Services.AddSingleton(appConfig);
 builder.Services.AddSingleton(serviceProvider =>
 {
-    var appConfig = serviceProvider.GetRequiredService<AppConfiguration>();
-    return new QueueClient(appConfig.AzureStorage, appConfig.AzureStorageQueue);
+    var config = serviceProvider.GetRequiredService<AppConfiguration>();
+    return new QueueClient(config.AzureStorage, config.AzureStorageQueue);
 });
 
 var app = builder.Build();

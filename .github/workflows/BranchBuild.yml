@@ -15,7 +15,8 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: 8.0.x
+          dotnet-version: 10.0.x
+          dotnet-quality: 'preview'
       - name: Build solution
         run: dotnet build -c Release
 
@@ -33,9 +34,10 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: 8.0.x
+          dotnet-version: 10.0.x
+          dotnet-quality: 'preview'
       - name: Publish package
-        run: dotnet publish AutoscalerApi --self-contained -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:PublishTrimmed=true -r linux-${{ matrix.arch }} -c Release -o artifacts
+        run: dotnet publish src/GithubActionsAutoscaler --self-contained -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:PublishTrimmed=true -r linux-${{ matrix.arch }} -c Release -o artifacts
       - name: Publish artifacts
         if: github.ref == 'refs/heads/main'
         uses: actions/upload-artifact@v6.0.0

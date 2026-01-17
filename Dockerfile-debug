@@ -1,0 +1,26 @@
+# See https://aka.ms/containerfastmode to understand how Visual Studio uses this Dockerfile to build your images for faster debugging.
+
+FROM mcr.microsoft.com/dotnet/sdk:10.0-preview AS base
+WORKDIR /app
+EXPOSE 80
+
+FROM mcr.microsoft.com/dotnet/sdk:10.0-preview AS build
+WORKDIR /src
+COPY ["src/GithubActionsAutoscaler/GithubActionsAutoscaler.csproj", "src/GithubActionsAutoscaler/"]
+RUN dotnet restore "src/GithubActionsAutoscaler/GithubActionsAutoscaler.csproj"
+COPY . .
+WORKDIR "/src/src/GithubActionsAutoscaler"
+RUN dotnet build "GithubActionsAutoscaler.csproj" -c Release -o /app/build
+
+FROM build AS publish
+RUN dotnet publish "GithubActionsAutoscaler.csproj" -c Release -o /app/publish
+
+FROM base AS final
+
+RUN dotnet tool install --global dotnet-trace
+RUN dotnet tool install --global dotnet-dump
+RUN dotnet tool install --global dotnet-counters
+
+WORKDIR /app
+COPY --from=publish /app/publish .
+ENTRYPOINT ["dotnet", "GithubActionsAutoscaler.dll"]

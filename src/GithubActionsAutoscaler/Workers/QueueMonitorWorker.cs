@@ -1,11 +1,11 @@
-﻿using System.Text.Json;
-using System.Threading;
-using AutoscalerApi.Models;
-using AutoscalerApi.Services;
+using System.Text.Json;
 using Azure.Storage.Queues;
 using Azure.Storage.Queues.Models;
+using GithubActionsAutoscaler.Configuration;
+using GithubActionsAutoscaler.Models;
+using GithubActionsAutoscaler.Services;
 
-namespace AutoscalerApi.Workers;
+namespace GithubActionsAutoscaler.Workers;
 
 public class QueueMonitorWorker : IHostedService
 {
@@ -14,7 +14,7 @@ public class QueueMonitorWorker : IHostedService
     private readonly string _connectionString;
     private readonly string _queueName;
 
-    private Task worker;
+    private Task? _worker;
 
     public QueueMonitorWorker(
         AppConfiguration configuration,
@@ -28,7 +28,7 @@ public class QueueMonitorWorker : IHostedService
         _queueName = configuration.AzureStorageQueue;
     }
 
-    private async Task MonitorQueue(CancellationToken token)
+    private async Task MonitorQueueAsync(CancellationToken token)
     {
         _logger.LogInformation("QueueMonitorWorker is starting");
         var client = new QueueClient(_connectionString, _queueName);
@@ -38,14 +38,14 @@ public class QueueMonitorWorker : IHostedService
 
         while (!token.IsCancellationRequested)
         {
-            QueueMessage message = null!;
+            QueueMessage? message = null;
             try
             {
-                await _dockerService.WaitForAvailableRunner();
+                await _dockerService.WaitForAvailableRunnerAsync();
 
                 if (lastUnsuccessfulMessageId != "")
                 {
-                    PeekedMessage pms = await client.PeekMessageAsync(token);
+                    PeekedMessage? pms = await client.PeekMessageAsync(token);
                     if (pms?.MessageId == lastUnsuccessfulMessageId)
                     {
                         await Task.Delay(10_000, token);
@@ -68,7 +68,7 @@ public class QueueMonitorWorker : IHostedService
 
                 var workflow = JsonSerializer.Deserialize<Workflow>(msg);
                 _logger.LogInformation("Executing workflow");
-                var workflowResult = await _dockerService.ProcessWorkflow(workflow);
+                var workflowResult = await _dockerService.ProcessWorkflowAsync(workflow);
 
                 if (workflowResult)
                     await client.DeleteMessageAsync(message.MessageId, message.PopReceipt, token);
@@ -90,18 +90,19 @@ public class QueueMonitorWorker : IHostedService
         }
     }
 
-    public async Task StartAsync(CancellationToken cancellationToken)
+    public Task StartAsync(CancellationToken cancellationToken)
     {
-        worker = MonitorQueue(cancellationToken);
+        _worker = MonitorQueueAsync(cancellationToken);
+        return Task.CompletedTask;
     }
 
     public async Task StopAsync(CancellationToken cancellationToken)
     {
         _logger.LogInformation("QueueMonitorWorker is stopping");
 
-        if (worker != null)
+        if (_worker != null)
         {
-            await worker;
+            await _worker;
         }
     }
 }

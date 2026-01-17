@@ -32,7 +32,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: AutoscalerApi/Dockerfile
+          file: Dockerfile
           pull: true
           push: true
           tags: docker.io/ofcoursedude/github-actions-runner:${{ github.RUN_ID }}${{env.suffix}},docker.io/ofcoursedude/github-actions-runner:latest${{env.suffix}}
