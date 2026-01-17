@@ -20,7 +20,7 @@ public class AppConfiguration
     public bool IsRepoDenylistExactMatch { get; set; }
     public string DockerHost { get; set; } = "";
     public string[] Labels { get; set; } = [];
-    public string ApplicationInsightsConnectionString { get; set; } = "";
+    public OpenTelemetryConfiguration OpenTelemetry { get; set; } = new();
     public bool AutoCheckForImageUpdates { get; set; }
     public string CoordinatorHostname { get; set; } = Environment.MachineName;
 
@@ -40,6 +40,21 @@ public class AppConfiguration
         };
 
         var architecture = RuntimeInformation.ProcessArchitecture.ToString().ToLowerInvariant();
+
+        var otelConfig = new OpenTelemetryConfiguration();
+        configuration.GetSection("OpenTelemetry").Bind(otelConfig);
+
+        var envOtlpEndpoint = Environment.GetEnvironmentVariable("OTEL_EXPORTER_OTLP_ENDPOINT");
+        if (!string.IsNullOrWhiteSpace(envOtlpEndpoint))
+        {
+            otelConfig.OtlpEndpoint = envOtlpEndpoint;
+        }
+
+        var envServiceName = Environment.GetEnvironmentVariable("OTEL_SERVICE_NAME");
+        if (!string.IsNullOrWhiteSpace(envServiceName))
+        {
+            otelConfig.ServiceName = envServiceName;
+        }
 
         return new AppConfiguration()
         {
@@ -94,8 +109,7 @@ public class AppConfiguration
                 )
                 .Distinct()
                 .ToArray(),
-            ApplicationInsightsConnectionString =
-                configuration.GetValue<string>("APPLICATIONINSIGHTS_CONNECTION_STRING") ?? "",
+            OpenTelemetry = otelConfig,
             DockerImage =
                 configuration.GetValue<string>("DockerImage") ?? "myoung34/github-runner:latest",
             AutoCheckForImageUpdates = configuration.GetValue<bool>(
@@ -105,5 +119,12 @@ public class AppConfiguration
             CoordinatorHostname =
                 configuration.GetValue<string>("CoordinatorHostname") ?? Environment.MachineName,
         };
+    }
+
+    public class OpenTelemetryConfiguration
+    {
+        public bool Enabled { get; set; } = true;
+        public string ServiceName { get; set; } = "github-actions-autoscaler";
+        public string? OtlpEndpoint { get; set; }
     }
 }
