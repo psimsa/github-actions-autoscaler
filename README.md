@@ -125,7 +125,7 @@ dotnet run --project src/GithubActionsAutoscaler
 
 ### Prerequisites
 
-- .NET 10.0 SDK (preview)
+- .NET 10.0 SDK
 - Docker (for testing runner functionality)
 
 ### Build Commands
