@@ -22,6 +22,7 @@ public class AppConfiguration
     public string[] Labels { get; set; } = [];
     public string ApplicationInsightsConnectionString { get; set; } = "";
     public bool AutoCheckForImageUpdates { get; set; }
+    public string CoordinatorHostname { get; set; } = Environment.MachineName;
 
     [UnconditionalSuppressMessage(
         "Trimming",
@@ -101,6 +102,8 @@ public class AppConfiguration
                 "AutoCheckForImageUpdates",
                 true
             ),
+            CoordinatorHostname =
+                configuration.GetValue<string>("CoordinatorHostname") ?? Environment.MachineName,
         };
     }
 }

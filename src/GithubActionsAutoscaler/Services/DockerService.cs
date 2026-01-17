@@ -14,6 +14,7 @@ public class DockerService : IDockerService
     private readonly int _maxRunners;
     private int _totalCount = 0;
     private readonly string _dockerImage;
+    private readonly string _coordinatorHostname;
 
     private Task _containerGuardTask;
 
@@ -33,6 +34,7 @@ public class DockerService : IDockerService
         _maxRunners = maxRunners > 0 ? maxRunners : 3;
         _containerGuardTask = ContainerGuardAsync(CancellationToken.None);
         _dockerImage = configuration.DockerImage;
+        _coordinatorHostname = configuration.CoordinatorHostname;
     }
 
     public async Task<IList<ContainerListResponse>> GetAutoscalerContainersAsync()
@@ -64,7 +66,7 @@ public class DockerService : IDockerService
                 );
                 Interlocked.Increment(ref _totalCount);
                 var containerName =
-                    $"{Environment.MachineName}-{workflow.Repository.Name}-{workflow.Job.RunId}-{_totalCount}";
+                    $"{_coordinatorHostname}-{workflow.Repository.Name}-{workflow.Job.RunId}-{_totalCount}";
                 return await _containerManager.CreateAndStartContainerAsync(
                     workflow.Repository.FullName,
                     containerName,

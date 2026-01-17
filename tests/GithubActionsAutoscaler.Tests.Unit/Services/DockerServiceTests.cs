@@ -21,7 +21,12 @@ public class DockerServiceTests
         _repositoryFilterMock = new Mock<IRepositoryFilter>();
         _labelMatcherMock = new Mock<ILabelMatcher>();
         _loggerMock = new Mock<ILogger<DockerService>>();
-        _config = new AppConfiguration { MaxRunners = 2, DockerImage = "test-image" };
+        _config = new AppConfiguration
+        {
+            MaxRunners = 2,
+            DockerImage = "test-image",
+            CoordinatorHostname = "test-host",
+        };
 
         _service = new DockerService(
             _containerManagerMock.Object,
@@ -103,7 +108,7 @@ public class DockerServiceTests
             x =>
                 x.CreateAndStartContainerAsync(
                     "myorg/repo",
-                    It.Is<string>(s => s.Contains("repo-123")),
+                    It.Is<string>(s => s.Contains("test-host-repo-123")),
                     123,
                     "test-image"
                 ),
