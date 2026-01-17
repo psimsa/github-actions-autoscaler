@@ -20,64 +20,54 @@ public class RabbitMQQueueService : IQueueService, IAsyncDisposable
 
     public async Task InitializeAsync(CancellationToken token)
     {
+        await EnsureConnectionAsync(token);
+        _logger.LogInformation("Connected to RabbitMQ queue {QueueName}", _config.RabbitQueueName);
+    }
+
+    private async Task EnsureConnectionAsync(CancellationToken token)
+    {
+        if (_channel != null && !_channel.IsClosed)
+            return;
+
         try
         {
-            var factory = new ConnectionFactory
+            if (_connection == null || !_connection.IsOpen)
             {
-                HostName = _config.RabbitHost,
-                Port = _config.RabbitPort,
-                UserName = _config.RabbitUsername,
-                Password = _config.RabbitPassword,
-            };
+                var factory = new ConnectionFactory
+                {
+                    HostName = _config.RabbitHost,
+                    Port = _config.RabbitPort,
+                    UserName = _config.RabbitUsername,
+                    Password = _config.RabbitPassword,
+                };
+                _connection = await factory.CreateConnectionAsync(token);
+            }
 
-            _connection = await factory.CreateConnectionAsync(token);
-            _channel = await _connection.CreateChannelAsync(cancellationToken: token);
-
-            await _channel.QueueDeclareAsync(
-                queue: _config.RabbitQueueName,
-                durable: true,
-                exclusive: false,
-                autoDelete: false,
-                arguments: null,
-                cancellationToken: token
-            );
-
-            _logger.LogInformation(
-                "Connected to RabbitMQ queue {QueueName}",
-                _config.RabbitQueueName
-            );
+            if (_channel == null || _channel.IsClosed)
+            {
+                _channel = await _connection.CreateChannelAsync(cancellationToken: token);
+                await _channel.QueueDeclareAsync(
+                    queue: _config.RabbitQueueName,
+                    durable: true,
+                    exclusive: false,
+                    autoDelete: false,
+                    arguments: null,
+                    cancellationToken: token
+                );
+            }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to initialize RabbitMQ connection");
+            _logger.LogError(ex, "Failed to ensure RabbitMQ connection");
             throw;
         }
     }
 
     public async Task<QueueMessage?> ReceiveMessageAsync(CancellationToken token)
     {
-        if (_channel == null)
-        {
-            // Try to initialize if not initialized? Or just throw.
-            // The worker calls InitializeAsync once. If connection dropped, we might need reconnection logic.
-            // For now, let's assume valid connection or throw.
-            throw new InvalidOperationException("RabbitMQ channel not initialized");
-        }
+        await EnsureConnectionAsync(token);
 
-        if (_channel.IsClosed)
-        {
-            // Simple reconnection logic could go here, but for now throwing to let worker retry loop handle it (if it crashes the worker)
-            // But QueueMonitorWorker catches exceptions in ProcessNextMessageAsync loop.
-            // So if we throw, it will delay 10s and retry. But we need to re-init.
-            // Since IQueueService doesn't expose Reconnect, we rely on InitializeAsync being called at start.
-            // If connection dies, we are in trouble.
-            // Ideally we should check validity and reconnect.
-            // However, strictly following instructions: "Implement RabbitMQ Service... InitializeAsync: Ensure queue exists".
-            // I'll stick to basic impl.
-            throw new InvalidOperationException("RabbitMQ channel is closed");
-        }
-
-        var result = await _channel.BasicGetAsync(
+        var result = await _channel!.BasicGetAsync(
             _config.RabbitQueueName,
             autoAck: false,
             cancellationToken: token
@@ -98,12 +88,34 @@ public class RabbitMQQueueService : IQueueService, IAsyncDisposable
         CancellationToken token
     )
     {
-        if (_channel == null)
-            throw new InvalidOperationException("Service not initialized");
+        await EnsureConnectionAsync(token);
 
         if (ulong.TryParse(popReceipt, out var deliveryTag))
         {
-            await _channel.BasicAckAsync(deliveryTag, multiple: false, cancellationToken: token);
+            await _channel!.BasicAckAsync(deliveryTag, multiple: false, cancellationToken: token);
+        }
+        else
+        {
+            _logger.LogError("Invalid PopReceipt for RabbitMQ: {PopReceipt}", popReceipt);
+        }
+    }
+
+    public async Task AbandonMessageAsync(
+        string messageId,
+        string popReceipt,
+        CancellationToken token
+    )
+    {
+        await EnsureConnectionAsync(token);
+
+        if (ulong.TryParse(popReceipt, out var deliveryTag))
+        {
+            await _channel!.BasicNackAsync(
+                deliveryTag,
+                multiple: false,
+                requeue: true,
+                cancellationToken: token
+            );
         }
         else
         {

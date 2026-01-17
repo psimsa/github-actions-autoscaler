@@ -66,6 +66,11 @@ public class QueueMonitorWorker : IHostedService
             else
             {
                 _lastUnsuccessfulMessageId = message.MessageId;
+                await _queueService.AbandonMessageAsync(
+                    message.MessageId,
+                    message.PopReceipt,
+                    token
+                );
             }
         }
         catch (Exception ex)

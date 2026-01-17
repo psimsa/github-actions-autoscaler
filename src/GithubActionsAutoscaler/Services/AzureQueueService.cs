@@ -67,6 +67,13 @@ public class AzureQueueService : IQueueService
         await _queueClient.DeleteMessageAsync(messageId, popReceipt, token);
     }
 
+    public Task AbandonMessageAsync(string messageId, string popReceipt, CancellationToken token)
+    {
+        // For Azure, we rely on the visibility timeout to make the message available again.
+        // We could explicitly set visibility to 0, but the worker has a delay mechanism anyway.
+        return Task.CompletedTask;
+    }
+
     public async Task<string?> PeekMessageIdAsync(CancellationToken token)
     {
         PeekedMessage? pms = await _queueClient.PeekMessageAsync(token);

@@ -81,4 +81,44 @@ public class QueueMonitorWorkerTests
             Times.Once
         );
     }
+
+    [Fact]
+    public async Task ProcessNextMessageAsync_WhenWorkflowFails_AbandonsMessage()
+    {
+        // Arrange
+        var workflow = new Workflow(
+            "queued",
+            new WorkflowJob("job1", [], 1),
+            new Repository("repo/name", "name")
+        );
+        var json = System.Text.Json.JsonSerializer.Serialize(workflow);
+        var queueMessage = new QueueMessage("id", "receipt", json);
+
+        _queueServiceMock
+            .Setup(x => x.ReceiveMessageAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(queueMessage);
+
+        _dockerServiceMock
+            .Setup(x => x.ProcessWorkflowAsync(It.IsAny<Workflow>()))
+            .ReturnsAsync(false);
+
+        // Act
+        await _worker.ProcessNextMessageAsync(CancellationToken.None);
+
+        // Assert
+        _dockerServiceMock.Verify(x => x.ProcessWorkflowAsync(It.IsAny<Workflow>()), Times.Once);
+        _queueServiceMock.Verify(
+            x =>
+                x.DeleteMessageAsync(
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<CancellationToken>()
+                ),
+            Times.Never
+        );
+        _queueServiceMock.Verify(
+            x => x.AbandonMessageAsync("id", "receipt", It.IsAny<CancellationToken>()),
+            Times.Once
+        );
+    }
 }
