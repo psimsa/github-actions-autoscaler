@@ -63,16 +63,16 @@ var dockerConfig = !string.IsNullOrWhiteSpace(appConfig.DockerHost)
     : new DockerClientConfiguration();
 builder.Services.AddSingleton(_ => dockerConfig.CreateClient());
 
-if (!string.IsNullOrWhiteSpace(appConfig.AzureStorage))
+if (appConfig.QueueProvider == QueueProvider.RabbitMQ)
 {
+    builder.Services.AddSingleton<IQueueService, RabbitMQQueueService>();
     builder.Services.AddHostedService<QueueMonitorWorker>();
 }
-
-builder.Services.AddSingleton(serviceProvider =>
+else if (!string.IsNullOrWhiteSpace(appConfig.AzureStorage))
 {
-    var config = serviceProvider.GetRequiredService<AppConfiguration>();
-    return new QueueClient(config.AzureStorage, config.AzureStorageQueue);
-});
+    builder.Services.AddSingleton<IQueueService, AzureQueueService>();
+    builder.Services.AddHostedService<QueueMonitorWorker>();
+}
 
 var app = builder.Build();
 
