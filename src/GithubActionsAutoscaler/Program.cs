@@ -16,7 +16,7 @@ var appConfig = AppConfiguration.FromConfiguration(builder.Configuration);
 if (appConfig.UseWebEndpoint)
 {
     builder.Services.AddEndpointsApiExplorer();
-    builder.Services.AddSwaggerGen();
+    // builder.Services.AddSwaggerGen();
 }
 
 builder.Services.AddSingleton(appConfig);
