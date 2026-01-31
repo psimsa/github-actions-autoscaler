@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Docker.DotNet;
 using Docker.DotNet.Models;
 using GithubActionsAutoscaler.Configuration;
@@ -44,6 +45,7 @@ public class DockerService : IDockerService
 
     public async Task<bool> ProcessWorkflowAsync(Workflow? workflow)
     {
+        using var _ = Activity.Current?.Source.StartActivity("DockerService.ProcessWorkflowAsync");
         switch (workflow?.Action)
         {
             case "queued" when workflow.Job.Labels.All(l => l != "self-hosted"):
@@ -85,6 +87,7 @@ public class DockerService : IDockerService
 
     public async Task WaitForAvailableRunnerAsync()
     {
+        using var _ = Activity.Current?.Source.StartActivity("DockerService.WaitForAvailableRunnerAsync");
         while ((await _containerManager.ListContainersAsync()).Count >= _maxRunners)
             await Task.Delay(3_000);
     }

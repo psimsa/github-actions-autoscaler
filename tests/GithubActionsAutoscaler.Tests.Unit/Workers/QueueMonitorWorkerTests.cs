@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Azure;
 using Azure.Storage.Queues;
 using Azure.Storage.Queues.Models;
@@ -27,6 +28,7 @@ public class QueueMonitorWorkerTests
         _worker = new QueueMonitorWorker(
             _queueClientMock.Object,
             _dockerServiceMock.Object,
+            new ActivitySource("GithubActionsAutoscaler.Tests"),
             _loggerMock.Object
         );
     }
