@@ -23,6 +23,7 @@ public class AppConfiguration
 	public OpenTelemetryConfiguration OpenTelemetry { get; set; } = new();
 	public bool AutoCheckForImageUpdates { get; set; }
 	public string CoordinatorHostname { get; set; } = Environment.MachineName;
+	public string ToolCacheVolumeName { get; set; } = "gha-toolcache";
 
 	[UnconditionalSuppressMessage(
 		"Trimming",
@@ -51,6 +52,7 @@ public class AppConfiguration
 			DockerImage = configuration.GetValue<string>("DockerImage") ?? "myoung34/github-runner:latest",
 			AutoCheckForImageUpdates = configuration.GetValue<bool>("AutoCheckForImageUpdates", true),
 			CoordinatorHostname = configuration.GetValue<string>("CoordinatorHostname") ?? Environment.MachineName,
+			ToolCacheVolumeName = configuration.GetValue<string>("ToolCacheVolumeName") ?? "gha-toolcache",
 		};
 	}
 

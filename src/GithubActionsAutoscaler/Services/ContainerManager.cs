@@ -10,6 +10,8 @@ public class ContainerManager : IContainerManager
     private readonly ILogger<ContainerManager> _logger;
     private readonly IImageManager _imageManager;
     private readonly string _accessToken;
+    private readonly string _toolCacheVolumeName;
+
     private readonly int _maxRunners;
     private readonly string _labelField;
     private readonly Dictionary<string, IDictionary<string, bool>> _autoscalerContainersDefinition =
@@ -33,6 +35,7 @@ public class ContainerManager : IContainerManager
         _logger = logger;
         _imageManager = imageManager;
         _accessToken = configuration.GithubToken;
+        _toolCacheVolumeName = configuration.ToolCacheVolumeName;
         var maxRunners = configuration.MaxRunners;
         _maxRunners = maxRunners > 0 ? maxRunners : 3;
         _labelField = string.Join(',', configuration.Labels).ToLowerInvariant();
@@ -57,12 +60,30 @@ public class ContainerManager : IContainerManager
             return false;
         }
 
-        var volume = await _client.Volumes.CreateAsync(new VolumesCreateParameters());
+        var workVolume = await _client.Volumes.CreateAsync(new VolumesCreateParameters());
+        var toolCacheVolume = (await _client.Volumes.ListAsync(new VolumesListParameters()
+        {
+            Filters = new Dictionary<string, IDictionary<string, bool>>()
+            {
+                {
+                    "name",
+                    new Dictionary<string, bool>()
+                    {
+                        { _toolCacheVolumeName, true }
+                    }
+                }
+                }
+        })).Volumes.FirstOrDefault() ??
+        await _client.Volumes.CreateAsync(new VolumesCreateParameters()
+        {
+            Name = _toolCacheVolumeName,
+        });
 
         var volumes = new Dictionary<string, EmptyStruct>
         {
             { "/var/run/docker.sock", _emptyStruct },
-            { volume.Mountpoint, _emptyStruct },
+            { workVolume.Mountpoint, _emptyStruct },
+            { toolCacheVolume.Name, _emptyStruct },
         };
 
         var cts = new CancellationTokenSource();
@@ -82,15 +103,29 @@ public class ContainerManager : IContainerManager
                 },
                 new Mount()
                 {
-                    Target = volume.Mountpoint,
-                    Source = volume.Mountpoint,
+                    Target = workVolume.Mountpoint,
+                    Source = workVolume.Mountpoint,
                     Type = "bind",
                     ReadOnly = false,
                 },
                 new Mount()
                 {
-                    Source = volume.Name,
+                    Target = toolCacheVolume.Mountpoint,
+                    Source = toolCacheVolume.Mountpoint,
+                    Type = "bind",
+                    ReadOnly = false,
+                },
+                new Mount()
+                {
+                    Source = workVolume.Name,
                     Target = "/dummy",
+                    ReadOnly = false,
+                    Type = "volume",
+                },
+                new Mount()
+                {
+                    Source = toolCacheVolume.Name,
+                    Target = "/opt/hostedtoolcache",
                     ReadOnly = false,
                     Type = "volume",
                 },
@@ -107,7 +142,7 @@ public class ContainerManager : IContainerManager
             [
                 "REPO_URL=https://github.com/" + repositoryFullName,
                 $"ACCESS_TOKEN={_accessToken}",
-                $"RUNNER_WORKDIR={volume.Mountpoint}",
+                $"RUNNER_WORKDIR={workVolume.Mountpoint}",
                 $"RUNNER_NAME={containerName}",
                 "EPHEMERAL=TRUE",
                 "DISABLE_AUTO_UPDATE=TRUE",

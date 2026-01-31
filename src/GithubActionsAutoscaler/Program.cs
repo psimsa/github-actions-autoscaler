@@ -28,6 +28,7 @@ builder.Services.AddSingleton<IDockerService, DockerService>();
 
 if (appConfig.OpenTelemetry.Enabled)
 {
+    var otlpEndpoint = Environment.GetEnvironmentVariable("OTEL_EXPORTER_OTLP_ENDPOINT") ?? appConfig.OpenTelemetry.OtlpEndpoint;
     builder
         .Services.AddOpenTelemetry()
         .ConfigureResource(resource =>
@@ -37,23 +38,16 @@ if (appConfig.OpenTelemetry.Enabled)
         {
             tracing.AddAspNetCoreInstrumentation().AddHttpClientInstrumentation();
 
-            // Only add OTLP exporter if endpoint is configured (via config or env var)
-            var otlpEndpoint =
-                appConfig.OpenTelemetry.OtlpEndpoint
-                ?? Environment.GetEnvironmentVariable("OTEL_EXPORTER_OTLP_ENDPOINT");
             if (!string.IsNullOrWhiteSpace(otlpEndpoint))
             {
-                tracing.AddOtlpExporter();
+                tracing.AddOtlpExporter(e => e.Endpoint = new Uri(otlpEndpoint));
             }
         })
         .WithLogging(logging =>
         {
-            var otlpEndpoint =
-                appConfig.OpenTelemetry.OtlpEndpoint
-                ?? Environment.GetEnvironmentVariable("OTEL_EXPORTER_OTLP_ENDPOINT");
             if (!string.IsNullOrWhiteSpace(otlpEndpoint))
             {
-                logging.AddOtlpExporter();
+                logging.AddOtlpExporter(e => e.Endpoint = new Uri(otlpEndpoint));
             }
         });
 }
