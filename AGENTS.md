@@ -24,10 +24,10 @@ dotnet clean
 ```
 
 ### Test Commands
-**Note:** This project currently has no test suite. Before implementing tests:
-1. Check with the user about their preferred testing framework (xUnit, NUnit, MSTest)
-2. Create a test project following conventions: `GithubActionsAutoscaler.Tests.Unit`
-3. Add test project to solution
+```bash
+# Run all tests
+dotnet test
+```
 
 ### Run Commands
 ```bash
@@ -63,13 +63,16 @@ docker run -p 8080:8080 github-actions-autoscaler
 
 ### File Organization
 ```
-src/GithubActionsAutoscaler/
-├── Configuration/     # Configuration classes (AppConfiguration)
-├── Endpoints/         # API endpoint definitions (WorkflowEndpoints)
-├── Models/            # Data models (Workflow, WorkflowJob, Repository)
-├── Services/          # Business logic (IDockerService, DockerService)
-├── Workers/           # Background services (QueueMonitorWorker)
-└── Program.cs         # Application entry point
+src/
+├── GithubActionsAutoscaler/               # Main application
+│   ├── Configuration/                     # Options/validators
+│   ├── Endpoints/                         # API endpoint definitions
+│   ├── Services/                          # WorkflowProcessor orchestration
+│   ├── Workers/                           # Background services
+│   └── Program.cs                         # Application entry point
+├── GithubActionsAutoscaler.Abstractions/  # Shared contracts
+├── GithubActionsAutoscaler.Queue.Azure/   # Azure queue provider
+└── GithubActionsAutoscaler.Runner.Docker/ # Docker runner provider
 ```
 
 ### Naming Conventions
@@ -125,20 +128,6 @@ public async Task<bool> StartContainerAsync(string name, CancellationToken token
 ### Dependency Injection
 - Constructor injection only (no property/method injection)
 - Inject interfaces, not concrete implementations
-- Common pattern:
-```csharp
-public class MyService
-{
-    private readonly ILogger<MyService> _logger;
-    private readonly IDockerService _dockerService;
-    
-    public MyService(ILogger<MyService> logger, IDockerService dockerService)
-    {
-        _logger = logger;
-        _dockerService = dockerService;
-    }
-}
-```
 
 ### Error Handling
 - Use structured logging with `ILogger<T>`
@@ -159,11 +148,10 @@ catch (Exception ex)
 ```
 
 ### Configuration
-- Configuration class: `AppConfiguration` in `Configuration/` folder
-- Supports both environment variables and JSON files
+- Options-based config in `Configuration/` folder
+- Supports environment variables and JSON files
 - Custom config file: `appsettings.custom.json` (not committed)
-- Default values should be sensible
-- Pattern: Static factory method `FromConfiguration(IConfiguration config)`
+- Defaults live in `appsettings.json`
 
 ### API Endpoints
 - Use minimal APIs with `IEndpointRouteBuilder` extensions
@@ -188,9 +176,9 @@ catch (Exception ex)
 
 ### Service Registration (Program.cs)
 ```csharp
-builder.Services.AddSingleton<IDockerService, DockerService>();
-builder.Services.AddSingleton(appConfig);
 builder.Services.AddHostedService<QueueMonitorWorker>();
+builder.Services.AddDockerRunnerProvider(...);
+builder.Services.AddAzureQueueProvider(...);
 ```
 
 ### Background Workers

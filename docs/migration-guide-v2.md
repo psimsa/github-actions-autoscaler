@@ -172,13 +172,9 @@ Create a new `appsettings.json` using the v2.0 structure. Map your v1.x settings
 
 ### Step 4: Test Configuration
 
-Run the application with `--validate-config` flag (optional feature):
+Run the application with config validation (startup will fail fast on invalid config):
 
-```bash
-dotnet GithubActionsAutoscaler.dll --validate-config
-```
-
-When missing required settings, you'll see clear error messages at startup.
+If required settings are missing, you'll see clear error messages at startup.
 
 ### Step 5: Deploy and Monitor
 

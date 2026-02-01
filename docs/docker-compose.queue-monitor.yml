@@ -1,0 +1,15 @@
+services:
+  autoscaler-monitor:
+    image: ghcr.io/psimsa/github-actions-autoscaler:v2.0
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - App__Mode=QueueMonitor
+      - App__GithubToken=${GITHUB_TOKEN}
+      - Queue__Provider=AzureStorageQueue
+      - Queue__AzureStorageQueue__ConnectionString=${AZURE_STORAGE_CONN}
+      - Queue__AzureStorageQueue__QueueName=workflow-job-queued
+      - Runner__Provider=Docker
+      - Runner__MaxRunners=4
+      - Runner__Docker__Host=unix:/var/run/docker.sock
+      - Runner__Docker__Image=myoung34/github-runner:latest
