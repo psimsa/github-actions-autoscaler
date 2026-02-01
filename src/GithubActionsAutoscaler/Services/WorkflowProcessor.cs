@@ -2,7 +2,7 @@ using System.Diagnostics;
 using GithubActionsAutoscaler.Abstractions.Models;
 using GithubActionsAutoscaler.Abstractions.Runner;
 using GithubActionsAutoscaler.Abstractions.Services;
-using GithubActionsAutoscaler.Telemetry;
+using GithubActionsAutoscaler.Abstractions.Telemetry;
 
 namespace GithubActionsAutoscaler.Services;
 

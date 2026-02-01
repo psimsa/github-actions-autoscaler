@@ -1,6 +1,7 @@
 using GithubActionsAutoscaler.Abstractions.Runner;
 using GithubActionsAutoscaler.Abstractions.Services;
 using GithubActionsAutoscaler.Runner.Docker.Services;
+using GithubActionsAutoscaler.Abstractions.Telemetry;
 
 namespace GithubActionsAutoscaler.Runner.Docker;
 
@@ -11,25 +12,29 @@ public class DockerRunnerManager : IRunnerManager
 	private readonly ILabelMatcher _labelMatcher;
 	private readonly DockerRunnerOptions _options;
 	private readonly string _coordinatorHostname;
+	private readonly AutoscalerMetrics? _metrics;
 	private int _totalCount = 0;
 
 	public DockerRunnerManager(
 		IContainerManager containerManager,
 		IRepositoryFilter repositoryFilter,
 		ILabelMatcher labelMatcher,
-		DockerRunnerOptions options)
+		DockerRunnerOptions options,
+		AutoscalerMetrics? metrics = null)
 	{
 		_containerManager = containerManager;
 		_repositoryFilter = repositoryFilter;
 		_labelMatcher = labelMatcher;
 		_options = options;
 		_coordinatorHostname = options.CoordinatorHostname;
+		_metrics = metrics;
 	}
 
 	public async Task<IReadOnlyList<IRunnerInstance>> GetRunnersAsync(
 		CancellationToken cancellationToken = default)
 	{
 		var containers = await _containerManager.ListContainersAsync();
+		_metrics?.UpdateActiveRunners(containers.Count);
 		var runners = containers
 			.Select(container =>
 			{
@@ -58,7 +63,9 @@ public class DockerRunnerManager : IRunnerManager
 
 	public async Task<int> GetRunnerCountAsync(CancellationToken cancellationToken = default)
 	{
-		return (await _containerManager.ListContainersAsync()).Count;
+		var count = (await _containerManager.ListContainersAsync()).Count;
+		_metrics?.UpdateActiveRunners(count);
+		return count;
 	}
 
 	public Task<int> GetMaxRunnersAsync()
@@ -68,7 +75,9 @@ public class DockerRunnerManager : IRunnerManager
 
 	public async Task<bool> CanCreateRunnerAsync(CancellationToken cancellationToken = default)
 	{
-		return (await _containerManager.ListContainersAsync()).Count < await GetMaxRunnersAsync();
+		var count = (await _containerManager.ListContainersAsync()).Count;
+		_metrics?.UpdateActiveRunners(count);
+		return count < await GetMaxRunnersAsync();
 	}
 
 	public async Task<IRunnerInstance?> CreateRunnerAsync(
@@ -128,6 +137,7 @@ public class DockerRunnerManager : IRunnerManager
 	{
 		while ((await _containerManager.ListContainersAsync()).Count >= await GetMaxRunnersAsync())
 		{
+			_metrics?.UpdateActiveRunners((await _containerManager.ListContainersAsync()).Count);
 			await Task.Delay(3_000, cancellationToken);
 		}
 	}
