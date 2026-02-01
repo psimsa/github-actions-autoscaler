@@ -631,13 +631,13 @@ See [IMPLEMENTATION-WORKFLOW.md](IMPLEMENTATION-WORKFLOW.md) for the full workfl
 - [x] Verify integration still works
 
 ### Phase 4: Configuration & Mode (Estimated: 4-5 hours)
-- [ ] Create new Options classes (`AppOptions`, etc.) in main app
-- [ ] Move all hardcoded defaults to `appsettings.json`
-- [ ] Add `Mode` enum (Webhook, QueueMonitor, Both)
-- [ ] Implement `IValidateOptions<T>` validators
-- [ ] Update `Program.cs` for mode-based service registration
-- [ ] Add validation tests
-- [ ] Verify all modes work correctly
+- [x] Create new Options classes (`AppOptions`, etc.) in main app
+- [x] Move all hardcoded defaults to `appsettings.json`
+- [x] Add `Mode` enum (Webhook, QueueMonitor, Both)
+- [x] Implement `IValidateOptions<T>` validators
+- [x] Update `Program.cs` for mode-based service registration
+- [x] Add validation tests
+- [x] Verify all modes work correctly
 
 ### Phase 5: Cleanup & Documentation (Estimated: 3-4 hours)
 - [ ] Remove old/unused code

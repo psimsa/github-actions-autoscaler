@@ -1,5 +1,6 @@
 using Docker.DotNet;
 using GithubActionsAutoscaler.Configuration;
+using GithubActionsAutoscaler.Configuration.Validation;
 using GithubActionsAutoscaler.Endpoints;
 using GithubActionsAutoscaler.Extensions;
 using GithubActionsAutoscaler.Queue.Azure;
@@ -7,75 +8,101 @@ using GithubActionsAutoscaler.Runner.Docker;
 using GithubActionsAutoscaler.Runner.Docker.Services;
 using GithubActionsAutoscaler.Services;
 using GithubActionsAutoscaler.Workers;
+using Microsoft.Extensions.Options;
+using QueueAzureOptions = GithubActionsAutoscaler.Queue.Azure.AzureQueueOptions;
+using RunnerDockerOptions = GithubActionsAutoscaler.Runner.Docker.DockerRunnerOptions;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Configuration.AddJsonFile("appsettings.custom.json", true);
-var appConfig = AppConfiguration.FromConfiguration(builder.Configuration);
 
-if (appConfig.UseWebEndpoint)
+builder.Services.AddOptions<AppOptions>()
+	.Bind(builder.Configuration.GetSection("App"))
+	.ValidateOnStart();
+builder.Services.AddOptions<QueueOptions>()
+	.Bind(builder.Configuration.GetSection("Queue"))
+	.ValidateOnStart();
+builder.Services.AddOptions<RunnerOptions>()
+	.Bind(builder.Configuration.GetSection("Runner"))
+	.ValidateOnStart();
+
+builder.Services.AddSingleton<IValidateOptions<AppOptions>, AppOptionsValidator>();
+builder.Services.AddSingleton<IValidateOptions<QueueOptions>, QueueOptionsValidator>();
+builder.Services.AddSingleton<IValidateOptions<RunnerOptions>, RunnerOptionsValidator>();
+
+var appOptions = builder.Configuration.GetSection("App").Get<AppOptions>() ?? new AppOptions();
+var queueOptions = builder.Configuration.GetSection("Queue").Get<QueueOptions>() ?? new QueueOptions();
+var runnerOptions = builder.Configuration.GetSection("Runner").Get<RunnerOptions>() ?? new RunnerOptions();
+
+if (appOptions.Mode is OperationMode.Webhook or OperationMode.Both)
 {
-    builder.Services.AddEndpointsApiExplorer();
-    // builder.Services.AddSwaggerGen();
+	builder.Services.AddEndpointsApiExplorer();
+	// builder.Services.AddSwaggerGen();
 }
 
-builder.Services.AddSingleton(appConfig);
+builder.Services.AddSingleton(appOptions);
+builder.Services.AddSingleton(queueOptions);
+builder.Services.AddSingleton(runnerOptions);
 builder.Services.AddSingleton<GithubActionsAutoscaler.Abstractions.Services.IRepositoryFilter>(_ =>
 {
+	var filter = appOptions.RepositoryFilter;
 	return new GithubActionsAutoscaler.Abstractions.Services.RepositoryFilter(
-		appConfig.RepoAllowlistPrefix,
-		appConfig.RepoAllowlist,
-		appConfig.IsRepoAllowlistExactMatch,
-		appConfig.RepoDenylistPrefix,
-		appConfig.RepoDenylist,
-		appConfig.IsRepoDenylistExactMatch
+		filter.AllowlistPrefix,
+		filter.Allowlist,
+		filter.IsAllowlistExactMatch,
+		filter.DenylistPrefix,
+		filter.Denylist,
+		filter.IsDenylistExactMatch
 	);
 });
 builder.Services.AddSingleton<GithubActionsAutoscaler.Abstractions.Services.ILabelMatcher>(
-	_ => new GithubActionsAutoscaler.Abstractions.Services.LabelMatcher(appConfig.Labels)
+	_ => new GithubActionsAutoscaler.Abstractions.Services.LabelMatcher(appOptions.Labels)
 );
 builder.Services.AddSingleton<IWorkflowProcessor, WorkflowProcessor>();
 
-if (appConfig.OpenTelemetry.Enabled)
+if (appOptions.OpenTelemetry.Enabled)
 {
-    builder.Services.AddOpenTelemetryInstrumentation(appConfig);
+	builder.Services.AddOpenTelemetryInstrumentation(appOptions.OpenTelemetry);
 }
 
-var dockerConfig = !string.IsNullOrWhiteSpace(appConfig.DockerHost)
-    ? new DockerClientConfiguration(new Uri(appConfig.DockerHost))
-    : new DockerClientConfiguration();
+var dockerConfig = !string.IsNullOrWhiteSpace(runnerOptions.Docker.Host)
+	? new DockerClientConfiguration(new Uri(runnerOptions.Docker.Host))
+	: new DockerClientConfiguration();
 builder.Services.AddSingleton(_ => dockerConfig.CreateClient());
 
-if (!string.IsNullOrWhiteSpace(appConfig.AzureStorage))
+if (appOptions.Mode is OperationMode.Webhook or OperationMode.Both)
 {
 	builder.Services.AddAzureQueueProvider(
-		new AzureQueueOptions
+		new QueueAzureOptions
 		{
-			ConnectionString = appConfig.AzureStorage,
-			QueueName = appConfig.AzureStorageQueue
+			ConnectionString = queueOptions.AzureStorageQueue.ConnectionString,
+			QueueName = queueOptions.AzureStorageQueue.QueueName
 		}
 	);
-	builder.Services.AddHostedService<QueueMonitorWorker>();
 }
 
+if (appOptions.Mode is OperationMode.QueueMonitor or OperationMode.Both)
+{
+	builder.Services.AddHostedService<QueueMonitorWorker>();
 	builder.Services.AddDockerRunnerProvider(
-		new DockerRunnerOptions
+		new RunnerDockerOptions
 		{
-			MaxRunners = appConfig.MaxRunners,
-			Image = appConfig.DockerImage,
-			DockerHost = appConfig.DockerHost,
-			RegistryToken = appConfig.DockerToken,
-			AccessToken = appConfig.GithubToken,
-		AutoCheckForImageUpdates = appConfig.AutoCheckForImageUpdates,
-		ToolCacheVolumeName = appConfig.ToolCacheVolumeName,
-		CoordinatorHostname = appConfig.CoordinatorHostname,
-		Labels = appConfig.Labels
-	}
-);
+			MaxRunners = runnerOptions.MaxRunners,
+			Image = runnerOptions.Docker.Image,
+			DockerHost = runnerOptions.Docker.Host,
+			RegistryToken = runnerOptions.Docker.RegistryToken,
+			AccessToken = appOptions.GithubToken,
+			AutoCheckForImageUpdates = runnerOptions.Docker.AutoCheckForImageUpdates,
+			ToolCacheVolumeName = runnerOptions.Docker.ToolCacheVolumeName,
+			CoordinatorHostname = appOptions.CoordinatorHostname,
+			Labels = appOptions.Labels
+		}
+	);
+}
 
 var app = builder.Build();
 
-if (appConfig.UseWebEndpoint)
+if (appOptions.Mode is OperationMode.Webhook or OperationMode.Both)
 {
     app.UseHttpsRedirection();
     if (app.Environment.IsDevelopment())

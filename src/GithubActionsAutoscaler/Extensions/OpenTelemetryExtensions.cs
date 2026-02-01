@@ -12,16 +12,16 @@ public static class OpenTelemetryExtensions
 {
     public static IServiceCollection AddOpenTelemetryInstrumentation(
         this IServiceCollection services,
-        AppConfiguration appConfig)
+        OpenTelemetryOptions options)
     {
         var activitySource = new ActivitySource("GithubActionsAutoscaler");
         services.AddSingleton(activitySource);
 
-        var otlpEndpoint = Environment.GetEnvironmentVariable("OTEL_EXPORTER_OTLP_ENDPOINT") ?? appConfig.OpenTelemetry.OtlpEndpoint;
+        var otlpEndpoint = Environment.GetEnvironmentVariable("OTEL_EXPORTER_OTLP_ENDPOINT") ?? options.OtlpEndpoint;
         
         services.AddOpenTelemetry()
             .ConfigureResource(resource =>
-                resource.AddService(serviceName: Environment.GetEnvironmentVariable("OTEL_SERVICE_NAME") ?? appConfig.OpenTelemetry.ServiceName)
+                resource.AddService(serviceName: Environment.GetEnvironmentVariable("OTEL_SERVICE_NAME") ?? options.ServiceName)
             )
             .WithTracing(tracing =>
             {
