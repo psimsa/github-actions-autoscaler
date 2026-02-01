@@ -1,8 +1,7 @@
 using System.Diagnostics;
 using System.Text.Json;
-using Azure.Storage.Queues;
-using Azure.Storage.Queues.Models;
 using GithubActionsAutoscaler.Abstractions.Models;
+using GithubActionsAutoscaler.Abstractions.Queue;
 using GithubActionsAutoscaler.Services;
 
 namespace GithubActionsAutoscaler.Workers;
@@ -12,46 +11,46 @@ public class QueueMonitorWorker : IHostedService
     private readonly IDockerService _dockerService;
     private readonly ActivitySource _activitySource;
     private readonly ILogger<QueueMonitorWorker> _logger;
-    private readonly QueueClient _queueClient;
+	private readonly IQueueProvider _queueProvider;
     private string _lastUnsuccessfulMessageId = "";
 
     private Task? _worker;
     private CancellationTokenSource? _cts;
 
     public QueueMonitorWorker(
-        QueueClient queueClient,
-        IDockerService dockerService,
-        ActivitySource activitySource,
-        ILogger<QueueMonitorWorker> logger
-    )
-    {
-        _queueClient = queueClient;
-        _dockerService = dockerService;
-        this._activitySource = activitySource;
-        _logger = logger;
-    }
+		IQueueProvider queueProvider,
+		IDockerService dockerService,
+		ActivitySource activitySource,
+		ILogger<QueueMonitorWorker> logger
+	)
+	{
+		_queueProvider = queueProvider;
+		_dockerService = dockerService;
+		this._activitySource = activitySource;
+		_logger = logger;
+	}
 
     internal async Task ProcessNextMessageAsync(CancellationToken token)
     {
         using var activity = _activitySource.StartActivity();
-        QueueMessage? message = null;
-        try
-        {
-            await _dockerService.WaitForAvailableRunnerAsync();
+		IQueueMessage? message = null;
+		try
+		{
+			await _dockerService.WaitForAvailableRunnerAsync();
+			await _queueProvider.InitializeAsync(token);
 
-            if (_lastUnsuccessfulMessageId != "")
-            {
-                PeekedMessage? pms = await _queueClient.PeekMessageAsync(token);
-                if (pms?.MessageId == _lastUnsuccessfulMessageId)
-                {
-                    await Task.Delay(10_000, token);
-                }
-            }
+			if (_lastUnsuccessfulMessageId != "")
+			{
+				IQueueMessage? pms = await _queueProvider.PeekMessageAsync(token);
+				if (pms?.MessageId == _lastUnsuccessfulMessageId)
+				{
+					await Task.Delay(10_000, token);
+				}
+			}
 
             _lastUnsuccessfulMessageId = "";
 
-            var response = await _queueClient.ReceiveMessageAsync(cancellationToken: token);
-            message = response.Value;
+			message = await _queueProvider.ReceiveMessageAsync(token);
 
             if (message == null)
             {
@@ -61,31 +60,31 @@ public class QueueMonitorWorker : IHostedService
 
             _logger.LogInformation("Dequeued message");
 
-            var msg = Convert.FromBase64String(message.MessageText);
+			var msg = Convert.FromBase64String(message.Content);
 
             var workflow = JsonSerializer.Deserialize<Workflow>(msg);
             _logger.LogInformation("Executing workflow");
             var workflowResult = await _dockerService.ProcessWorkflowAsync(workflow);
 
-            if (workflowResult)
-                await _queueClient.DeleteMessageAsync(message.MessageId, message.PopReceipt, token);
-            else
-            {
-                _lastUnsuccessfulMessageId = message.MessageId;
-            }
+			if (workflowResult)
+				await _queueProvider.DeleteMessageAsync(message, token);
+			else
+			{
+				_lastUnsuccessfulMessageId = message.MessageId;
+			}
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error receiving message");
             activity?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex.Message);
 
-            if (message != null)
-            {
-                activity?.AddEvent(new ActivityEvent("Deleting message due to processing error"));
-                // In case of processing error (serialization etc), we delete to avoid poison pill
-                // But we might want to reconsider this strategy later (dead letter queue?)
-                await _queueClient.DeleteMessageAsync(message.MessageId, message.PopReceipt, token);
-            }
+			if (message != null)
+			{
+				activity?.AddEvent(new ActivityEvent("Deleting message due to processing error"));
+				// In case of processing error (serialization etc), we delete to avoid poison pill
+				// But we might want to reconsider this strategy later (dead letter queue?)
+				await _queueProvider.DeleteMessageAsync(message, token);
+			}
             activity?.Stop();
             await Task.Delay(10_000, token);
         }
@@ -95,10 +94,10 @@ public class QueueMonitorWorker : IHostedService
     {
         _logger.LogInformation("QueueMonitorWorker is starting");
 
-        using (var activity = _activitySource.StartActivity("QueueMonitorWorker.Startup"))
-        {
-            await _queueClient.CreateIfNotExistsAsync(cancellationToken: token);
-        }
+		using (var activity = _activitySource.StartActivity("QueueMonitorWorker.Startup"))
+		{
+			await _queueProvider.InitializeAsync(token);
+		}
 
         while (!token.IsCancellationRequested)
         {
