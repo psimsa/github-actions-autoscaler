@@ -1,8 +1,8 @@
 using Docker.DotNet;
 using Docker.DotNet.Models;
-using GithubActionsAutoscaler.Configuration;
+using Microsoft.Extensions.Logging;
 
-namespace GithubActionsAutoscaler.Services;
+namespace GithubActionsAutoscaler.Runner.Docker.Services;
 
 public class ImageManager : IImageManager
 {
@@ -14,14 +14,14 @@ public class ImageManager : IImageManager
 
     public ImageManager(
         DockerClient client,
-        AppConfiguration configuration,
+        DockerRunnerOptions options,
         ILogger<ImageManager> logger
     )
     {
         _client = client;
         _logger = logger;
-        _dockerToken = configuration.DockerToken;
-        _autoCheckForImageUpdates = configuration.AutoCheckForImageUpdates;
+        _dockerToken = options.RegistryToken;
+        _autoCheckForImageUpdates = options.AutoCheckForImageUpdates;
     }
 
     public async Task<bool> EnsureImageExistsAsync(string imageName, CancellationToken token)

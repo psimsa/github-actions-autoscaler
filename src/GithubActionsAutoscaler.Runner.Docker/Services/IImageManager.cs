@@ -1,4 +1,4 @@
-namespace GithubActionsAutoscaler.Services;
+namespace GithubActionsAutoscaler.Runner.Docker.Services;
 
 public interface IImageManager
 {

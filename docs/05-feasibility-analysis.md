@@ -579,106 +579,56 @@ Current architecture detection uses `RuntimeInformation.ProcessArchitecture`. Th
 
 ## 7. Implementation Process
 
-### 7.1 Phase-by-Phase Workflow
-
-For each implementation phase, the following process will be followed:
-
-```
-┌─────────────────────────────────────────────────────────────────────────┐
-│  PHASE X WORKFLOW                                                       │
-├─────────────────────────────────────────────────────────────────────────┤
-│                                                                         │
-│  1. CREATE IMPLEMENTATION PLAN                                          │
-│     ├── Detailed, step-by-step instructions                             │
-│     ├── Specific file paths and code changes                            │
-│     ├── Expected outcomes for each step                                 │
-│     └── Skill level: Claude Haiku 4.5 / Gemini Flash 3.0 / equivalent   │
-│                                                                         │
-│  2. VALIDATE PLAN                                                       │
-│     └── Human review and approval                                       │
-│                                                                         │
-│  3. EXECUTE WITH DEDICATED AGENT                                        │
-│     ├── AI agent follows the plan                                       │
-│     └── Creates implementation commit                                   │
-│                                                                         │
-│  4. VERIFY & FIX                                                        │
-│     ├── Run tests: dotnet test                                          │
-│     ├── Build verification: dotnet build                                │
-│     ├── Review code quality                                             │
-│     └── Mixed AI/human effort for bug fixes                             │
-│                                                                         │
-│  5. DOCUMENTATION UPDATE                                                │
-│     ├── Update feasibility doc if needed                                │
-│     ├── Note any gaps for future phases                                 │
-│     └── Update migration guide if applicable                            │
-│                                                                         │
-│  6. ITERATE TO PHASE X+1                                                │
-│                                                                         │
-└─────────────────────────────────────────────────────────────────────────┘
-```
-
-### 7.2 Implementation Plan Requirements
-
-Each phase plan must include:
-
-1. **Objective**: Clear statement of what the phase accomplishes
-2. **Prerequisites**: What must be complete before starting
-3. **Step-by-Step Instructions**: 
-   - Numbered steps with specific actions
-   - Exact file paths (absolute or relative to project root)
-   - Code snippets or templates where helpful
-   - Expected state after each step
-4. **Verification Steps**: How to confirm the phase is complete
-5. **Rollback Instructions**: How to undo if something goes wrong
+See [IMPLEMENTATION-WORKFLOW.md](IMPLEMENTATION-WORKFLOW.md) for the full workflow and plan requirements.
 
 ---
 
 ## 8. Phased Implementation Plan
 
 ### Phase 0: Preparation (Estimated: 2-3 hours)
-- [ ] Create feature branch `feature/v2-restructure`
-- [ ] Document current behavior as baseline (existing tests serve this purpose)
-- [ ] Ensure all existing tests pass
-- [ ] Create initial migration guide skeleton
+- [x] Create feature branch `feature/v2-restructure`
+- [x] Document current behavior as baseline (existing tests serve this purpose)
+- [x] Ensure all existing tests pass
+- [x] Create initial migration guide skeleton
 
 ### Phase 1: Solution Restructure (Estimated: 3-4 hours)
-- [ ] Create `GithubActionsAutoscaler.Abstractions` project (class library)
-- [ ] Create `GithubActionsAutoscaler.Queue.Azure` project (class library)
-- [ ] Create `GithubActionsAutoscaler.Runner.Docker` project (class library)
-- [ ] Update solution file with new projects
-- [ ] Set up project references (dependency graph)
-- [ ] Move Models to Abstractions project
-- [ ] Update namespaces
-- [ ] Verify solution builds
+- [x] Create `GithubActionsAutoscaler.Abstractions` project (class library)
+- [x] Create `GithubActionsAutoscaler.Queue.Azure` project (class library)
+- [x] Create `GithubActionsAutoscaler.Runner.Docker` project (class library)
+- [x] Update solution file with new projects
+- [x] Set up project references (dependency graph)
+- [x] Move Models to Abstractions project
+- [x] Update namespaces
+- [x] Verify solution builds
 
 ### Phase 2: Queue Abstraction (Estimated: 4-5 hours)
-- [ ] Define `IQueueProvider` and `IQueueMessage` in Abstractions
-- [ ] Define `QueueOptions` base class in Abstractions
-- [ ] Implement `InMemoryQueueProvider` in Abstractions (for testing)
-- [ ] Implement `AzureQueueProvider` in Queue.Azure project
-- [ ] Implement `AzureQueueMessage` in Queue.Azure project
-- [ ] Create `AzureQueueOptions` with validator
-- [ ] Create `AddAzureQueueProvider()` extension method
-- [ ] Create `AddInMemoryQueueProvider()` extension method in Abstractions
-- [ ] Update `WorkflowEndpoints` to use `IQueueProvider`
-- [ ] Update `QueueMonitorWorker` to use `IQueueProvider`
-- [ ] Add unit tests for queue providers
-- [ ] Verify integration still works
+- [x] Define `IQueueProvider` and `IQueueMessage` in Abstractions
+- [x] Define `QueueOptions` base class in Abstractions
+- [x] Implement `InMemoryQueueProvider` in Abstractions (for testing)
+- [x] Implement `AzureQueueProvider` in Queue.Azure project
+- [x] Implement `AzureQueueMessage` in Queue.Azure project
+- [x] Create `AzureQueueOptions` with validator
+- [x] Create `AddAzureQueueProvider()` extension method
+- [x] Create `AddInMemoryQueueProvider()` extension method in Abstractions
+- [x] Update `WorkflowEndpoints` to use `IQueueProvider`
+- [x] Update `QueueMonitorWorker` to use `IQueueProvider`
+- [x] Add unit tests for queue providers
+- [x] Verify integration still works
 
 ### Phase 3: Runner Abstraction (Estimated: 5-6 hours)
-- [ ] Define `IRunnerManager` and `IRunnerInstance` in Abstractions
-- [ ] Define `RunnerOptions` base class in Abstractions
-- [ ] Move `IRepositoryFilter`, `RepositoryFilter` to Abstractions
-- [ ] Move `ILabelMatcher`, `LabelMatcher` to Abstractions
-- [ ] Move Docker-specific code to Runner.Docker project
-- [ ] Create `DockerRunnerManager` implementing `IRunnerManager`
-- [ ] Create `DockerRunnerInstance` implementing `IRunnerInstance`
-- [ ] Create `DockerRunnerOptions` with validator
-- [ ] Create `AddDockerRunnerProvider()` extension method
-- [ ] Create `WorkflowProcessor` service in main app (orchestrator)
-- [ ] Update `QueueMonitorWorker` to use `IRunnerManager` via `WorkflowProcessor`
-- [ ] Update/migrate existing tests
-- [ ] Verify integration still works
+- [x] Define `IRunnerManager` and `IRunnerInstance` in Abstractions
+- [x] Define `RunnerOptions` base class in Abstractions
+- [x] Move `IRepositoryFilter`, `RepositoryFilter` to Abstractions
+- [x] Move `ILabelMatcher`, `LabelMatcher` to Abstractions
+- [x] Move Docker-specific code to Runner.Docker project
+- [x] Create `DockerRunnerManager` implementing `IRunnerManager`
+- [x] Create `DockerRunnerInstance` implementing `IRunnerInstance`
+- [x] Create `DockerRunnerOptions` with validator
+- [x] Create `AddDockerRunnerProvider()` extension method
+- [x] Create `WorkflowProcessor` service in main app (orchestrator)
+- [x] Update `QueueMonitorWorker` to use `IRunnerManager` via `WorkflowProcessor`
+- [x] Update/migrate existing tests
+- [x] Verify integration still works
 
 ### Phase 4: Configuration & Mode (Estimated: 4-5 hours)
 - [ ] Create new Options classes (`AppOptions`, etc.) in main app

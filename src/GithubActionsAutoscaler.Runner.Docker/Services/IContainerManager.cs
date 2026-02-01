@@ -1,6 +1,6 @@
 using Docker.DotNet.Models;
 
-namespace GithubActionsAutoscaler.Services;
+namespace GithubActionsAutoscaler.Runner.Docker.Services;
 
 public interface IContainerManager
 {

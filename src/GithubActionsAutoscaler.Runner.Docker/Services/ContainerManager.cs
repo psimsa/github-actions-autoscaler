@@ -1,9 +1,9 @@
 using System.Diagnostics;
 using Docker.DotNet;
 using Docker.DotNet.Models;
-using GithubActionsAutoscaler.Configuration;
+using Microsoft.Extensions.Logging;
 
-namespace GithubActionsAutoscaler.Services;
+namespace GithubActionsAutoscaler.Runner.Docker.Services;
 
 public class ContainerManager : IContainerManager
 {
@@ -27,7 +27,7 @@ public class ContainerManager : IContainerManager
 
     public ContainerManager(
         DockerClient client,
-        AppConfiguration configuration,
+        DockerRunnerOptions options,
         IImageManager imageManager,
         ILogger<ContainerManager> logger
     )
@@ -35,11 +35,11 @@ public class ContainerManager : IContainerManager
         _client = client;
         _logger = logger;
         _imageManager = imageManager;
-        _accessToken = configuration.GithubToken;
-        _toolCacheVolumeName = configuration.ToolCacheVolumeName;
-        var maxRunners = configuration.MaxRunners;
+        _accessToken = options.AccessToken;
+        _toolCacheVolumeName = options.ToolCacheVolumeName;
+        var maxRunners = options.MaxRunners;
         _maxRunners = maxRunners > 0 ? maxRunners : 3;
-        _labelField = string.Join(',', configuration.Labels).ToLowerInvariant();
+        _labelField = string.Join(',', options.Labels).ToLowerInvariant();
     }
 
     public async Task<IList<ContainerListResponse>> ListContainersAsync()

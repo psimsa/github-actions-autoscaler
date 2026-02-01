@@ -8,7 +8,7 @@ namespace GithubActionsAutoscaler.Workers;
 
 public class QueueMonitorWorker : IHostedService
 {
-    private readonly IDockerService _dockerService;
+	private readonly IWorkflowProcessor _workflowProcessor;
     private readonly ActivitySource _activitySource;
     private readonly ILogger<QueueMonitorWorker> _logger;
 	private readonly IQueueProvider _queueProvider;
@@ -19,13 +19,13 @@ public class QueueMonitorWorker : IHostedService
 
     public QueueMonitorWorker(
 		IQueueProvider queueProvider,
-		IDockerService dockerService,
+		IWorkflowProcessor workflowProcessor,
 		ActivitySource activitySource,
 		ILogger<QueueMonitorWorker> logger
 	)
 	{
 		_queueProvider = queueProvider;
-		_dockerService = dockerService;
+		_workflowProcessor = workflowProcessor;
 		this._activitySource = activitySource;
 		_logger = logger;
 	}
@@ -36,9 +36,7 @@ public class QueueMonitorWorker : IHostedService
 		IQueueMessage? message = null;
 		try
 		{
-			await _dockerService.WaitForAvailableRunnerAsync();
-			await _queueProvider.InitializeAsync(token);
-
+			// Initialize done during startup
 			if (_lastUnsuccessfulMessageId != "")
 			{
 				IQueueMessage? pms = await _queueProvider.PeekMessageAsync(token);
@@ -64,7 +62,7 @@ public class QueueMonitorWorker : IHostedService
 
             var workflow = JsonSerializer.Deserialize<Workflow>(msg);
             _logger.LogInformation("Executing workflow");
-            var workflowResult = await _dockerService.ProcessWorkflowAsync(workflow);
+			var workflowResult = await _workflowProcessor.ProcessWorkflowAsync(workflow);
 
 			if (workflowResult)
 				await _queueProvider.DeleteMessageAsync(message, token);

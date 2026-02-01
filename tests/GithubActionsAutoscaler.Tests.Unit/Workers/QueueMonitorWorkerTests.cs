@@ -9,14 +9,14 @@ namespace GithubActionsAutoscaler.Tests.Unit.Workers;
 
 public class QueueMonitorWorkerTests
 {
-    private readonly Mock<IDockerService> _dockerServiceMock;
+    private readonly Mock<IWorkflowProcessor> _workflowProcessorMock;
 	private readonly Mock<IQueueProvider> _queueProviderMock;
 	private readonly Mock<ILogger<QueueMonitorWorker>> _loggerMock;
 	private readonly QueueMonitorWorker _worker;
 
     public QueueMonitorWorkerTests()
     {
-        _dockerServiceMock = new Mock<IDockerService>();
+        _workflowProcessorMock = new Mock<IWorkflowProcessor>();
 		_queueProviderMock = new Mock<IQueueProvider>();
 		_loggerMock = new Mock<ILogger<QueueMonitorWorker>>();
 
@@ -24,7 +24,7 @@ public class QueueMonitorWorkerTests
         // For now, I'll assume the new signature
 		_worker = new QueueMonitorWorker(
 			_queueProviderMock.Object,
-			_dockerServiceMock.Object,
+			_workflowProcessorMock.Object,
 			new ActivitySource("GithubActionsAutoscaler.Tests"),
 			_loggerMock.Object
 		);
@@ -51,7 +51,10 @@ public class QueueMonitorWorkerTests
 			x => x.ReceiveMessageAsync(It.IsAny<CancellationToken>()),
 			Times.Once
 		);
-        _dockerServiceMock.Verify(x => x.ProcessWorkflowAsync(It.IsAny<Workflow>()), Times.Never);
+		_workflowProcessorMock.Verify(
+			x => x.ProcessWorkflowAsync(It.IsAny<Workflow>()),
+			Times.Never
+		);
     }
 
     [Fact]
@@ -76,18 +79,18 @@ public class QueueMonitorWorkerTests
 			.Setup(x => x.ReceiveMessageAsync(It.IsAny<CancellationToken>()))
 			.ReturnsAsync(queueMessage);
 
-        _dockerServiceMock
-            .Setup(x => x.ProcessWorkflowAsync(It.IsAny<Workflow>()))
-            .ReturnsAsync(true);
+		_workflowProcessorMock
+			.Setup(x => x.ProcessWorkflowAsync(It.IsAny<Workflow>()))
+			.ReturnsAsync(true);
 
         // Act
         await _worker.ProcessNextMessageAsync(CancellationToken.None);
 
         // Assert
-        _dockerServiceMock.Verify(
-            x => x.ProcessWorkflowAsync(It.Is<Workflow>(w => w.Job.Name == "job1")),
-            Times.Once
-        );
+		_workflowProcessorMock.Verify(
+			x => x.ProcessWorkflowAsync(It.Is<Workflow>(w => w.Job.Name == "job1")),
+			Times.Once
+		);
 		_queueProviderMock.Verify(
 			x => x.DeleteMessageAsync(queueMessage, It.IsAny<CancellationToken>()),
 			Times.Once

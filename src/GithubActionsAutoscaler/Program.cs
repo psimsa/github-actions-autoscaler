@@ -3,6 +3,8 @@ using GithubActionsAutoscaler.Configuration;
 using GithubActionsAutoscaler.Endpoints;
 using GithubActionsAutoscaler.Extensions;
 using GithubActionsAutoscaler.Queue.Azure;
+using GithubActionsAutoscaler.Runner.Docker;
+using GithubActionsAutoscaler.Runner.Docker.Services;
 using GithubActionsAutoscaler.Services;
 using GithubActionsAutoscaler.Workers;
 
@@ -32,9 +34,7 @@ builder.Services.AddSingleton<GithubActionsAutoscaler.Abstractions.Services.IRep
 builder.Services.AddSingleton<GithubActionsAutoscaler.Abstractions.Services.ILabelMatcher>(
 	_ => new GithubActionsAutoscaler.Abstractions.Services.LabelMatcher(appConfig.Labels)
 );
-builder.Services.AddSingleton<IImageManager, ImageManager>();
-builder.Services.AddSingleton<IContainerManager, ContainerManager>();
-builder.Services.AddSingleton<IDockerService, DockerService>();
+builder.Services.AddSingleton<IWorkflowProcessor, WorkflowProcessor>();
 
 if (appConfig.OpenTelemetry.Enabled)
 {
@@ -57,6 +57,21 @@ if (!string.IsNullOrWhiteSpace(appConfig.AzureStorage))
 	);
 	builder.Services.AddHostedService<QueueMonitorWorker>();
 }
+
+	builder.Services.AddDockerRunnerProvider(
+		new DockerRunnerOptions
+		{
+			MaxRunners = appConfig.MaxRunners,
+			Image = appConfig.DockerImage,
+			DockerHost = appConfig.DockerHost,
+			RegistryToken = appConfig.DockerToken,
+			AccessToken = appConfig.GithubToken,
+		AutoCheckForImageUpdates = appConfig.AutoCheckForImageUpdates,
+		ToolCacheVolumeName = appConfig.ToolCacheVolumeName,
+		CoordinatorHostname = appConfig.CoordinatorHostname,
+		Labels = appConfig.Labels
+	}
+);
 
 var app = builder.Build();
 

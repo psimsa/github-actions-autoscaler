@@ -18,6 +18,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\GithubActionsAutoscaler\GithubActionsAutoscaler.csproj" />
     <ProjectReference Include="..\..\src\GithubActionsAutoscaler.Abstractions\GithubActionsAutoscaler.Abstractions.csproj" />
+    <ProjectReference Include="..\..\src\GithubActionsAutoscaler.Runner.Docker\GithubActionsAutoscaler.Runner.Docker.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Using Include="Xunit" />
