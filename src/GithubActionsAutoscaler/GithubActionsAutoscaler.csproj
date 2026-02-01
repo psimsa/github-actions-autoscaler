@@ -24,4 +24,9 @@
       <_Parameter1>GithubActionsAutoscaler.Tests.Unit</_Parameter1>
     </AssemblyAttribute>
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\GithubActionsAutoscaler.Abstractions\GithubActionsAutoscaler.Abstractions.csproj" />
+    <ProjectReference Include="..\GithubActionsAutoscaler.Queue.Azure\GithubActionsAutoscaler.Queue.Azure.csproj" />
+    <ProjectReference Include="..\GithubActionsAutoscaler.Runner.Docker\GithubActionsAutoscaler.Runner.Docker.csproj" />
+  </ItemGroup>
 </Project>

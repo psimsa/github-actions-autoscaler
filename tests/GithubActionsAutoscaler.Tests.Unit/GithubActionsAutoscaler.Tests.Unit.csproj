@@ -17,6 +17,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\GithubActionsAutoscaler\GithubActionsAutoscaler.csproj" />
+    <ProjectReference Include="..\..\src\GithubActionsAutoscaler.Abstractions\GithubActionsAutoscaler.Abstractions.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Using Include="Xunit" />

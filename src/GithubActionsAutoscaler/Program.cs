@@ -18,8 +18,20 @@ if (appConfig.UseWebEndpoint)
 }
 
 builder.Services.AddSingleton(appConfig);
-builder.Services.AddSingleton<IRepositoryFilter, RepositoryFilter>();
-builder.Services.AddSingleton<ILabelMatcher, LabelMatcher>();
+builder.Services.AddSingleton<GithubActionsAutoscaler.Abstractions.Services.IRepositoryFilter>(_ =>
+{
+	return new GithubActionsAutoscaler.Abstractions.Services.RepositoryFilter(
+		appConfig.RepoAllowlistPrefix,
+		appConfig.RepoAllowlist,
+		appConfig.IsRepoAllowlistExactMatch,
+		appConfig.RepoDenylistPrefix,
+		appConfig.RepoDenylist,
+		appConfig.IsRepoDenylistExactMatch
+	);
+});
+builder.Services.AddSingleton<GithubActionsAutoscaler.Abstractions.Services.ILabelMatcher>(
+	_ => new GithubActionsAutoscaler.Abstractions.Services.LabelMatcher(appConfig.Labels)
+);
 builder.Services.AddSingleton<IImageManager, ImageManager>();
 builder.Services.AddSingleton<IContainerManager, ContainerManager>();
 builder.Services.AddSingleton<IDockerService, DockerService>();

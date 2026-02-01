@@ -1,4 +1,4 @@
-namespace GithubActionsAutoscaler.Services;
+namespace GithubActionsAutoscaler.Abstractions.Services;
 
 public interface ILabelMatcher
 {

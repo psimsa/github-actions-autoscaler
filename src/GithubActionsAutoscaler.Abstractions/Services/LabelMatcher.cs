@@ -1,14 +1,12 @@
-using GithubActionsAutoscaler.Configuration;
-
-namespace GithubActionsAutoscaler.Services;
+namespace GithubActionsAutoscaler.Abstractions.Services;
 
 public class LabelMatcher : ILabelMatcher
 {
     private readonly string[] _labels;
 
-    public LabelMatcher(AppConfiguration configuration)
+    public LabelMatcher(string[] labels)
     {
-        _labels = configuration.Labels;
+        _labels = labels;
     }
 
     public bool HasAllRequiredLabels(string[] jobLabels)

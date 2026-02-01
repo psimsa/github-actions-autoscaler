@@ -1,8 +1,9 @@
 using System.Diagnostics;
 using Docker.DotNet;
 using Docker.DotNet.Models;
+using GithubActionsAutoscaler.Abstractions.Models;
+using GithubActionsAutoscaler.Abstractions.Services;
 using GithubActionsAutoscaler.Configuration;
-using GithubActionsAutoscaler.Models;
 
 namespace GithubActionsAutoscaler.Services;
 

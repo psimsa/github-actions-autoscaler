@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace GithubActionsAutoscaler.Models;
+namespace GithubActionsAutoscaler.Abstractions.Models;
 
 public record Repository
 {

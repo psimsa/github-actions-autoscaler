@@ -1,6 +1,4 @@
-using GithubActionsAutoscaler.Configuration;
-
-namespace GithubActionsAutoscaler.Services;
+namespace GithubActionsAutoscaler.Abstractions.Services;
 
 public class RepositoryFilter : IRepositoryFilter
 {
@@ -11,14 +9,21 @@ public class RepositoryFilter : IRepositoryFilter
     private readonly string[] _repoDenylist;
     private readonly bool _isRepoDenylistExactMatch;
 
-    public RepositoryFilter(AppConfiguration configuration)
+    public RepositoryFilter(
+        string repoAllowlistPrefix,
+        string[] repoAllowlist,
+        bool isRepoAllowlistExactMatch,
+        string repoDenylistPrefix,
+        string[] repoDenylist,
+        bool isRepoDenylistExactMatch
+    )
     {
-        _repoAllowlistPrefix = configuration.RepoAllowlistPrefix;
-        _repoAllowlist = configuration.RepoAllowlist;
-        _isRepoAllowlistExactMatch = configuration.IsRepoAllowlistExactMatch;
-        _repoDenylistPrefix = configuration.RepoDenylistPrefix;
-        _repoDenylist = configuration.RepoDenylist;
-        _isRepoDenylistExactMatch = configuration.IsRepoDenylistExactMatch;
+        _repoAllowlistPrefix = repoAllowlistPrefix;
+        _repoAllowlist = repoAllowlist;
+        _isRepoAllowlistExactMatch = isRepoAllowlistExactMatch;
+        _repoDenylistPrefix = repoDenylistPrefix;
+        _repoDenylist = repoDenylist;
+        _isRepoDenylistExactMatch = isRepoDenylistExactMatch;
     }
 
     public bool IsRepositoryAllowed(string repositoryFullName)

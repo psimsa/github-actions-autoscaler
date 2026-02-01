@@ -1,6 +1,7 @@
 using Docker.DotNet.Models;
 using GithubActionsAutoscaler.Configuration;
-using GithubActionsAutoscaler.Models;
+using GithubActionsAutoscaler.Abstractions.Models;
+using GithubActionsAutoscaler.Abstractions.Services;
 using GithubActionsAutoscaler.Services;
 using Microsoft.Extensions.Logging;
 

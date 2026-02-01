@@ -2,7 +2,7 @@ using System.Diagnostics;
 using System.Text.Json;
 using Azure.Storage.Queues;
 using Azure.Storage.Queues.Models;
-using GithubActionsAutoscaler.Models;
+using GithubActionsAutoscaler.Abstractions.Models;
 using GithubActionsAutoscaler.Services;
 
 namespace GithubActionsAutoscaler.Workers;

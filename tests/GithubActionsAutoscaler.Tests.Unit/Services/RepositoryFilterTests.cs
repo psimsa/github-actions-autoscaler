@@ -1,5 +1,4 @@
-using GithubActionsAutoscaler.Configuration;
-using GithubActionsAutoscaler.Services;
+using GithubActionsAutoscaler.Abstractions.Services;
 
 namespace GithubActionsAutoscaler.Tests.Unit.Services;
 
@@ -9,7 +8,7 @@ public class RepositoryFilterTests
     public void IsRepositoryAllowed_WithMatchingAllowlistPrefix_ReturnsTrue()
     {
         var config = CreateConfiguration(repoAllowlistPrefix: "myorg/");
-        var filter = new RepositoryFilter(config);
+        var filter = CreateFilter(config);
 
         var result = filter.IsRepositoryAllowed("myorg/my-repo");
 
@@ -20,7 +19,7 @@ public class RepositoryFilterTests
     public void IsRepositoryAllowed_WithNonMatchingAllowlistPrefix_ReturnsFalse()
     {
         var config = CreateConfiguration(repoAllowlistPrefix: "myorg/");
-        var filter = new RepositoryFilter(config);
+        var filter = CreateFilter(config);
 
         var result = filter.IsRepositoryAllowed("otherorg/my-repo");
 
@@ -34,7 +33,7 @@ public class RepositoryFilterTests
             repoAllowlist: ["myorg/repo1", "myorg/repo2"],
             isRepoAllowlistExactMatch: true
         );
-        var filter = new RepositoryFilter(config);
+        var filter = CreateFilter(config);
 
         var result = filter.IsRepositoryAllowed("myorg/repo1");
 
@@ -48,7 +47,7 @@ public class RepositoryFilterTests
             repoAllowlist: ["myorg/repo1", "myorg/repo2"],
             isRepoAllowlistExactMatch: true
         );
-        var filter = new RepositoryFilter(config);
+        var filter = CreateFilter(config);
 
         var result = filter.IsRepositoryAllowed("myorg/repo3");
 
@@ -62,7 +61,7 @@ public class RepositoryFilterTests
             repoAllowlist: ["myorg/"],
             isRepoAllowlistExactMatch: false
         );
-        var filter = new RepositoryFilter(config);
+        var filter = CreateFilter(config);
 
         var result = filter.IsRepositoryAllowed("myorg/any-repo");
 
@@ -73,7 +72,7 @@ public class RepositoryFilterTests
     public void IsRepositoryAllowed_WithWildcardAllowlist_ReturnsTrue()
     {
         var config = CreateConfiguration(repoAllowlist: ["*"], isRepoAllowlistExactMatch: false);
-        var filter = new RepositoryFilter(config);
+        var filter = CreateFilter(config);
 
         var result = filter.IsRepositoryAllowed("anyorg/any-repo");
 
@@ -87,7 +86,7 @@ public class RepositoryFilterTests
             repoAllowlistPrefix: "myorg/",
             repoDenylistPrefix: "myorg/blocked-"
         );
-        var filter = new RepositoryFilter(config);
+        var filter = CreateFilter(config);
 
         var result = filter.IsRepositoryAllowed("myorg/blocked-repo");
 
@@ -103,7 +102,7 @@ public class RepositoryFilterTests
             isRepoAllowlistExactMatch: true,
             isRepoDenylistExactMatch: true
         );
-        var filter = new RepositoryFilter(config);
+        var filter = CreateFilter(config);
 
         var result = filter.IsRepositoryAllowed("myorg/blocked-repo");
 
@@ -114,7 +113,7 @@ public class RepositoryFilterTests
     public void IsRepositoryAllowed_WithEmptyAllowlistAndNoPrefix_ReturnsFalse()
     {
         var config = CreateConfiguration();
-        var filter = new RepositoryFilter(config);
+        var filter = CreateFilter(config);
 
         var result = filter.IsRepositoryAllowed("anyorg/any-repo");
 
@@ -129,14 +128,14 @@ public class RepositoryFilterTests
             repoDenylist: ["myorg/blocked"],
             isRepoDenylistExactMatch: false
         );
-        var filter = new RepositoryFilter(config);
+        var filter = CreateFilter(config);
 
         var result = filter.IsRepositoryAllowed("myorg/blocked-repo");
 
         result.Should().BeFalse();
     }
 
-    private static AppConfiguration CreateConfiguration(
+    private static RepositoryFilterConfiguration CreateConfiguration(
         string repoAllowlistPrefix = "",
         string[] repoAllowlist = null!,
         bool isRepoAllowlistExactMatch = true,
@@ -145,15 +144,34 @@ public class RepositoryFilterTests
         bool isRepoDenylistExactMatch = false
     )
     {
-        return new AppConfiguration
-        {
-            RepoAllowlistPrefix = repoAllowlistPrefix,
-            RepoAllowlist = repoAllowlist ?? [],
-            IsRepoAllowlistExactMatch = isRepoAllowlistExactMatch,
-            RepoDenylistPrefix = repoDenylistPrefix,
-            RepoDenylist = repoDenylist ?? [],
-            IsRepoDenylistExactMatch = isRepoDenylistExactMatch,
-            DockerImage = "test-image:latest",
-        };
+        return new RepositoryFilterConfiguration(
+            repoAllowlistPrefix,
+            repoAllowlist ?? [],
+            isRepoAllowlistExactMatch,
+            repoDenylistPrefix,
+            repoDenylist ?? [],
+            isRepoDenylistExactMatch
+        );
     }
+
+    private static RepositoryFilter CreateFilter(RepositoryFilterConfiguration config)
+    {
+        return new RepositoryFilter(
+            config.RepoAllowlistPrefix,
+            config.RepoAllowlist,
+            config.IsRepoAllowlistExactMatch,
+            config.RepoDenylistPrefix,
+            config.RepoDenylist,
+            config.IsRepoDenylistExactMatch
+        );
+    }
+
+    private sealed record RepositoryFilterConfiguration(
+        string RepoAllowlistPrefix,
+        string[] RepoAllowlist,
+        bool IsRepoAllowlistExactMatch,
+        string RepoDenylistPrefix,
+        string[] RepoDenylist,
+        bool IsRepoDenylistExactMatch
+    );
 }

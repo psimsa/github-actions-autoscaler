@@ -1,5 +1,5 @@
 using Docker.DotNet.Models;
-using GithubActionsAutoscaler.Models;
+using GithubActionsAutoscaler.Abstractions.Models;
 
 namespace GithubActionsAutoscaler.Services;
 
