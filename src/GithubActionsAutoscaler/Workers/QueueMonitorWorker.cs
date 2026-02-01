@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text.Json;
 using Azure.Storage.Queues;
 using Azure.Storage.Queues.Models;
@@ -9,6 +10,7 @@ namespace GithubActionsAutoscaler.Workers;
 public class QueueMonitorWorker : IHostedService
 {
     private readonly IDockerService _dockerService;
+    private readonly ActivitySource _activitySource;
     private readonly ILogger<QueueMonitorWorker> _logger;
     private readonly QueueClient _queueClient;
     private string _lastUnsuccessfulMessageId = "";
@@ -19,16 +21,19 @@ public class QueueMonitorWorker : IHostedService
     public QueueMonitorWorker(
         QueueClient queueClient,
         IDockerService dockerService,
+        ActivitySource activitySource,
         ILogger<QueueMonitorWorker> logger
     )
     {
         _queueClient = queueClient;
         _dockerService = dockerService;
+        this._activitySource = activitySource;
         _logger = logger;
     }
 
     internal async Task ProcessNextMessageAsync(CancellationToken token)
     {
+        using var activity = _activitySource.StartActivity();
         QueueMessage? message = null;
         try
         {
@@ -72,13 +77,16 @@ public class QueueMonitorWorker : IHostedService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error receiving message");
+            activity?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex.Message);
+
             if (message != null)
             {
+                activity?.AddEvent(new ActivityEvent("Deleting message due to processing error"));
                 // In case of processing error (serialization etc), we delete to avoid poison pill
                 // But we might want to reconsider this strategy later (dead letter queue?)
                 await _queueClient.DeleteMessageAsync(message.MessageId, message.PopReceipt, token);
             }
-
+            activity?.Stop();
             await Task.Delay(10_000, token);
         }
     }
@@ -87,7 +95,10 @@ public class QueueMonitorWorker : IHostedService
     {
         _logger.LogInformation("QueueMonitorWorker is starting");
 
-        await _queueClient.CreateIfNotExistsAsync(cancellationToken: token);
+        using (var activity = _activitySource.StartActivity("QueueMonitorWorker.Startup"))
+        {
+            await _queueClient.CreateIfNotExistsAsync(cancellationToken: token);
+        }
 
         while (!token.IsCancellationRequested)
         {
@@ -97,6 +108,7 @@ public class QueueMonitorWorker : IHostedService
 
     public Task StartAsync(CancellationToken cancellationToken)
     {
+        _logger.LogInformation("QueueMonitorWorker is starting");
         _cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         _worker = MonitorQueueAsync(_cts.Token);
         return Task.CompletedTask;

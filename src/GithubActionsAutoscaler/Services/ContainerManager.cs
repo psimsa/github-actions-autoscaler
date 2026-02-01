@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Docker.DotNet;
 using Docker.DotNet.Models;
 using GithubActionsAutoscaler.Configuration;
@@ -55,11 +56,14 @@ public class ContainerManager : IContainerManager
         string image
     )
     {
+        using var activity = Activity.Current?.Source.StartActivity("ContainerManager.CreateAndStartContainerAsync");
         if ((await ListContainersAsync()).Count >= _maxRunners)
         {
+            activity?.AddEvent(new ActivityEvent("Max runners reached, cannot create new container"));
             return false;
         }
 
+        activity?.AddEvent(new ActivityEvent("Creating volumes for new container"));
         var workVolume = await _client.Volumes.CreateAsync(new VolumesCreateParameters());
         var toolCacheVolume = (await _client.Volumes.ListAsync(new VolumesListParameters()
         {
@@ -157,8 +161,10 @@ public class ContainerManager : IContainerManager
             },
         };
 
+        activity?.AddEvent(new ActivityEvent($"Creating and starting container for {repositoryFullName}"));
         _logger.LogInformation("Creating container for {repositoryFullName}", repositoryFullName);
         var response = await _client.Containers.CreateContainerAsync(container, cts.Token);
+        activity?.AddEvent(new ActivityEvent($"Container for {repositoryFullName} created, starting"));
         _logger.LogInformation("Container for {repositoryFullName} created", repositoryFullName);
         int startAttempts = 0;
         while (
@@ -169,9 +175,12 @@ public class ContainerManager : IContainerManager
             )
         )
         {
+            activity?.AddEvent(new ActivityEvent($"Starting container for {repositoryFullName} failed, retrying"));
             startAttempts++;
             if (startAttempts > 5)
             {
+                activity?.AddEvent(new ActivityEvent($"Failed to start container for {repositoryFullName} after multiple attempts"));
+                activity?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Failed to start container after multiple attempts");
                 _logger.LogError(
                     "Failed to start container for {repositoryFullName}",
                     repositoryFullName
