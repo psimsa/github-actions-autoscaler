@@ -1,14 +1,10 @@
-using System.Diagnostics;
 using Azure.Storage.Queues;
 using Docker.DotNet;
 using GithubActionsAutoscaler.Configuration;
 using GithubActionsAutoscaler.Endpoints;
+using GithubActionsAutoscaler.Extensions;
 using GithubActionsAutoscaler.Services;
 using GithubActionsAutoscaler.Workers;
-using OpenTelemetry.Logs;
-using OpenTelemetry.Metrics;
-using OpenTelemetry.Resources;
-using OpenTelemetry.Trace;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -30,39 +26,7 @@ builder.Services.AddSingleton<IDockerService, DockerService>();
 
 if (appConfig.OpenTelemetry.Enabled)
 {
-    var activitySource = new ActivitySource("GithubActionsAutoscaler");
-    builder.Services.AddSingleton(activitySource);
-
-    var otlpEndpoint = Environment.GetEnvironmentVariable("OTEL_EXPORTER_OTLP_ENDPOINT") ?? appConfig.OpenTelemetry.OtlpEndpoint;
-    builder
-        .Services.AddOpenTelemetry()
-        .ConfigureResource(resource =>
-            resource.AddService(serviceName: Environment.GetEnvironmentVariable("OTEL_SERVICE_NAME") ?? appConfig.OpenTelemetry.ServiceName)
-        )
-        .WithTracing(tracing =>
-        {
-            tracing.AddAspNetCoreInstrumentation().AddHttpClientInstrumentation().AddSource(activitySource.Name);
-
-            if (!string.IsNullOrWhiteSpace(otlpEndpoint))
-            {
-                tracing.AddOtlpExporter(e => e.Endpoint = new Uri(otlpEndpoint));
-            }
-        })
-        .WithLogging(logging =>
-        {
-            if (!string.IsNullOrWhiteSpace(otlpEndpoint))
-            {
-                logging.AddOtlpExporter(e => e.Endpoint = new Uri(otlpEndpoint));
-            }
-        })
-        .WithMetrics(metrics =>
-        {
-            metrics.AddAspNetCoreInstrumentation().AddHttpClientInstrumentation();
-            if (!string.IsNullOrWhiteSpace(otlpEndpoint))
-            {
-                metrics.AddOtlpExporter(e => e.Endpoint = new Uri(otlpEndpoint));
-            }
-        });
+    builder.Services.AddOpenTelemetryInstrumentation(appConfig);
 }
 
 var dockerConfig = !string.IsNullOrWhiteSpace(appConfig.DockerHost)
