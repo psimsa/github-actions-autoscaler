@@ -30,7 +30,7 @@ Abstractions → (no external dependencies except BCL)
 **Action:** Create new class library project
 
 ```bash
-cd c:\dev\psimsa\github-actions-autoscaler\src
+cd src
 dotnet new classlib -n GithubActionsAutoscaler.Abstractions -f net10.0
 ```
 
@@ -41,7 +41,7 @@ dotnet new classlib -n GithubActionsAutoscaler.Abstractions -f net10.0
 
 **Verification:**
 ```bash
-ls src/GithubActionsAutoscaler.Abstractions/
+ls -la GithubActionsAutoscaler.Abstractions/
 ```
 
 ---
@@ -51,18 +51,18 @@ ls src/GithubActionsAutoscaler.Abstractions/
 **Action:** Create new class library project
 
 ```bash
-cd c:\dev\psimsa\github-actions-autoscaler\src
+cd src
 dotnet new classlib -n GithubActionsAutoscaler.Queue.Azure -f net10.0
 ```
 
 **Expected Result:**
-- New folder: `src/GithubActionsAutoscaler.Queue.Azure/`
+- New folder: `GithubActionsAutoscaler.Queue.Azure/`
 - New file: `src/GithubActionsAutoscaler.Queue.Azure/GithubActionsAutoscaler.Queue.Azure.csproj`
 - New file: `src/GithubActionsAutoscaler.Queue.Azure/Class1.cs` (delete this)
 
 **Verification:**
 ```bash
-ls src/GithubActionsAutoscaler.Queue.Azure/
+ls -la GithubActionsAutoscaler.Queue.Azure/
 ```
 
 ---
@@ -72,18 +72,18 @@ ls src/GithubActionsAutoscaler.Queue.Azure/
 **Action:** Create new class library project
 
 ```bash
-cd c:\dev\psimsa\github-actions-autoscaler\src
+cd src
 dotnet new classlib -n GithubActionsAutoscaler.Runner.Docker -f net10.0
 ```
 
 **Expected Result:**
-- New folder: `src/GithubActionsAutoscaler.Runner.Docker/`
+- New folder: `GithubActionsAutoscaler.Runner.Docker/`
 - New file: `src/GithubActionsAutoscaler.Runner.Docker/GithubActionsAutoscaler.Runner.Docker.csproj`
 - New file: `src/GithubActionsAutoscaler.Runner.Docker/Class1.cs` (delete this)
 
 **Verification:**
 ```bash
-ls src/GithubActionsAutoscaler.Runner.Docker/
+ls -la GithubActionsAutoscaler.Runner.Docker/
 ```
 
 ---
@@ -93,9 +93,9 @@ ls src/GithubActionsAutoscaler.Runner.Docker/
 **Action:** Delete `Class1.cs` from each new project
 
 ```bash
-rm src/GithubActionsAutoscaler.Abstractions/Class1.cs
-rm src/GithubActionsAutoscaler.Queue.Azure/Class1.cs
-rm src/GithubActionsAutoscaler.Runner.Docker/Class1.cs
+rm GithubActionsAutoscaler.Abstractions/Class1.cs
+rm GithubActionsAutoscaler.Queue.Azure/Class1.cs
+rm GithubActionsAutoscaler.Runner.Docker/Class1.cs
 ```
 
 **Verification:** Verify each project has no `Class1.cs`
@@ -107,7 +107,7 @@ rm src/GithubActionsAutoscaler.Runner.Docker/Class1.cs
 **Action:** Re-build solution to discover new projects
 
 ```bash
-cd c:\dev\psimsa\github-actions-autoscaler
+cd ..
 dotnet sln add src/GithubActionsAutoscaler.Abstractions/GithubActionsAutoscaler.Abstractions.csproj
 dotnet sln add src/GithubActionsAutoscaler.Queue.Azure/GithubActionsAutoscaler.Queue.Azure.csproj
 dotnet sln add src/GithubActionsAutoscaler.Runner.Docker/GithubActionsAutoscaler.Runner.Docker.csproj
@@ -134,7 +134,7 @@ Should show:
 
 **6a. Main app references Abstractions:**
 ```bash
-cd c:\dev\psimsa\github-actions-autoscaler\src\GithubActionsAutoscaler
+cd src/GithubActionsAutoscaler
 dotnet add reference ../GithubActionsAutoscaler.Abstractions/GithubActionsAutoscaler.Abstractions.csproj
 dotnet add reference ../GithubActionsAutoscaler.Queue.Azure/GithubActionsAutoscaler.Queue.Azure.csproj
 dotnet add reference ../GithubActionsAutoscaler.Runner.Docker/GithubActionsAutoscaler.Runner.Docker.csproj
@@ -142,19 +142,19 @@ dotnet add reference ../GithubActionsAutoscaler.Runner.Docker/GithubActionsAutos
 
 **6b. Queue.Azure references Abstractions:**
 ```bash
-cd c:\dev\psimsa\github-actions-autoscaler\src\GithubActionsAutoscaler.Queue.Azure
+cd ../GithubActionsAutoscaler.Queue.Azure
 dotnet add reference ../GithubActionsAutoscaler.Abstractions/GithubActionsAutoscaler.Abstractions.csproj
 ```
 
 **6c. Runner.Docker references Abstractions:**
 ```bash
-cd c:\dev\psimsa\github-actions-autoscaler\src\GithubActionsAutoscaler.Runner.Docker
+cd ../GithubActionsAutoscaler.Runner.Docker
 dotnet add reference ../GithubActionsAutoscaler.Abstractions/GithubActionsAutoscaler.Abstractions.csproj
 ```
 
 **Verification:**
 ```bash
-cd c:\dev\psimsa\github-actions-autoscaler
+cd ../..
 dotnet build
 ```
 
@@ -188,9 +188,9 @@ Should compile successfully with 0 warnings/errors.
 
 4. Delete original files:
    ```bash
-   rm src/GithubActionsAutoscaler/Models/Workflow.cs
-   rm src/GithubActionsAutoscaler/Models/WorkflowJob.cs
-   rm src/GithubActionsAutoscaler/Models/Repository.cs
+   rm -f src/GithubActionsAutoscaler/Models/Workflow.cs
+   rm -f src/GithubActionsAutoscaler/Models/WorkflowJob.cs
+   rm -f src/GithubActionsAutoscaler/Models/Repository.cs
    ```
 
 5. Update imports in main app:
@@ -204,7 +204,6 @@ Should compile successfully with 0 warnings/errors.
 
 **Verification:**
 ```bash
-cd c:\dev\psimsa\github-actions-autoscaler
 dotnet build
 ```
 
@@ -243,10 +242,10 @@ Should compile successfully.
 
 5. Delete original files:
    ```bash
-   rm src/GithubActionsAutoscaler/Services/IRepositoryFilter.cs
-   rm src/GithubActionsAutoscaler/Services/RepositoryFilter.cs
-   rm src/GithubActionsAutoscaler/Services/ILabelMatcher.cs
-   rm src/GithubActionsAutoscaler/Services/LabelMatcher.cs
+   rm -f src/GithubActionsAutoscaler/Services/IRepositoryFilter.cs
+   rm -f src/GithubActionsAutoscaler/Services/RepositoryFilter.cs
+   rm -f src/GithubActionsAutoscaler/Services/ILabelMatcher.cs
+   rm -f src/GithubActionsAutoscaler/Services/LabelMatcher.cs
    ```
 
 6. Update imports in main app:
@@ -255,7 +254,6 @@ Should compile successfully.
 
 **Verification:**
 ```bash
-cd c:\dev\psimsa\github-actions-autoscaler
 dotnet build
 ```
 
@@ -268,8 +266,9 @@ Should compile successfully.
 **Action:** Update test project to reference Abstractions
 
 ```bash
-cd c:\dev\psimsa\github-actions-autoscaler\tests\GithubActionsAutoscaler.Tests.Unit
+cd tests/GithubActionsAutoscaler.Tests.Unit
 dotnet add reference ../../src/GithubActionsAutoscaler.Abstractions/GithubActionsAutoscaler.Abstractions.csproj
+cd ../..
 ```
 
 **Expected Result:**
@@ -305,7 +304,6 @@ Should return no results.
 **Action:** Do a full clean build
 
 ```bash
-cd c:\dev\psimsa\github-actions-autoscaler
 dotnet clean
 dotnet build
 ```
@@ -322,7 +320,6 @@ dotnet build
 **Action:** Verify all 23 tests still pass with new structure
 
 ```bash
-cd c:\dev\psimsa\github-actions-autoscaler
 dotnet test
 ```
 
@@ -347,7 +344,7 @@ src/
 
 **Verification Commands:**
 ```bash
-ls -la src/GithubActionsAutoscaler/Models/  # Should be empty or show non-model files
+ls -la src/GithubActionsAutoscaler/Models/ || echo "Models folder empty or deleted"
 ls -la src/GithubActionsAutoscaler.Abstractions/Models/  # Should have 3 files
 ls -la src/GithubActionsAutoscaler.Abstractions/Services/  # Should have 4 files
 ```
@@ -359,7 +356,6 @@ ls -la src/GithubActionsAutoscaler.Abstractions/Services/  # Should have 4 files
 **Action:** Commit the restructure work
 
 ```bash
-cd c:\dev\psimsa\github-actions-autoscaler
 git add .
 git commit -m "Phase 1: Create 4-project solution structure with Abstractions project
 
