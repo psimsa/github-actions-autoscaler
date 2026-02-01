@@ -21,6 +21,6 @@ public class QueueOptionsValidatorTests
 
 		var result = validator.Validate(null, options);
 
-		result.Succeeded.Should().BeFalse();
+		Assert.False(result.Succeeded);
 	}
 }

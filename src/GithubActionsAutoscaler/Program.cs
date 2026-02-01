@@ -8,6 +8,7 @@ using GithubActionsAutoscaler.Runner.Docker;
 using GithubActionsAutoscaler.Runner.Docker.Services;
 using GithubActionsAutoscaler.Services;
 using GithubActionsAutoscaler.Workers;
+using GithubActionsAutoscaler.Telemetry;
 using Microsoft.Extensions.Options;
 using QueueAzureOptions = GithubActionsAutoscaler.Queue.Azure.AzureQueueOptions;
 using RunnerDockerOptions = GithubActionsAutoscaler.Runner.Docker.DockerRunnerOptions;
@@ -98,6 +99,10 @@ if (appOptions.Mode is OperationMode.QueueMonitor or OperationMode.Both)
 			Labels = appOptions.Labels
 		}
 	);
+	if (appOptions.OpenTelemetry.Enabled)
+	{
+		builder.Services.AddSingleton<AutoscalerMetrics>();
+	}
 }
 
 var app = builder.Build();

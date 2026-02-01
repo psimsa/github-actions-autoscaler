@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Docker.DotNet;
 using Docker.DotNet.Models;
 using Microsoft.Extensions.Logging;
@@ -26,11 +27,11 @@ public class ImageManager : IImageManager
 
     public async Task<bool> EnsureImageExistsAsync(string imageName, CancellationToken token)
     {
-        if (!_autoCheckForImageUpdates)
-        {
-            _logger.LogInformation("Auto download of builder image disabled, skipping...");
-            return true;
-        }
+		if (!_autoCheckForImageUpdates)
+		{
+			Activity.Current?.AddEvent(new ActivityEvent("Auto download of builder image disabled"));
+			return true;
+		}
 
         var success = true;
 
@@ -47,7 +48,7 @@ public class ImageManager : IImageManager
             return success;
         }
 
-        _logger.LogInformation("Checking for latest image");
+		Activity.Current?.AddEvent(new ActivityEvent("Checking for latest image"));
 
         _lastPullCheck = DateTime.UtcNow;
         var m = new ManualResetEventSlim();
@@ -79,7 +80,7 @@ public class ImageManager : IImageManager
         if (token.IsCancellationRequested)
             return false;
 
-        _logger.LogInformation("Downloaded new docker image");
-        return success;
-    }
+		Activity.Current?.AddEvent(new ActivityEvent("Downloaded new docker image"));
+		return success;
+	}
 }

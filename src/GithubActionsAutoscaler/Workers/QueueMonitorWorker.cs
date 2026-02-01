@@ -3,6 +3,7 @@ using System.Text.Json;
 using GithubActionsAutoscaler.Abstractions.Models;
 using GithubActionsAutoscaler.Abstractions.Queue;
 using GithubActionsAutoscaler.Services;
+using GithubActionsAutoscaler.Telemetry;
 
 namespace GithubActionsAutoscaler.Workers;
 
@@ -12,22 +13,27 @@ public class QueueMonitorWorker : IHostedService
     private readonly ActivitySource _activitySource;
     private readonly ILogger<QueueMonitorWorker> _logger;
 	private readonly IQueueProvider _queueProvider;
+	private readonly AutoscalerMetrics? _metrics;
+	private readonly string _mode;
     private string _lastUnsuccessfulMessageId = "";
 
     private Task? _worker;
     private CancellationTokenSource? _cts;
 
-    public QueueMonitorWorker(
+	public QueueMonitorWorker(
 		IQueueProvider queueProvider,
 		IWorkflowProcessor workflowProcessor,
 		ActivitySource activitySource,
-		ILogger<QueueMonitorWorker> logger
+		ILogger<QueueMonitorWorker> logger,
+		AutoscalerMetrics? metrics = null
 	)
 	{
 		_queueProvider = queueProvider;
 		_workflowProcessor = workflowProcessor;
 		this._activitySource = activitySource;
 		_logger = logger;
+		_metrics = metrics;
+		_mode = "QueueMonitor";
 	}
 
     internal async Task ProcessNextMessageAsync(CancellationToken token)
@@ -48,29 +54,37 @@ public class QueueMonitorWorker : IHostedService
 
             _lastUnsuccessfulMessageId = "";
 
-			message = await _queueProvider.ReceiveMessageAsync(token);
+		message = await _queueProvider.ReceiveMessageAsync(token);
 
-            if (message == null)
-            {
-                await Task.Delay(10_000, token);
-                return;
-            }
+		if (message == null)
+		{
+			await Task.Delay(10_000, token);
+			return;
+		}
 
-            _logger.LogInformation("Dequeued message");
+		activity?.AddEvent(new ActivityEvent("Dequeued message"));
 
-			var msg = Convert.FromBase64String(message.Content);
+		var msg = Convert.FromBase64String(message.Content);
 
-            var workflow = JsonSerializer.Deserialize<Workflow>(msg);
-            _logger.LogInformation("Executing workflow");
-			var workflowResult = await _workflowProcessor.ProcessWorkflowAsync(workflow);
+		var workflow = JsonSerializer.Deserialize<Workflow>(msg);
+		if (workflow != null)
+		{
+			_metrics?.RecordJobReceived(workflow.Action ?? "unknown", _mode);
+		}
+		activity?.AddEvent(new ActivityEvent("Executing workflow"));
+		var workflowResult = await _workflowProcessor.ProcessWorkflowAsync(workflow);
 
-			if (workflowResult)
-				await _queueProvider.DeleteMessageAsync(message, token);
-			else
-			{
-				_lastUnsuccessfulMessageId = message.MessageId;
-			}
-        }
+		if (workflowResult)
+		{
+			await _queueProvider.DeleteMessageAsync(message, token);
+			_metrics?.RecordQueueMessageDeleted();
+		}
+		else
+		{
+			_lastUnsuccessfulMessageId = message.MessageId;
+			_metrics?.RecordQueueMessageFailed();
+		}
+	}
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error receiving message");
@@ -82,15 +96,16 @@ public class QueueMonitorWorker : IHostedService
 				// In case of processing error (serialization etc), we delete to avoid poison pill
 				// But we might want to reconsider this strategy later (dead letter queue?)
 				await _queueProvider.DeleteMessageAsync(message, token);
+				_metrics?.RecordQueueMessageDeleted();
 			}
-            activity?.Stop();
-            await Task.Delay(10_000, token);
-        }
+		activity?.Stop();
+		await Task.Delay(10_000, token);
+	}
     }
 
     private async Task MonitorQueueAsync(CancellationToken token)
     {
-        _logger.LogInformation("QueueMonitorWorker is starting");
+		_logger.LogInformation("QueueMonitorWorker monitor loop starting");
 
 		using (var activity = _activitySource.StartActivity("QueueMonitorWorker.Startup"))
 		{
@@ -105,7 +120,7 @@ public class QueueMonitorWorker : IHostedService
 
     public Task StartAsync(CancellationToken cancellationToken)
     {
-        _logger.LogInformation("QueueMonitorWorker is starting");
+		_logger.LogInformation("QueueMonitorWorker is starting");
         _cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         _worker = MonitorQueueAsync(_cts.Token);
         return Task.CompletedTask;

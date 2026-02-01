@@ -162,10 +162,8 @@ public class ContainerManager : IContainerManager
         };
 
         activity?.AddEvent(new ActivityEvent($"Creating and starting container for {repositoryFullName}"));
-        _logger.LogInformation("Creating container for {repositoryFullName}", repositoryFullName);
         var response = await _client.Containers.CreateContainerAsync(container, cts.Token);
         activity?.AddEvent(new ActivityEvent($"Container for {repositoryFullName} created, starting"));
-        _logger.LogInformation("Container for {repositoryFullName} created", repositoryFullName);
         int startAttempts = 0;
         while (
             !await _client.Containers.StartContainerAsync(
@@ -201,7 +199,6 @@ public class ContainerManager : IContainerManager
             await Task.Delay(TimeSpan.FromSeconds(1), cts.Token);
         }
 
-        _logger.LogInformation("Container for {repositoryFullName} started", repositoryFullName);
         return true;
     }
 

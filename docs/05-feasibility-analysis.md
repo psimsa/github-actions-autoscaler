@@ -640,10 +640,10 @@ See [IMPLEMENTATION-WORKFLOW.md](IMPLEMENTATION-WORKFLOW.md) for the full workfl
 - [x] Verify all modes work correctly
 
 ### Phase 4.5: Testing & Telemetry Alignment (Estimated: 2-3 hours)
-- [ ] Remove FluentAssertions usage in tests
-- [ ] Replace Info-level logs with Activity events (except lifecycle logs)
-- [ ] Review OpenTelemetry usage and align with best practices
-- [ ] Verify build and tests
+- [x] Remove FluentAssertions usage in tests
+- [x] Replace Info-level logs with Activity events (except lifecycle logs)
+- [x] Review OpenTelemetry usage and align with best practices
+- [x] Verify build and tests
 
 ### Phase 5: Cleanup & Documentation (Estimated: 3-4 hours)
 - [ ] Remove old/unused code

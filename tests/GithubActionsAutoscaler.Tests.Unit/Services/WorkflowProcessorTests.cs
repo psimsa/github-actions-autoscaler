@@ -40,7 +40,7 @@ public class WorkflowProcessorTests
 
 		var result = await _processor.ProcessWorkflowAsync(workflow);
 
-		result.Should().BeFalse();
+		Assert.False(result);
 	}
 
 	[Fact]
@@ -60,7 +60,7 @@ public class WorkflowProcessorTests
 
 		var result = await _processor.ProcessWorkflowAsync(workflow);
 
-		result.Should().BeTrue();
+		Assert.True(result);
 		_runnerManagerMock.Verify(
 			x => x.WaitForAvailableSlotAsync(It.IsAny<CancellationToken>()),
 			Times.Once

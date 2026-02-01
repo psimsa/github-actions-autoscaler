@@ -13,9 +13,9 @@ public class InMemoryQueueProviderTests
 		await provider.SendMessageAsync("payload");
 		var message = await provider.ReceiveMessageAsync();
 
-		message.Should().NotBeNull();
-		message!.Content.Should().Be("payload");
-		message.DequeueCount.Should().Be(1);
+		Assert.NotNull(message);
+		Assert.Equal("payload", message!.Content);
+		Assert.Equal(1, message.DequeueCount);
 	}
 
 	[Fact]
@@ -26,11 +26,11 @@ public class InMemoryQueueProviderTests
 
 		await provider.SendMessageAsync("payload");
 		var message = await provider.ReceiveMessageAsync();
-		message.Should().NotBeNull();
+		Assert.NotNull(message);
 
 		await provider.DeleteMessageAsync(message!);
 		var next = await provider.ReceiveMessageAsync();
 
-		next.Should().BeNull();
+		Assert.Null(next);
 	}
 }

@@ -12,7 +12,7 @@ public class LabelMatcherTests
 
         var result = matcher.HasAllRequiredLabels(["self-hosted", "linux"]);
 
-        result.Should().BeTrue();
+        Assert.True(result);
     }
 
     [Fact]
@@ -23,7 +23,7 @@ public class LabelMatcherTests
 
         var result = matcher.HasAllRequiredLabels(["linux", "x64"]);
 
-        result.Should().BeFalse();
+        Assert.False(result);
     }
 
     [Fact]
@@ -34,7 +34,7 @@ public class LabelMatcherTests
 
         var result = matcher.HasAllRequiredLabels(["self-hosted", "windows"]);
 
-        result.Should().BeFalse();
+        Assert.False(result);
     }
 
     [Fact]
@@ -45,7 +45,7 @@ public class LabelMatcherTests
 
         var result = matcher.HasAllRequiredLabels(["Self-Hosted", "LINUX"]);
 
-        result.Should().BeTrue();
+        Assert.True(result);
     }
 
     [Fact]
@@ -56,7 +56,7 @@ public class LabelMatcherTests
 
         var result = matcher.HasAllRequiredLabels(["self-hosted"]);
 
-        result.Should().BeTrue();
+        Assert.True(result);
     }
 
     [Fact]
@@ -67,7 +67,7 @@ public class LabelMatcherTests
 
         var result = matcher.HasAllRequiredLabels([]);
 
-        result.Should().BeFalse();
+        Assert.False(result);
     }
 
     [Fact]
@@ -78,7 +78,7 @@ public class LabelMatcherTests
 
         var result = matcher.HasAllRequiredLabels(["self-hosted", "linux"]);
 
-        result.Should().BeTrue();
+        Assert.True(result);
     }
 
     private static string[] CreateConfiguration(string[] labels)

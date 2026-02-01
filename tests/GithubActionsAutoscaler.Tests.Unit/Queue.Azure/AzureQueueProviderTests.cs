@@ -14,8 +14,8 @@ public class AzureQueueProviderTests
 
 		var result = validator.Validate(null, options);
 
-		result.Succeeded.Should().BeFalse();
-		result.FailureMessage.Should().Contain("connection string");
+		Assert.False(result.Succeeded);
+		Assert.Contains("connection string", result.FailureMessage);
 	}
 
 	[Fact]
@@ -26,8 +26,8 @@ public class AzureQueueProviderTests
 
 		var result = validator.Validate(null, options);
 
-		result.Succeeded.Should().BeFalse();
-		result.FailureMessage.Should().Contain("queue name");
+		Assert.False(result.Succeeded);
+		Assert.Contains("queue name", result.FailureMessage);
 	}
 
 	[Fact]
@@ -38,7 +38,7 @@ public class AzureQueueProviderTests
 
 		var result = validator.Validate(null, options);
 
-		result.Succeeded.Should().BeTrue();
+		Assert.True(result.Succeeded);
 	}
 
 	[Fact]
@@ -52,9 +52,9 @@ public class AzureQueueProviderTests
 			2
 		);
 
-		message.MessageId.Should().Be("id");
-		message.PopReceipt.Should().Be("receipt");
-		message.Content.Should().Be("content");
-		message.DequeueCount.Should().Be(2);
+		Assert.Equal("id", message.MessageId);
+		Assert.Equal("receipt", message.PopReceipt);
+		Assert.Equal("content", message.Content);
+		Assert.Equal(2, message.DequeueCount);
 	}
 }

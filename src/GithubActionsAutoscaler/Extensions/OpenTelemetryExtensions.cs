@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Diagnostics.Metrics;
 using GithubActionsAutoscaler.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Logs;
@@ -10,12 +11,14 @@ namespace GithubActionsAutoscaler.Extensions;
 
 public static class OpenTelemetryExtensions
 {
-    public static IServiceCollection AddOpenTelemetryInstrumentation(
-        this IServiceCollection services,
-        OpenTelemetryOptions options)
-    {
-        var activitySource = new ActivitySource("GithubActionsAutoscaler");
-        services.AddSingleton(activitySource);
+	public static IServiceCollection AddOpenTelemetryInstrumentation(
+		this IServiceCollection services,
+		OpenTelemetryOptions options)
+	{
+		var activitySource = new ActivitySource("GithubActionsAutoscaler");
+		var meter = new Meter("GithubActionsAutoscaler");
+		services.AddSingleton(activitySource);
+		services.AddSingleton(meter);
 
         var otlpEndpoint = Environment.GetEnvironmentVariable("OTEL_EXPORTER_OTLP_ENDPOINT") ?? options.OtlpEndpoint;
         
@@ -41,7 +44,10 @@ public static class OpenTelemetryExtensions
             })
             .WithMetrics(metrics =>
             {
-                metrics.AddAspNetCoreInstrumentation().AddHttpClientInstrumentation();
+			metrics
+				.AddAspNetCoreInstrumentation()
+				.AddHttpClientInstrumentation()
+				.AddMeter("GithubActionsAutoscaler");
                 if (!string.IsNullOrWhiteSpace(otlpEndpoint))
                 {
                     metrics.AddOtlpExporter(e => e.Endpoint = new Uri(otlpEndpoint));

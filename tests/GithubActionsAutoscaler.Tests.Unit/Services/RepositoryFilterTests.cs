@@ -12,7 +12,7 @@ public class RepositoryFilterTests
 
         var result = filter.IsRepositoryAllowed("myorg/my-repo");
 
-        result.Should().BeTrue();
+        Assert.True(result);
     }
 
     [Fact]
@@ -23,7 +23,7 @@ public class RepositoryFilterTests
 
         var result = filter.IsRepositoryAllowed("otherorg/my-repo");
 
-        result.Should().BeFalse();
+        Assert.False(result);
     }
 
     [Fact]
@@ -37,7 +37,7 @@ public class RepositoryFilterTests
 
         var result = filter.IsRepositoryAllowed("myorg/repo1");
 
-        result.Should().BeTrue();
+        Assert.True(result);
     }
 
     [Fact]
@@ -51,7 +51,7 @@ public class RepositoryFilterTests
 
         var result = filter.IsRepositoryAllowed("myorg/repo3");
 
-        result.Should().BeFalse();
+        Assert.False(result);
     }
 
     [Fact]
@@ -65,7 +65,7 @@ public class RepositoryFilterTests
 
         var result = filter.IsRepositoryAllowed("myorg/any-repo");
 
-        result.Should().BeTrue();
+        Assert.True(result);
     }
 
     [Fact]
@@ -76,7 +76,7 @@ public class RepositoryFilterTests
 
         var result = filter.IsRepositoryAllowed("anyorg/any-repo");
 
-        result.Should().BeTrue();
+        Assert.True(result);
     }
 
     [Fact]
@@ -90,7 +90,7 @@ public class RepositoryFilterTests
 
         var result = filter.IsRepositoryAllowed("myorg/blocked-repo");
 
-        result.Should().BeFalse();
+        Assert.False(result);
     }
 
     [Fact]
@@ -106,7 +106,7 @@ public class RepositoryFilterTests
 
         var result = filter.IsRepositoryAllowed("myorg/blocked-repo");
 
-        result.Should().BeFalse();
+        Assert.False(result);
     }
 
     [Fact]
@@ -117,7 +117,7 @@ public class RepositoryFilterTests
 
         var result = filter.IsRepositoryAllowed("anyorg/any-repo");
 
-        result.Should().BeFalse();
+        Assert.False(result);
     }
 
     [Fact]
@@ -132,7 +132,7 @@ public class RepositoryFilterTests
 
         var result = filter.IsRepositoryAllowed("myorg/blocked-repo");
 
-        result.Should().BeFalse();
+        Assert.False(result);
     }
 
     private static RepositoryFilterConfiguration CreateConfiguration(
