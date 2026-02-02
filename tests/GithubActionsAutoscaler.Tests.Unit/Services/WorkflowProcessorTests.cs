@@ -55,6 +55,9 @@ public class WorkflowProcessorTests
 		_labelMatcherMock.Setup(x => x.HasAllRequiredLabels(It.IsAny<string[]>())).Returns(true);
 		_repositoryFilterMock.Setup(x => x.IsRepositoryAllowed("myorg/repo")).Returns(true);
 		_runnerManagerMock
+			.Setup(x => x.CanCreateRunnerAsync(It.IsAny<CancellationToken>()))
+			.ReturnsAsync(true);
+		_runnerManagerMock
 			.Setup(x => x.CreateRunnerAsync("myorg/repo", It.IsAny<string>(), 123, It.IsAny<CancellationToken>()))
 			.ReturnsAsync(new Mock<IRunnerInstance>().Object);
 
@@ -62,7 +65,7 @@ public class WorkflowProcessorTests
 
 		Assert.True(result);
 		_runnerManagerMock.Verify(
-			x => x.WaitForAvailableSlotAsync(It.IsAny<CancellationToken>()),
+			x => x.CanCreateRunnerAsync(It.IsAny<CancellationToken>()),
 			Times.Once
 		);
 	}

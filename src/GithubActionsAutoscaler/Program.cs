@@ -71,16 +71,13 @@ var dockerConfig = !string.IsNullOrWhiteSpace(runnerOptions.Docker.Host)
 	: new DockerClientConfiguration();
 builder.Services.AddSingleton(_ => dockerConfig.CreateClient());
 
-if (appOptions.Mode is OperationMode.Webhook or OperationMode.Both)
-{
-	builder.Services.AddAzureQueueProvider(
-		new QueueAzureOptions
-		{
-			ConnectionString = queueOptions.AzureStorageQueue.ConnectionString,
-			QueueName = queueOptions.AzureStorageQueue.QueueName
-		}
-	);
-}
+builder.Services.AddAzureQueueProvider(
+	new QueueAzureOptions
+	{
+		ConnectionString = queueOptions.AzureStorageQueue.ConnectionString,
+		QueueName = queueOptions.AzureStorageQueue.QueueName
+	}
+);
 
 if (appOptions.Mode is OperationMode.QueueMonitor or OperationMode.Both)
 {

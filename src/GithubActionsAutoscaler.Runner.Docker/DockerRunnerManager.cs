@@ -133,12 +133,4 @@ public class DockerRunnerManager : IRunnerManager
 		return _containerManager.CleanupOldContainersAsync(cancellationToken);
 	}
 
-	public async Task WaitForAvailableSlotAsync(CancellationToken cancellationToken = default)
-	{
-		while ((await _containerManager.ListContainersAsync()).Count >= await GetMaxRunnersAsync())
-		{
-			_metrics?.UpdateActiveRunners((await _containerManager.ListContainersAsync()).Count);
-			await Task.Delay(3_000, cancellationToken);
-		}
-	}
 }

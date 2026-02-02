@@ -46,7 +46,11 @@ public class WorkflowProcessor : IWorkflowProcessor
 			Activity.Current?.AddEvent(
 				new ActivityEvent("Starting runner for workflow")
 			);
-			await _runnerManager.WaitForAvailableSlotAsync();
+			if (!await _runnerManager.CanCreateRunnerAsync())
+			{
+				Activity.Current?.AddEvent(new ActivityEvent("Runner capacity unavailable"));
+				return false;
+			}
 			var created = await _runnerManager.CreateRunnerAsync(
 				workflow.Repository.FullName,
 				string.Empty,

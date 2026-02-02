@@ -13,5 +13,4 @@ public interface IRunnerManager
 		CancellationToken cancellationToken = default);
 	Task StopRunnerAsync(string runnerId, CancellationToken cancellationToken = default);
 	Task CleanupOldRunnersAsync(CancellationToken cancellationToken = default);
-	Task WaitForAvailableSlotAsync(CancellationToken cancellationToken = default);
 }
