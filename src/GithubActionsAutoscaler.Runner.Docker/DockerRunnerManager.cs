@@ -132,5 +132,4 @@ public class DockerRunnerManager : IRunnerManager
 	{
 		return _containerManager.CleanupOldContainersAsync(cancellationToken);
 	}
-
 }
