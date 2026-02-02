@@ -114,20 +114,103 @@ src/
 - `IRunnerManager` for runner lifecycle
 - `WorkflowProcessor` orchestrates queue → runner workflow
 - `QueueMonitorWorker` handles polling
+- `RepositoryFilter` / `LabelMatcher` for workflow filtering
+- `AutoscalerMetrics` (optional) for OpenTelemetry instrumentation
 
-### Service Registration
-Startup is in `Program.cs` and uses `AutoscalerSetupExtensions`.
+### Service Registration & OperationMode Flow
+Startup in [Program.cs](src/GithubActionsAutoscaler/Program.cs) delegates to [AutoscalerSetupExtensions](src/GithubActionsAutoscaler/Extensions/AutoscalerSetupExtensions.cs). Service registration is **conditionally driven by `OperationMode`**:
+
+- **Webhook mode**: Registers HTTP endpoints only (`MapWorkflowEndpoints`); no workers started
+- **QueueMonitor mode**: Registers `QueueMonitorWorker` (IHostedService); continuously polls queue via `IQueueProvider`
+- **Both mode**: Registers both endpoints and worker
+
+`AutoscalerMetrics` is **optional** (nullable)—only created if OpenTelemetry is enabled. Services handle null gracefully.
+
+### Integration Flow
+1. **Startup**: `AutoscalerSetupExtensions` conditionally registers based on `OperationMode`
+2. **Webhook pathway**: HTTP POST → [WorkflowEndpoints](src/GithubActionsAutoscaler/Endpoints/WorkflowEndpoints.cs) → (Base64 decode JSON) → `WorkflowProcessor`
+3. **QueueMonitor pathway**: [QueueMonitorWorker](src/GithubActionsAutoscaler/Workers/QueueMonitorWorker.cs) polls `IQueueProvider` → `WorkflowProcessor`
+4. **Processing**: `WorkflowProcessor` applies `RepositoryFilter` / `LabelMatcher` → calls `IRunnerManager.CreateRunnerAsync()`
+5. **Cleanup**: `QueueMonitorWorker` periodically calls `IRunnerManager.CleanupOldRunnersAsync()` when workflow action is 'completed'
+
+### Message Format & Serialization
+- Queue messages are **Base64-encoded JSON** (applied in `WorkflowEndpoints`)
+- Decode before deserialization: `Convert.FromBase64String` → JSON parse
+- Workflow payload contains repository, labels, and action fields used for filtering
+
+### Retry Logic & Message Tracking
+`QueueMonitorWorker` tracks `_lastUnsuccessfulMessageId` to prevent infinite retries:
+- Messages that fail to process remain on queue but are skipped for 10 seconds
+- Implements exponential backoff indirectly via polling interval
+- See [QueueMonitorWorker.cs](src/GithubActionsAutoscaler/Workers/QueueMonitorWorker.cs) for implementation
+
+### Distributed Tracing with Activity
+Services use `System.Diagnostics.Activity.Current?.AddEvent()` for non-intrusive tracing:
+```csharp
+Activity.Current?.AddEvent(new("workflow_processed", tags: new() { 
+    { "repo", workflow.Repository }, 
+    { "runner_id", runnerInstance.Id } 
+}));
+```
+This integrates with OpenTelemetry without requiring explicit span creation.
+
+## Extending with Custom Providers
+
+### Adding a New Queue Provider
+1. Create project `GithubActionsAutoscaler.Queue.{Provider}/`
+2. Implement `IQueueProvider` interface (see [IQueueProvider.cs](src/GithubActionsAutoscaler.Abstractions/Queue/IQueueProvider.cs))
+3. Implement `IQueueMessage` for message type
+4. Create `{Provider}QueueOptions` record inheriting `QueueOptions` base
+5. Add `IValidateOptions<{Provider}QueueOptions>` validator
+6. Create `ServiceCollectionExtensions.AddQueue{Provider}()` extension method
+7. Call extension from `Program.cs` when provider is selected via config
+
+See [AzureQueueProvider](src/GithubActionsAutoscaler.Queue.Azure/) for reference implementation.
+
+### Adding a New Runner Manager
+1. Create project `GithubActionsAutoscaler.Runner.{Provider}/`
+2. Implement `IRunnerManager` interface (see [IRunnerManager.cs](src/GithubActionsAutoscaler.Abstractions/Runner/IRunnerManager.cs))
+3. Create `{Provider}RunnerInstance` record with runner metadata
+4. Create `{Provider}RunnerOptions` record with provider-specific config
+5. Add `IValidateOptions<{Provider}RunnerOptions>` validator
+6. Create `ServiceCollectionExtensions.AddRunner{Provider}()` extension method
+
+See [DockerRunnerManager](src/GithubActionsAutoscaler.Runner.Docker/) for reference implementation.
+
+## Configuration Validation
+
+Configuration uses `IValidateOptions<T>` pattern with cascading validation:
+- Each `*Options` class has corresponding validator in `Validation/` subfolder
+- Validators throw `OptionsValidationException` with detailed error messages
+- Validation occurs during host startup (fail-fast approach)
+- See [RepositoryFilterValidator](src/GithubActionsAutoscaler/Configuration/Validation/) for filtering logic example
+
+## IHostedService Lifecycle
+
+`QueueMonitorWorker` implements `IHostedService`:
+- **`StartAsync()`**: Initializes resources, starts background polling loop
+- **`StopAsync()`**: Gracefully stops polling, cleans up resources
+- Registrations in `Program.cs` via `.AddHostedService<QueueMonitorWorker>()`
+- DI container manages lifetime; only runs when `OperationMode` includes QueueMonitor
 
 ## Tests
 
 - Test project: `tests/GithubActionsAutoscaler.Tests.Unit`
 - No FluentAssertions; use xUnit `Assert.*`
+- Test naming: `{Method}_{Scenario}_{Expected}` (e.g., `ProcessWorkflowAsync_WhenRepoAllowed_StartsRunner`)
+- Mock setup with Moq: use `.Setup()` chains and `.Verify()` for assertions
+- Test organization: Mirror source structure (e.g., `Tests.Unit/Services/` mirrors `src/.../Services/`)
 
 ## Security Notes
 
-- Never log tokens or secrets
+- Never log tokens or secrets (use configured secrets manager)
 - Respect mode behavior: Webhook vs QueueMonitor vs Both
+- Validate input from queue before processing (prevent injection attacks)
+- Repository filters enforce allowlist/denylist access control
 
-## Cursor/Copilot Rules
+## References
 
-- No `.cursor` or Copilot rules found in this repo.
+- Installation guide: [README.md](README.md)
+- Implementation workflow: [docs/IMPLEMENTATION-WORKFLOW.md](docs/IMPLEMENTATION-WORKFLOW.md)
+- Phase plans: [docs/PHASE-*-PLAN.md](docs/)
+- Related instructions: [.github/instructions/](github/instructions/)
