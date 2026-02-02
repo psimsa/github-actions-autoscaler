@@ -650,7 +650,7 @@ See [IMPLEMENTATION-WORKFLOW.md](IMPLEMENTATION-WORKFLOW.md) for the full workfl
 - [x] Ensure OpenTelemetry instrumentation preserved
 - [x] Complete migration guide with before/after examples
 - [x] Update README.md
-- [ ] Update AGENTS.md
+- [x] Update AGENTS.md
 - [x] Create docker-compose examples for all modes
 - [x] Update Dockerfile if needed
 - [x] Final integration testing
