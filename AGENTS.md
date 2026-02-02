@@ -1,203 +1,133 @@
 # AGENTS.md - Developer Guide for AI Coding Agents
 
-This guide provides essential information for AI coding agents working in this repository.
+This guide helps AI agents work effectively in this repository. It captures build/test commands, style rules, and architectural conventions.
 
 ## Project Overview
 
-This is a C# .NET 10.0 ASP.NET Core application that autoscales GitHub Actions runners using Docker containers. It monitors Azure Storage Queues for GitHub workflow events and dynamically creates ephemeral runner containers.
+This is a .NET 10 ASP.NET Core application that autoscales GitHub Actions runners. It is a single deployable app with a mode switch and pluggable queue/runner providers.
 
 ## Build, Test, and Lint Commands
 
-### Build Commands
+### Build
 ```bash
-# Build the main project
+# Build the main app
 dotnet build src/GithubActionsAutoscaler
 
 # Build entire solution
 dotnet build
 
-# Build in Release mode
+# Release build
 dotnet build -c Release
 
-# Clean build artifacts
+# Clean artifacts
 dotnet clean
 ```
 
-### Test Commands
+### Test
 ```bash
 # Run all tests
 dotnet test
+
+# Run a single test file
+dotnet test --filter "FullyQualifiedName~GithubActionsAutoscaler.Tests.Unit.Services.WorkflowProcessorTests"
+
+# Run a single test method
+dotnet test --filter "FullyQualifiedName=GithubActionsAutoscaler.Tests.Unit.Services.WorkflowProcessorTests.ProcessWorkflowAsync_WhenRepoAllowed_StartsRunner"
 ```
 
-### Run Commands
+### Run
 ```bash
-# Run the application
 dotnet run --project src/GithubActionsAutoscaler
-
-# Run with specific configuration
 dotnet run --project src/GithubActionsAutoscaler -c Release
 ```
 
-### Lint/Format Commands
-**Note:** No explicit linting tools are configured. The project relies on:
-- Built-in C# compiler warnings
-- Implicit nullable reference types enforcement (enabled in .csproj)
-- Validate with: `dotnet build` (warnings will be displayed)
+### Lint/Format
+No explicit linting tools are configured. Use `dotnet build` to surface warnings.
 
-### Docker Commands
+### Docker
 ```bash
-# Build Docker image (from solution root)
 docker build -t github-actions-autoscaler .
-
-# Run container
 docker run -p 8080:8080 github-actions-autoscaler
 ```
 
 ## Code Style Guidelines
 
-### General Principles
-- **Target Framework:** .NET 10.0
-- **Language Version:** C# 14
-- **Nullable Reference Types:** Enabled (strict null checking)
-- **Implicit Usings:** Enabled
+### General
+- Target framework: .NET 10.0, C# 14
+- Nullable reference types: enabled
+- Implicit usings: enabled
 
-### File Organization
+### Formatting
+- Indentation: tabs (not spaces)
+- Braces: opening brace on same line
+- No strict line length, prefer readability
+
+### Imports
+- Use implicit usings for standard namespaces
+- Explicit `using` for non-standard namespaces
+- Order: System, third-party, local
+
+### Naming
+- Classes/Interfaces: PascalCase (e.g., `DockerRunnerManager`, `IQueueProvider`)
+- Methods: PascalCase, async methods end with `Async`
+- Properties: PascalCase
+- Fields: `_camelCase`
+- Locals/parameters: camelCase
+
+### Types
+- Use `record` for immutable DTOs (e.g., Workflow models)
+- Use `class` for services and mutable state
+- Initialize collections with `[]` (never null)
+
+### Error Handling
+- Use structured logging with `ILogger<T>`
+- Log errors with `_logger.LogError(ex, "message")`
+- Return false/empty results for expected failures
+
+### Dependency Injection
+- Constructor injection only
+- Inject interfaces, not concrete types
+
+### Configuration
+- Options-based config under `Configuration/`
+- Defaults are in `appsettings.json`
+- `appsettings.custom.json` is optional and not committed
+
+### Telemetry
+- Use `Activity` events for operational messages
+- Info logs only for lifecycle events
+- Metrics: use `AutoscalerMetrics` (Abstractions)
+
+## Architecture Conventions
+
+### Project Layout
 ```
 src/
-├── GithubActionsAutoscaler/               # Main application
-│   ├── Configuration/                     # Options/validators
-│   ├── Endpoints/                         # API endpoint definitions
-│   ├── Services/                          # WorkflowProcessor orchestration
-│   ├── Workers/                           # Background services
-│   └── Program.cs                         # Application entry point
+├── GithubActionsAutoscaler/               # Main app
 ├── GithubActionsAutoscaler.Abstractions/  # Shared contracts
 ├── GithubActionsAutoscaler.Queue.Azure/   # Azure queue provider
 └── GithubActionsAutoscaler.Runner.Docker/ # Docker runner provider
 ```
 
-### Naming Conventions
-- **Classes/Interfaces:** PascalCase (e.g., `DockerService`, `IDockerService`)
-- **Methods:** PascalCase with Async suffix for async methods (e.g., `ProcessWorkflowAsync`, `GetAutoscalerContainersAsync`)
-- **Properties:** PascalCase (e.g., `MaxRunners`, `AzureStorage`)
-- **Private Fields:** _camelCase with underscore prefix (e.g., `_client`, `_logger`, `_maxRunners`)
-- **Local Variables:** camelCase (e.g., `containerName`, `workflowResult`)
-- **Constants:** PascalCase (e.g., `EmptyStruct`)
-- **Parameters:** camelCase (e.g., `repositoryFullName`, `containerName`)
+### Key Services
+- `IQueueProvider` and `IQueueMessage` for queue interactions
+- `IRunnerManager` for runner lifecycle
+- `WorkflowProcessor` orchestrates queue → runner workflow
+- `QueueMonitorWorker` handles polling
 
-### Code Formatting
-- **Indentation:** Tabs (not spaces)
-- **Braces:** Opening brace on same line for methods/classes
-- **Line Length:** No strict limit, but prefer readability
-- **String Interpolation:** Use `$""` for simple cases, prefer explicit concatenation for complex scenarios
+### Service Registration
+Startup is in `Program.cs` and uses `AutoscalerSetupExtensions`.
 
-### Type Guidelines
-- Always use explicit types for clarity when declaring services/clients
-- Use `var` for obvious types (e.g., `var container = new CreateContainerParameters()`)
-- Always initialize collections: `[]` for empty arrays (C# 14 collection expressions), never null
-- Properties should have explicit types
-- Methods must have explicit return types
-- Use records for immutable DTOs (see `WorkflowJob`, `Repository`, `Workflow`)
+## Tests
 
-### Imports
-- Use implicit usings (enabled by default for .NET 10 web projects)
-- Explicit `using` statements only for non-standard namespaces
-- Standard order: System namespaces, third-party, local namespaces
-- Example from codebase:
-```csharp
-using GithubActionsAutoscaler.Models;
-using Docker.DotNet;
-using Docker.DotNet.Models;
+- Test project: `tests/GithubActionsAutoscaler.Tests.Unit`
+- No FluentAssertions; use xUnit `Assert.*`
 
-namespace GithubActionsAutoscaler.Services;
-```
+## Security Notes
 
-### Async/Await Patterns
-- All I/O operations must be async
-- Method names: append `Async` suffix (e.g., `ProcessWorkflowAsync`, `GetContainersAsync`)
-- Use `Task<T>` for async methods returning values
-- Use `Task` for async void equivalents
-- Always pass `CancellationToken` where supported
-- Example pattern:
-```csharp
-public async Task<bool> StartContainerAsync(string name, CancellationToken token)
-{
-    return await _client.Containers.StartContainerAsync(name, new(), token);
-}
-```
+- Never log tokens or secrets
+- Respect mode behavior: Webhook vs QueueMonitor vs Both
 
-### Dependency Injection
-- Constructor injection only (no property/method injection)
-- Inject interfaces, not concrete implementations
+## Cursor/Copilot Rules
 
-### Error Handling
-- Use structured logging with `ILogger<T>`
-- Log errors with `_logger.LogError(ex, "message")` 
-- Log information with `_logger.LogInformation("message", params)`
-- Return `false` or empty results on failure, not exceptions for expected failures
-- Example pattern:
-```csharp
-try
-{
-    await PerformOperation();
-}
-catch (Exception ex)
-{
-    _logger.LogError(ex, "Error performing operation");
-    return false;
-}
-```
-
-### Configuration
-- Options-based config in `Configuration/` folder
-- Supports environment variables and JSON files
-- Custom config file: `appsettings.custom.json` (not committed)
-- Defaults live in `appsettings.json`
-
-### API Endpoints
-- Use minimal APIs with `IEndpointRouteBuilder` extensions
-- Endpoint definitions in `Endpoints/` folder
-- Group related endpoints: `builder.MapGroup("workflow")`
-- Use `Results.Ok()`, `Results.BadRequest()`, etc.
-- Apply OpenAPI attributes: `.WithName()`, `.WithOpenApi()`
-
-### Comments
-- **DO NOT add code comments** unless explicitly requested by the user
-- Code should be self-documenting through clear naming
-- XML documentation comments are not used in this codebase
-
-### Models and Records
-- Use `record` types for immutable data transfer objects
-- Use `class` for services and mutable state
-- Records should have positional parameters
-- Include explicit `Deconstruct` method for records if needed
-- Use `[JsonPropertyName]` attributes for JSON mapping
-
-## Important Patterns
-
-### Service Registration (Program.cs)
-```csharp
-builder.Services.AddHostedService<QueueMonitorWorker>();
-builder.Services.AddDockerRunnerProvider(...);
-builder.Services.AddAzureQueueProvider(...);
-```
-
-### Background Workers
-- Implement `IHostedService` interface
-- Methods: `StartAsync` and `StopAsync`
-- Long-running tasks should respect `CancellationToken`
-
-## Azure Services
-- Azure Storage Queues for message processing
-- Application Insights for telemetry (optional)
-- Messages are Base64-encoded JSON
-
-## Docker Integration
-- Uses `Docker.DotNet` library
-- Default socket: `unix:/var/run/docker.sock`
-- Labels pattern: `autoscaler.*` for tracking containers
-
-## Important Notes
-- No tests currently exist - consult user before adding test infrastructure
-- This is a containerized application - be mindful of Docker host configuration
-- Security: Never log tokens or sensitive configuration values
-- Environment: Primarily Linux containers, Windows support via Docker host configuration
+- No `.cursor` or Copilot rules found in this repo.
