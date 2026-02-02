@@ -1,134 +1,151 @@
 using System.Diagnostics;
 using System.Text.Json;
-using Azure.Storage.Queues;
-using Azure.Storage.Queues.Models;
-using GithubActionsAutoscaler.Models;
+using GithubActionsAutoscaler.Abstractions.Models;
+using GithubActionsAutoscaler.Abstractions.Queue;
 using GithubActionsAutoscaler.Services;
+using GithubActionsAutoscaler.Abstractions.Telemetry;
 
 namespace GithubActionsAutoscaler.Workers;
 
 public class QueueMonitorWorker : IHostedService
 {
-    private readonly IDockerService _dockerService;
-    private readonly ActivitySource _activitySource;
-    private readonly ILogger<QueueMonitorWorker> _logger;
-    private readonly QueueClient _queueClient;
-    private string _lastUnsuccessfulMessageId = "";
+	private readonly IWorkflowProcessor _workflowProcessor;
+	private readonly ActivitySource _activitySource;
+	private readonly ILogger<QueueMonitorWorker> _logger;
+	private readonly IQueueProvider _queueProvider;
+	private readonly AutoscalerMetrics? _metrics;
+	private readonly string _mode;
+	private string _lastUnsuccessfulMessageId = "";
 
-    private Task? _worker;
-    private CancellationTokenSource? _cts;
+	private Task? _worker;
+	private CancellationTokenSource? _cts;
 
-    public QueueMonitorWorker(
-        QueueClient queueClient,
-        IDockerService dockerService,
-        ActivitySource activitySource,
-        ILogger<QueueMonitorWorker> logger
-    )
-    {
-        _queueClient = queueClient;
-        _dockerService = dockerService;
-        this._activitySource = activitySource;
-        _logger = logger;
-    }
+	public QueueMonitorWorker(
+		IQueueProvider queueProvider,
+		IWorkflowProcessor workflowProcessor,
+		ActivitySource activitySource,
+		ILogger<QueueMonitorWorker> logger,
+		AutoscalerMetrics? metrics = null
+	)
+	{
+		_queueProvider = queueProvider;
+		_workflowProcessor = workflowProcessor;
+		this._activitySource = activitySource;
+		_logger = logger;
+		_metrics = metrics;
+		_mode = "QueueMonitor";
+	}
 
-    internal async Task ProcessNextMessageAsync(CancellationToken token)
-    {
-        using var activity = _activitySource.StartActivity();
-        QueueMessage? message = null;
-        try
-        {
-            await _dockerService.WaitForAvailableRunnerAsync();
+	internal async Task ProcessNextMessageAsync(CancellationToken token)
+	{
+		using var activity = _activitySource.StartActivity();
+		IQueueMessage? message = null;
+		try
+		{
+			// Initialize done during startup
+			if (_lastUnsuccessfulMessageId != "")
+			{
+				IQueueMessage? pms = await _queueProvider.PeekMessageAsync(token);
+				if (pms?.MessageId == _lastUnsuccessfulMessageId)
+				{
+					await Task.Delay(10_000, token);
+				}
+			}
 
-            if (_lastUnsuccessfulMessageId != "")
-            {
-                PeekedMessage? pms = await _queueClient.PeekMessageAsync(token);
-                if (pms?.MessageId == _lastUnsuccessfulMessageId)
-                {
-                    await Task.Delay(10_000, token);
-                }
-            }
+			_lastUnsuccessfulMessageId = "";
 
-            _lastUnsuccessfulMessageId = "";
+			message = await _queueProvider.ReceiveMessageAsync(token);
+			_metrics?.UpdateQueueDepth(await _queueProvider.GetApproximateMessageCountAsync(token));
 
-            var response = await _queueClient.ReceiveMessageAsync(cancellationToken: token);
-            message = response.Value;
+			if (message == null)
+			{
+				Activity.Current?.Stop();
+				await Task.Delay(10_000, token);
+				return;
+			}
 
-            if (message == null)
-            {
-                await Task.Delay(10_000, token);
-                return;
-            }
+			activity?.AddEvent(new ActivityEvent("Dequeued message"));
 
-            _logger.LogInformation("Dequeued message");
+			var msg = Convert.FromBase64String(message.Content);
 
-            var msg = Convert.FromBase64String(message.MessageText);
+			var workflow = JsonSerializer.Deserialize<Workflow>(msg);
+			if (workflow != null)
+			{
+				_metrics?.RecordJobReceived(workflow.Action ?? "unknown", _mode);
+			}
+			activity?.AddEvent(new ActivityEvent("Executing workflow"));
+			var workflowResult = await _workflowProcessor.ProcessWorkflowAsync(workflow);
 
-            var workflow = JsonSerializer.Deserialize<Workflow>(msg);
-            _logger.LogInformation("Executing workflow");
-            var workflowResult = await _dockerService.ProcessWorkflowAsync(workflow);
+			if (workflowResult)
+			{
+				await _queueProvider.DeleteMessageAsync(message, token);
+				_metrics?.RecordQueueMessageDeleted();
+			}
+			else
+			{
+				_lastUnsuccessfulMessageId = message.MessageId;
+				_metrics?.RecordQueueMessageFailed();
+			}
+			
+			_metrics?.UpdateQueueDepth(await _queueProvider.GetApproximateMessageCountAsync(token));
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Error receiving message");
+			activity?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex.Message);
 
-            if (workflowResult)
-                await _queueClient.DeleteMessageAsync(message.MessageId, message.PopReceipt, token);
-            else
-            {
-                _lastUnsuccessfulMessageId = message.MessageId;
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error receiving message");
-            activity?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex.Message);
+			if (message != null)
+			{
+				activity?.AddEvent(new ActivityEvent("Deleting message due to processing error"));
+				// In case of processing error (serialization etc), we delete to avoid poison pill
+				// But we might want to reconsider this strategy later (dead letter queue?)
+				await _queueProvider.DeleteMessageAsync(message, token);
+				_metrics?.RecordQueueMessageDeleted();
+				_metrics?.UpdateQueueDepth(await _queueProvider.GetApproximateMessageCountAsync(token));
+			}
+			activity?.Stop();
+			await Task.Delay(10_000, token);
+		}
+	}
 
-            if (message != null)
-            {
-                activity?.AddEvent(new ActivityEvent("Deleting message due to processing error"));
-                // In case of processing error (serialization etc), we delete to avoid poison pill
-                // But we might want to reconsider this strategy later (dead letter queue?)
-                await _queueClient.DeleteMessageAsync(message.MessageId, message.PopReceipt, token);
-            }
-            activity?.Stop();
-            await Task.Delay(10_000, token);
-        }
-    }
+	private async Task MonitorQueueAsync(CancellationToken token)
+	{
+		_logger.LogInformation("QueueMonitorWorker monitor loop starting");
 
-    private async Task MonitorQueueAsync(CancellationToken token)
-    {
-        _logger.LogInformation("QueueMonitorWorker is starting");
+		using (var activity = _activitySource.StartActivity("QueueMonitorWorker.Startup"))
+		{
+			await _queueProvider.InitializeAsync(token);
+		}
 
-        using (var activity = _activitySource.StartActivity("QueueMonitorWorker.Startup"))
-        {
-            await _queueClient.CreateIfNotExistsAsync(cancellationToken: token);
-        }
+		while (!token.IsCancellationRequested)
+		{
+			await ProcessNextMessageAsync(token);
+		}
+	}
 
-        while (!token.IsCancellationRequested)
-        {
-            await ProcessNextMessageAsync(token);
-        }
-    }
+	public Task StartAsync(CancellationToken cancellationToken)
+	{
+		_logger.LogInformation("QueueMonitorWorker is starting");
+		_cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+		_worker = MonitorQueueAsync(_cts.Token);
+		return Task.CompletedTask;
+	}
 
-    public Task StartAsync(CancellationToken cancellationToken)
-    {
-        _logger.LogInformation("QueueMonitorWorker is starting");
-        _cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        _worker = MonitorQueueAsync(_cts.Token);
-        return Task.CompletedTask;
-    }
+	public async Task StopAsync(CancellationToken cancellationToken)
+	{
+		_logger.LogInformation("QueueMonitorWorker is stopping");
+		_cts?.Cancel();
 
-    public async Task StopAsync(CancellationToken cancellationToken)
-    {
-        _logger.LogInformation("QueueMonitorWorker is stopping");
-        _cts?.Cancel();
-
-        if (_worker != null)
-        {
-            try
-            {
-                await _worker;
-            }
-            catch (OperationCanceledException)
-            {
-                // Ignore
-            }
-        }
-    }
+		if (_worker != null)
+		{
+			try
+			{
+				await _worker;
+			}
+			catch (OperationCanceledException)
+			{
+				// Ignore
+			}
+		}
+	}
 }

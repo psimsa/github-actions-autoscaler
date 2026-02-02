@@ -1,215 +1,216 @@
 # AGENTS.md - Developer Guide for AI Coding Agents
 
-This guide provides essential information for AI coding agents working in this repository.
+This guide helps AI agents work effectively in this repository. It captures build/test commands, style rules, and architectural conventions.
 
 ## Project Overview
 
-This is a C# .NET 10.0 ASP.NET Core application that autoscales GitHub Actions runners using Docker containers. It monitors Azure Storage Queues for GitHub workflow events and dynamically creates ephemeral runner containers.
+This is a .NET 10 ASP.NET Core application that autoscales GitHub Actions runners. It is a single deployable app with a mode switch and pluggable queue/runner providers.
 
 ## Build, Test, and Lint Commands
 
-### Build Commands
+### Build
 ```bash
-# Build the main project
+# Build the main app
 dotnet build src/GithubActionsAutoscaler
 
 # Build entire solution
 dotnet build
 
-# Build in Release mode
+# Release build
 dotnet build -c Release
 
-# Clean build artifacts
+# Clean artifacts
 dotnet clean
 ```
 
-### Test Commands
-**Note:** This project currently has no test suite. Before implementing tests:
-1. Check with the user about their preferred testing framework (xUnit, NUnit, MSTest)
-2. Create a test project following conventions: `GithubActionsAutoscaler.Tests.Unit`
-3. Add test project to solution
-
-### Run Commands
+### Test
 ```bash
-# Run the application
-dotnet run --project src/GithubActionsAutoscaler
+# Run all tests
+dotnet test
 
-# Run with specific configuration
+# Run a single test file
+dotnet test --filter "FullyQualifiedName~GithubActionsAutoscaler.Tests.Unit.Services.WorkflowProcessorTests"
+
+# Run a single test method
+dotnet test --filter "FullyQualifiedName=GithubActionsAutoscaler.Tests.Unit.Services.WorkflowProcessorTests.ProcessWorkflowAsync_WhenRepoAllowed_StartsRunner"
+```
+
+### Run
+```bash
+dotnet run --project src/GithubActionsAutoscaler
 dotnet run --project src/GithubActionsAutoscaler -c Release
 ```
 
-### Lint/Format Commands
-**Note:** No explicit linting tools are configured. The project relies on:
-- Built-in C# compiler warnings
-- Implicit nullable reference types enforcement (enabled in .csproj)
-- Validate with: `dotnet build` (warnings will be displayed)
+### Lint/Format
+No explicit linting tools are configured. Use `dotnet build` to surface warnings.
 
-### Docker Commands
+### Docker
 ```bash
-# Build Docker image (from solution root)
 docker build -t github-actions-autoscaler .
-
-# Run container
 docker run -p 8080:8080 github-actions-autoscaler
 ```
 
 ## Code Style Guidelines
 
-### General Principles
-- **Target Framework:** .NET 10.0
-- **Language Version:** C# 14
-- **Nullable Reference Types:** Enabled (strict null checking)
-- **Implicit Usings:** Enabled
+### General
+- Target framework: .NET 10.0, C# 14
+- Nullable reference types: enabled
+- Implicit usings: enabled
 
-### File Organization
-```
-src/GithubActionsAutoscaler/
-├── Configuration/     # Configuration classes (AppConfiguration)
-├── Endpoints/         # API endpoint definitions (WorkflowEndpoints)
-├── Models/            # Data models (Workflow, WorkflowJob, Repository)
-├── Services/          # Business logic (IDockerService, DockerService)
-├── Workers/           # Background services (QueueMonitorWorker)
-└── Program.cs         # Application entry point
-```
-
-### Naming Conventions
-- **Classes/Interfaces:** PascalCase (e.g., `DockerService`, `IDockerService`)
-- **Methods:** PascalCase with Async suffix for async methods (e.g., `ProcessWorkflowAsync`, `GetAutoscalerContainersAsync`)
-- **Properties:** PascalCase (e.g., `MaxRunners`, `AzureStorage`)
-- **Private Fields:** _camelCase with underscore prefix (e.g., `_client`, `_logger`, `_maxRunners`)
-- **Local Variables:** camelCase (e.g., `containerName`, `workflowResult`)
-- **Constants:** PascalCase (e.g., `EmptyStruct`)
-- **Parameters:** camelCase (e.g., `repositoryFullName`, `containerName`)
-
-### Code Formatting
-- **Indentation:** Tabs (not spaces)
-- **Braces:** Opening brace on same line for methods/classes
-- **Line Length:** No strict limit, but prefer readability
-- **String Interpolation:** Use `$""` for simple cases, prefer explicit concatenation for complex scenarios
-
-### Type Guidelines
-- Always use explicit types for clarity when declaring services/clients
-- Use `var` for obvious types (e.g., `var container = new CreateContainerParameters()`)
-- Always initialize collections: `[]` for empty arrays (C# 14 collection expressions), never null
-- Properties should have explicit types
-- Methods must have explicit return types
-- Use records for immutable DTOs (see `WorkflowJob`, `Repository`, `Workflow`)
+### Formatting
+- Indentation: tabs (not spaces)
+- Braces: opening brace on same line
+- No strict line length, prefer readability
 
 ### Imports
-- Use implicit usings (enabled by default for .NET 10 web projects)
-- Explicit `using` statements only for non-standard namespaces
-- Standard order: System namespaces, third-party, local namespaces
-- Example from codebase:
-```csharp
-using GithubActionsAutoscaler.Models;
-using Docker.DotNet;
-using Docker.DotNet.Models;
+- Use implicit usings for standard namespaces
+- Explicit `using` for non-standard namespaces
+- Order: System, third-party, local
 
-namespace GithubActionsAutoscaler.Services;
-```
+### Naming
+- Classes/Interfaces: PascalCase (e.g., `DockerRunnerManager`, `IQueueProvider`)
+- Methods: PascalCase, async methods end with `Async`
+- Properties: PascalCase
+- Fields: `_camelCase`
+- Locals/parameters: camelCase
 
-### Async/Await Patterns
-- All I/O operations must be async
-- Method names: append `Async` suffix (e.g., `ProcessWorkflowAsync`, `GetContainersAsync`)
-- Use `Task<T>` for async methods returning values
-- Use `Task` for async void equivalents
-- Always pass `CancellationToken` where supported
-- Example pattern:
-```csharp
-public async Task<bool> StartContainerAsync(string name, CancellationToken token)
-{
-    return await _client.Containers.StartContainerAsync(name, new(), token);
-}
-```
-
-### Dependency Injection
-- Constructor injection only (no property/method injection)
-- Inject interfaces, not concrete implementations
-- Common pattern:
-```csharp
-public class MyService
-{
-    private readonly ILogger<MyService> _logger;
-    private readonly IDockerService _dockerService;
-    
-    public MyService(ILogger<MyService> logger, IDockerService dockerService)
-    {
-        _logger = logger;
-        _dockerService = dockerService;
-    }
-}
-```
+### Types
+- Use `record` for immutable DTOs (e.g., Workflow models)
+- Use `class` for services and mutable state
+- Initialize collections with `[]` (never null)
 
 ### Error Handling
 - Use structured logging with `ILogger<T>`
-- Log errors with `_logger.LogError(ex, "message")` 
-- Log information with `_logger.LogInformation("message", params)`
-- Return `false` or empty results on failure, not exceptions for expected failures
-- Example pattern:
-```csharp
-try
-{
-    await PerformOperation();
-}
-catch (Exception ex)
-{
-    _logger.LogError(ex, "Error performing operation");
-    return false;
-}
-```
+- Log errors with `_logger.LogError(ex, "message")`
+- Return false/empty results for expected failures
+
+### Dependency Injection
+- Constructor injection only
+- Inject interfaces, not concrete types
 
 ### Configuration
-- Configuration class: `AppConfiguration` in `Configuration/` folder
-- Supports both environment variables and JSON files
-- Custom config file: `appsettings.custom.json` (not committed)
-- Default values should be sensible
-- Pattern: Static factory method `FromConfiguration(IConfiguration config)`
+- Options-based config under `Configuration/`
+- Defaults are in `appsettings.json`
+- `appsettings.custom.json` is optional and not committed
 
-### API Endpoints
-- Use minimal APIs with `IEndpointRouteBuilder` extensions
-- Endpoint definitions in `Endpoints/` folder
-- Group related endpoints: `builder.MapGroup("workflow")`
-- Use `Results.Ok()`, `Results.BadRequest()`, etc.
-- Apply OpenAPI attributes: `.WithName()`, `.WithOpenApi()`
+### Telemetry
+- Use `Activity` events for operational messages
+- Info logs only for lifecycle events
+- Metrics: use `AutoscalerMetrics` (Abstractions)
 
-### Comments
-- **DO NOT add code comments** unless explicitly requested by the user
-- Code should be self-documenting through clear naming
-- XML documentation comments are not used in this codebase
+## Architecture Conventions
 
-### Models and Records
-- Use `record` types for immutable data transfer objects
-- Use `class` for services and mutable state
-- Records should have positional parameters
-- Include explicit `Deconstruct` method for records if needed
-- Use `[JsonPropertyName]` attributes for JSON mapping
-
-## Important Patterns
-
-### Service Registration (Program.cs)
-```csharp
-builder.Services.AddSingleton<IDockerService, DockerService>();
-builder.Services.AddSingleton(appConfig);
-builder.Services.AddHostedService<QueueMonitorWorker>();
+### Project Layout
+```
+src/
+├── GithubActionsAutoscaler/               # Main app
+├── GithubActionsAutoscaler.Abstractions/  # Shared contracts
+├── GithubActionsAutoscaler.Queue.Azure/   # Azure queue provider
+└── GithubActionsAutoscaler.Runner.Docker/ # Docker runner provider
 ```
 
-### Background Workers
-- Implement `IHostedService` interface
-- Methods: `StartAsync` and `StopAsync`
-- Long-running tasks should respect `CancellationToken`
+### Key Services
+- `IQueueProvider` and `IQueueMessage` for queue interactions
+- `IRunnerManager` for runner lifecycle
+- `WorkflowProcessor` orchestrates queue → runner workflow
+- `QueueMonitorWorker` handles polling
+- `RepositoryFilter` / `LabelMatcher` for workflow filtering
+- `AutoscalerMetrics` (optional) for OpenTelemetry instrumentation
 
-## Azure Services
-- Azure Storage Queues for message processing
-- Application Insights for telemetry (optional)
-- Messages are Base64-encoded JSON
+### Service Registration & OperationMode Flow
+Startup in [Program.cs](src/GithubActionsAutoscaler/Program.cs) delegates to [AutoscalerSetupExtensions](src/GithubActionsAutoscaler/Extensions/AutoscalerSetupExtensions.cs). Service registration is **conditionally driven by `OperationMode`**:
 
-## Docker Integration
-- Uses `Docker.DotNet` library
-- Default socket: `unix:/var/run/docker.sock`
-- Labels pattern: `autoscaler.*` for tracking containers
+- **Webhook mode**: Registers HTTP endpoints only (`MapWorkflowEndpoints`); no workers started
+- **QueueMonitor mode**: Registers `QueueMonitorWorker` (IHostedService); continuously polls queue via `IQueueProvider`
+- **Both mode**: Registers both endpoints and worker
 
-## Important Notes
-- No tests currently exist - consult user before adding test infrastructure
-- This is a containerized application - be mindful of Docker host configuration
-- Security: Never log tokens or sensitive configuration values
-- Environment: Primarily Linux containers, Windows support via Docker host configuration
+`AutoscalerMetrics` is **optional** (nullable)—only created if OpenTelemetry is enabled. Services handle null gracefully.
+
+### Integration Flow
+1. **Startup**: `AutoscalerSetupExtensions` conditionally registers based on `OperationMode`
+2. **Webhook pathway**: HTTP POST → [WorkflowEndpoints](src/GithubActionsAutoscaler/Endpoints/WorkflowEndpoints.cs) → (Base64 decode JSON) → `WorkflowProcessor`
+3. **QueueMonitor pathway**: [QueueMonitorWorker](src/GithubActionsAutoscaler/Workers/QueueMonitorWorker.cs) polls `IQueueProvider` → `WorkflowProcessor`
+4. **Processing**: `WorkflowProcessor` applies `RepositoryFilter` / `LabelMatcher` → calls `IRunnerManager.CreateRunnerAsync()`
+5. **Cleanup**: `QueueMonitorWorker` periodically calls `IRunnerManager.CleanupOldRunnersAsync()` when workflow action is 'completed'
+
+### Message Format & Serialization
+- Queue messages are **Base64-encoded JSON** (applied in `WorkflowEndpoints`)
+- Decode before deserialization: `Convert.FromBase64String` → JSON parse
+- Workflow payload contains repository, labels, and action fields used for filtering
+
+### Retry Logic & Message Tracking
+`QueueMonitorWorker` tracks `_lastUnsuccessfulMessageId` to prevent infinite retries:
+- Messages that fail to process remain on queue but are skipped for 10 seconds
+- Implements exponential backoff indirectly via polling interval
+- See [QueueMonitorWorker.cs](src/GithubActionsAutoscaler/Workers/QueueMonitorWorker.cs) for implementation
+
+### Distributed Tracing with Activity
+Services use `System.Diagnostics.Activity.Current?.AddEvent()` for non-intrusive tracing:
+```csharp
+Activity.Current?.AddEvent(new("workflow_processed", tags: new() { 
+    { "repo", workflow.Repository }, 
+    { "runner_id", runnerInstance.Id } 
+}));
+```
+This integrates with OpenTelemetry without requiring explicit span creation.
+
+## Extending with Custom Providers
+
+### Adding a New Queue Provider
+1. Create project `GithubActionsAutoscaler.Queue.{Provider}/`
+2. Implement `IQueueProvider` interface (see [IQueueProvider.cs](src/GithubActionsAutoscaler.Abstractions/Queue/IQueueProvider.cs))
+3. Implement `IQueueMessage` for message type
+4. Create `{Provider}QueueOptions` record inheriting `QueueOptions` base
+5. Add `IValidateOptions<{Provider}QueueOptions>` validator
+6. Create `ServiceCollectionExtensions.AddQueue{Provider}()` extension method
+7. Call extension from `Program.cs` when provider is selected via config
+
+See [AzureQueueProvider](src/GithubActionsAutoscaler.Queue.Azure/) for reference implementation.
+
+### Adding a New Runner Manager
+1. Create project `GithubActionsAutoscaler.Runner.{Provider}/`
+2. Implement `IRunnerManager` interface (see [IRunnerManager.cs](src/GithubActionsAutoscaler.Abstractions/Runner/IRunnerManager.cs))
+3. Create `{Provider}RunnerInstance` record with runner metadata
+4. Create `{Provider}RunnerOptions` record with provider-specific config
+5. Add `IValidateOptions<{Provider}RunnerOptions>` validator
+6. Create `ServiceCollectionExtensions.AddRunner{Provider}()` extension method
+
+See [DockerRunnerManager](src/GithubActionsAutoscaler.Runner.Docker/) for reference implementation.
+
+## Configuration Validation
+
+Configuration uses `IValidateOptions<T>` pattern with cascading validation:
+- Each `*Options` class has corresponding validator in `Validation/` subfolder
+- Validators throw `OptionsValidationException` with detailed error messages
+- Validation occurs during host startup (fail-fast approach)
+- See [RepositoryFilterValidator](src/GithubActionsAutoscaler/Configuration/Validation/) for filtering logic example
+
+## IHostedService Lifecycle
+
+`QueueMonitorWorker` implements `IHostedService`:
+- **`StartAsync()`**: Initializes resources, starts background polling loop
+- **`StopAsync()`**: Gracefully stops polling, cleans up resources
+- Registrations in `Program.cs` via `.AddHostedService<QueueMonitorWorker>()`
+- DI container manages lifetime; only runs when `OperationMode` includes QueueMonitor
+
+## Tests
+
+- Test project: `tests/GithubActionsAutoscaler.Tests.Unit`
+- No FluentAssertions; use xUnit `Assert.*`
+- Test naming: `{Method}_{Scenario}_{Expected}` (e.g., `ProcessWorkflowAsync_WhenRepoAllowed_StartsRunner`)
+- Mock setup with Moq: use `.Setup()` chains and `.Verify()` for assertions
+- Test organization: Mirror source structure (e.g., `Tests.Unit/Services/` mirrors `src/.../Services/`)
+
+## Security Notes
+
+- Never log tokens or secrets (use configured secrets manager)
+- Respect mode behavior: Webhook vs QueueMonitor vs Both
+- Validate input from queue before processing (prevent injection attacks)
+- Repository filters enforce allowlist/denylist access control
+
+## References
+
+- Installation guide: [README.md](README.md)
+- Implementation workflow: [docs/IMPLEMENTATION-WORKFLOW.md](docs/IMPLEMENTATION-WORKFLOW.md)
+- Phase plans: [docs/PHASE-*-PLAN.md](docs/)
+- Related instructions: [.github/instructions/](github/instructions/)

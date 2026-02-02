@@ -1,5 +1,5 @@
 using System.Text.Json.Nodes;
-using Azure.Storage.Queues;
+using GithubActionsAutoscaler.Abstractions.Queue;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GithubActionsAutoscaler.Endpoints;
@@ -17,16 +17,17 @@ public static class WorkflowEndpoints
         group
             .MapPost(
                 "enqueue-job",
-                async ([FromBody] JsonNode job, QueueClient queueClient) =>
-                {
-                    string messageText = job.ToJsonString();
-                    string base64MessageText = Convert.ToBase64String(
-                        System.Text.Encoding.UTF8.GetBytes(messageText)
-                    );
-                    var receipt = await queueClient.SendMessageAsync(base64MessageText);
-                    return Results.Ok();
-                }
-            )
+				async ([FromBody] JsonNode job, IQueueProvider queueProvider) =>
+				{
+					string messageText = job.ToJsonString();
+					string base64MessageText = Convert.ToBase64String(
+						System.Text.Encoding.UTF8.GetBytes(messageText)
+					);
+					await queueProvider.InitializeAsync();
+					await queueProvider.SendMessageAsync(base64MessageText);
+					return Results.Ok();
+				}
+			)
             .WithName("Enqueue Job")
             .WithOpenApi();
 

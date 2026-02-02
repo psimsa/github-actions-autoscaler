@@ -15,16 +15,19 @@ A self-hosted GitHub Actions runner autoscaler that dynamically creates ephemera
 
 ## Architecture
 
-The solution operates in two modes:
+The solution operates in three modes:
 
-1. **Web Endpoint Mode** (`UseWebEndpoint=true`)
+1. **Webhook Mode** (`App:Mode=Webhook`)
    - Accepts webhook calls from GitHub when a job is queued
-   - Places jobs into an Azure Storage Queue
+   - Places jobs into a queue provider
 
-2. **Runner Coordinator Mode** (`AzureStorage` configured)
-   - Monitors Azure Storage Queue for workflow events
+2. **QueueMonitor Mode** (`App:Mode=QueueMonitor`)
+   - Monitors the queue for workflow events
    - Spawns ephemeral Docker containers to execute jobs
    - Removes containers after job completion
+
+3. **Both Mode** (`App:Mode=Both`)
+   - Combined webhook + queue monitor for simple deployments
 
 ## Requirements
 
@@ -38,83 +41,64 @@ The solution operates in two modes:
 ```
 github-actions-autoscaler/
 ├── src/
-│   └── GithubActionsAutoscaler/     # Main application
-│       ├── Configuration/           # App configuration
-│       ├── Endpoints/               # REST API endpoints
-│       ├── Models/                  # Data models
-│       ├── Services/                # Business logic
-│       │   ├── DockerService.cs     # Workflow orchestration
-│       │   ├── ContainerManager.cs  # Docker container management
-│       │   ├── ImageManager.cs      # Docker image management
-│       │   ├── RepositoryFilter.cs  # Filtering logic
-│       │   └── LabelMatcher.cs      # Label matching logic
-│       └── Workers/                 # Background services
+│   ├── GithubActionsAutoscaler/               # Main application
+│   ├── GithubActionsAutoscaler.Abstractions/  # Shared contracts
+│   ├── GithubActionsAutoscaler.Queue.Azure/   # Azure queue provider
+│   └── GithubActionsAutoscaler.Runner.Docker/ # Docker runner provider
 ├── tests/
-│   └── GithubActionsAutoscaler.Tests.Unit/ # Unit tests
-├── docs/                            # Documentation
-└── Dockerfile                       # Production Docker image
+│   └── GithubActionsAutoscaler.Tests.Unit/    # Unit tests
+├── docs/                                      # Documentation
+└── Dockerfile                                 # Production Docker image
 ```
 
 ## Configuration
 
-Configuration can be done via environment variables or `appsettings.custom.json`:
-
-| Key | Default | Description |
-|:----|:--------|:------------|
-| `UseWebEndpoint` | `false` | Enable web endpoint for receiving webhooks |
-| `AzureStorage` | | Azure Storage connection string |
-| `AzureStorageQueue` | | Azure Storage Queue name |
-| `DockerToken` | | Docker Hub PAT (to avoid rate limits) |
-| `GithubToken` | | GitHub PAT (for runner registration) |
-| `MaxRunners` | `4` | Maximum concurrent runners |
-| `RepoAllowlistPrefix` | | Prefix for allowed repositories |
-| `RepoAllowlist` | | Comma-separated list of allowed repos |
-| `IsRepoAllowlistExactMatch` | `true` | Allowlist uses exact matching |
-| `RepoDenylistPrefix` | | Prefix for blocked repositories |
-| `RepoDenylist` | | Comma-separated list of blocked repos |
-| `IsRepoDenylistExactMatch` | `false` | Denylist uses exact matching |
-| `DockerHost` | `unix:/var/run/docker.sock` | Docker daemon endpoint |
-| `Labels` | `self-hosted,[arch]` | Runner labels |
-| `DockerImage` | `myoung34/github-runner:latest` | Runner container image |
-| `AutoCheckForImageUpdates` | `true` | Auto-pull latest runner image |
-| `CoordinatorHostname` | System hostname | Coordinator instance hostname |
-
-### OpenTelemetry Configuration
-
-Observability is provided via OpenTelemetry with OTLP exporter. Configure using standard OpenTelemetry environment variables or the `appsettings.json` section:
-
-| Key | Default | Description |
-|:----|:--------|:------------|
-| `OTEL_EXPORTER_OTLP_ENDPOINT` | | OTLP exporter endpoint (e.g., `http://localhost:4317`) |
-| `OTEL_SERVICE_NAME` | `github-actions-autoscaler` | Service name for telemetry |
-
-Alternatively, configure in `appsettings.json`:
-
-```json
-{
-  "OpenTelemetry": {
-    "Enabled": true,
-    "ServiceName": "github-actions-autoscaler",
-    "OtlpEndpoint": "http://localhost:4317"
-  }
-}
-```
-
-Environment variables take precedence over configuration file settings.
+Configuration uses a hierarchical structure in `appsettings.json` or environment variables.
 
 ### Example Configuration
 
 ```json
 {
-  "AzureStorage": "DefaultEndpointsProtocol=https;AccountName=...",
-  "AzureStorageQueue": "workflow-job-queued",
-  "DockerHost": "tcp://localhost:2375",
-  "GithubToken": "ghp_...",
-  "MaxRunners": 3,
-  "RepoAllowlistPrefix": "myorg/",
-  "UseWebEndpoint": true
+  "App": {
+    "Mode": "Both",
+    "GithubToken": "ghp_...",
+    "RepositoryFilter": {
+      "AllowlistPrefix": "myorg/"
+    },
+    "Labels": ["self-hosted", "linux", "x64"],
+    "OpenTelemetry": {
+      "Enabled": true,
+      "ServiceName": "github-actions-autoscaler",
+      "OtlpEndpoint": "http://localhost:4317"
+    }
+  },
+  "Queue": {
+    "Provider": "AzureStorageQueue",
+    "AzureStorageQueue": {
+      "ConnectionString": "DefaultEndpointsProtocol=https;AccountName=...",
+      "QueueName": "workflow-job-queued"
+    }
+  },
+  "Runner": {
+    "Provider": "Docker",
+    "MaxRunners": 3,
+    "Docker": {
+      "Host": "unix:/var/run/docker.sock",
+      "Image": "myoung34/github-runner:latest",
+      "RegistryToken": ""
+    }
+  }
 }
 ```
+
+### OpenTelemetry Configuration
+
+Use either environment variables or `App:OpenTelemetry` config:
+
+- `OTEL_EXPORTER_OTLP_ENDPOINT`
+- `OTEL_SERVICE_NAME`
+
+Environment variables take precedence.
 
 ## Quick Start
 
@@ -123,10 +107,14 @@ Environment variables take precedence over configuration file settings.
 ```bash
 docker run -d \
   -v /var/run/docker.sock:/var/run/docker.sock \
-  -e AzureStorage="your-connection-string" \
-  -e AzureStorageQueue="workflow-job-queued" \
-  -e GithubToken="ghp_..." \
-  -e RepoAllowlistPrefix="yourusername/" \
+  -e App__Mode=Both \
+  -e App__GithubToken="ghp_..." \
+  -e Queue__Provider=AzureStorageQueue \
+  -e Queue__AzureStorageQueue__ConnectionString="your-connection-string" \
+  -e Queue__AzureStorageQueue__QueueName="workflow-job-queued" \
+  -e Runner__Provider=Docker \
+  -e Runner__Docker__Host="unix:/var/run/docker.sock" \
+  -e Runner__Docker__Image="myoung34/github-runner:latest" \
   ofcoursedude/github-actions-runner:latest
 ```
 

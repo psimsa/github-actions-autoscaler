@@ -10,6 +10,9 @@ FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 ARG TARGETARCH
 WORKDIR /src
 COPY ["src/GithubActionsAutoscaler/GithubActionsAutoscaler.csproj", "src/GithubActionsAutoscaler/"]
+COPY ["src/GithubActionsAutoscaler.Abstractions/GithubActionsAutoscaler.Abstractions.csproj", "src/GithubActionsAutoscaler.Abstractions/"]
+COPY ["src/GithubActionsAutoscaler.Queue.Azure/GithubActionsAutoscaler.Queue.Azure.csproj", "src/GithubActionsAutoscaler.Queue.Azure/"]
+COPY ["src/GithubActionsAutoscaler.Runner.Docker/GithubActionsAutoscaler.Runner.Docker.csproj", "src/GithubActionsAutoscaler.Runner.Docker/"]
 RUN dotnet restore "src/GithubActionsAutoscaler/GithubActionsAutoscaler.csproj" -a $TARGETARCH
 COPY . .
 WORKDIR "/src/src/GithubActionsAutoscaler"

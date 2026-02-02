@@ -1,5 +1,4 @@
-using GithubActionsAutoscaler.Configuration;
-using GithubActionsAutoscaler.Services;
+using GithubActionsAutoscaler.Abstractions.Services;
 
 namespace GithubActionsAutoscaler.Tests.Unit.Services;
 
@@ -8,82 +7,82 @@ public class LabelMatcherTests
     [Fact]
     public void HasAllRequiredLabels_WithSelfHostedLabel_ReturnsTrue()
     {
-        var config = CreateConfiguration(["self-hosted", "linux", "x64"]);
-        var matcher = new LabelMatcher(config);
+        var labels = CreateConfiguration(["self-hosted", "linux", "x64"]);
+        var matcher = new LabelMatcher(labels);
 
         var result = matcher.HasAllRequiredLabels(["self-hosted", "linux"]);
 
-        result.Should().BeTrue();
+        Assert.True(result);
     }
 
     [Fact]
     public void HasAllRequiredLabels_WithoutSelfHostedLabel_ReturnsFalse()
     {
-        var config = CreateConfiguration(["self-hosted", "linux", "x64"]);
-        var matcher = new LabelMatcher(config);
+        var labels = CreateConfiguration(["self-hosted", "linux", "x64"]);
+        var matcher = new LabelMatcher(labels);
 
         var result = matcher.HasAllRequiredLabels(["linux", "x64"]);
 
-        result.Should().BeFalse();
+        Assert.False(result);
     }
 
     [Fact]
     public void HasAllRequiredLabels_WithMissingLabel_ReturnsFalse()
     {
-        var config = CreateConfiguration(["self-hosted", "linux"]);
-        var matcher = new LabelMatcher(config);
+        var labels = CreateConfiguration(["self-hosted", "linux"]);
+        var matcher = new LabelMatcher(labels);
 
         var result = matcher.HasAllRequiredLabels(["self-hosted", "windows"]);
 
-        result.Should().BeFalse();
+        Assert.False(result);
     }
 
     [Fact]
     public void HasAllRequiredLabels_IsCaseInsensitive()
     {
-        var config = CreateConfiguration(["self-hosted", "linux", "x64"]);
-        var matcher = new LabelMatcher(config);
+        var labels = CreateConfiguration(["self-hosted", "linux", "x64"]);
+        var matcher = new LabelMatcher(labels);
 
         var result = matcher.HasAllRequiredLabels(["Self-Hosted", "LINUX"]);
 
-        result.Should().BeTrue();
+        Assert.True(result);
     }
 
     [Fact]
     public void HasAllRequiredLabels_WithOnlySelfHosted_ReturnsTrue()
     {
-        var config = CreateConfiguration(["self-hosted"]);
-        var matcher = new LabelMatcher(config);
+        var labels = CreateConfiguration(["self-hosted"]);
+        var matcher = new LabelMatcher(labels);
 
         var result = matcher.HasAllRequiredLabels(["self-hosted"]);
 
-        result.Should().BeTrue();
+        Assert.True(result);
     }
 
     [Fact]
     public void HasAllRequiredLabels_WithEmptyJobLabels_ReturnsFalse()
     {
-        var config = CreateConfiguration(["self-hosted", "linux"]);
-        var matcher = new LabelMatcher(config);
+        var labels = CreateConfiguration(["self-hosted", "linux"]);
+        var matcher = new LabelMatcher(labels);
 
         var result = matcher.HasAllRequiredLabels([]);
 
-        result.Should().BeFalse();
+        Assert.False(result);
     }
 
     [Fact]
     public void HasAllRequiredLabels_WithSubsetOfLabels_ReturnsTrue()
     {
-        var config = CreateConfiguration(["self-hosted", "linux", "x64", "gpu"]);
-        var matcher = new LabelMatcher(config);
+        var labels = CreateConfiguration(["self-hosted", "linux", "x64", "gpu"]);
+        var matcher = new LabelMatcher(labels);
 
         var result = matcher.HasAllRequiredLabels(["self-hosted", "linux"]);
 
-        result.Should().BeTrue();
+        Assert.True(result);
     }
 
-    private static AppConfiguration CreateConfiguration(string[] labels)
+    private static string[] CreateConfiguration(string[] labels)
     {
-        return new AppConfiguration { Labels = labels, DockerImage = "test-image:latest" };
+        return labels;
     }
 }
